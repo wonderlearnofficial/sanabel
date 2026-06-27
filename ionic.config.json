@@ -1,0 +1,7 @@
+{
+  "name": "Sanabel_Al-Ehsan",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
