@@ -12,11 +12,20 @@ import {
   FaPlus,
   FaTimes,
   FaCopy,
+  FaEdit,
+  FaTrash,
+  FaSchool,
+  FaBuilding,
 } from "react-icons/fa";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 import { getErrorMessage } from "../../config/getErrorMessage";
 
-type Tab = "users" | "students" | "teachers" | "parents" | "admins";
+type Tab = "users" | "students" | "teachers" | "parents" | "admins" | "classes" | "organizations";
+type UserLikeTab = "users" | "students" | "teachers" | "parents" | "admins";
+
+const USER_LIKE_TABS: UserLikeTab[] = ["users", "students", "teachers", "parents", "admins"];
+const isUserLikeTab = (tab: Tab): tab is UserLikeTab =>
+  (USER_LIKE_TABS as Tab[]).includes(tab);
 
 const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "users", label: "كل المستخدمين", icon: <FaUsers /> },
@@ -24,6 +33,8 @@ const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "teachers", label: "المعلمون", icon: <FaChalkboardTeacher /> },
   { key: "parents", label: "أولياء الأمور", icon: <FaUserFriends /> },
   { key: "admins", label: "المشرفون", icon: <FaUserShield /> },
+  { key: "classes", label: "الفصول", icon: <FaSchool /> },
+  { key: "organizations", label: "المدارس والمؤسسات", icon: <FaBuilding /> },
 ];
 
 const ENDPOINTS: Record<Tab, string> = {
@@ -32,9 +43,11 @@ const ENDPOINTS: Record<Tab, string> = {
   teachers: `${API_BASE_URL}/admin/teachers`,
   parents: `${API_BASE_URL}/admin/parents`,
   admins: `${API_BASE_URL}/admin/users`,
+  classes: `${API_BASE_URL}/admin/classes`,
+  organizations: `${API_BASE_URL}/admin/organizations`,
 };
 
-const getUserId = (tab: Tab, row: any): number => {
+const getUserId = (tab: UserLikeTab, row: any): number => {
   if (tab === "users" || tab === "admins") return row.id;
   return row.userId;
 };
@@ -103,6 +116,130 @@ const UserData: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string } | null>(null);
 
+  // Edit modal (shared across every tab; visible fields depend on activeTab)
+  const [editingRow, setEditingRow] = useState<any>(null);
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editGrade, setEditGrade] = useState("");
+  const [editOrgId, setEditOrgId] = useState("");
+  const [editClassId, setEditClassId] = useState("");
+  const [editClassName, setEditClassName] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editOrgName, setEditOrgName] = useState("");
+  const [editOrgType, setEditOrgType] = useState("School");
+  const [editClassesOptions, setEditClassesOptions] = useState<{ id: number; classname: string; category: string }[]>([]);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+
+  const openEditModal = (row: any) => {
+    setEditingRow(row);
+    setEditFirstName(row.firstName ?? row.user?.firstName ?? row.User?.firstName ?? "");
+    setEditLastName(row.lastName ?? row.user?.lastName ?? row.User?.lastName ?? "");
+    setEditEmail(row.email ?? row.user?.email ?? row.User?.email ?? "");
+    setEditGrade(row.grade ?? "");
+    setEditOrgId(String(row.organizationId ?? row.Organization?.id ?? ""));
+    setEditClassId(String(row.classId ?? ""));
+    setEditClassName(row.classname ?? "");
+    setEditCategory(row.category ?? "");
+    setEditOrgName(row.name ?? "");
+    setEditOrgType(row.type ?? "School");
+  };
+
+  useEffect(() => {
+    if (!editingRow || activeTab !== "students") {
+      setEditClassesOptions([]);
+      return;
+    }
+    if (!editOrgId) {
+      setEditClassesOptions([]);
+      return;
+    }
+    const token = localStorage.getItem("token");
+    axios
+      .get(`${API_BASE_URL}/admin/organizations/${editOrgId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((response) => setEditClassesOptions(response.data.data.Classes || []))
+      .catch((error) => console.error("Error fetching classes:", error));
+  }, [editingRow, editOrgId, activeTab]);
+
+  const handleSaveEdit = async () => {
+    const token = localStorage.getItem("token");
+    setIsSavingEdit(true);
+    try {
+      if (activeTab === "classes") {
+        await axios.patch(
+          `${API_BASE_URL}/admin/classes/${editingRow.id}`,
+          { classname: editClassName, category: editCategory, organizationId: editOrgId ? Number(editOrgId) : undefined },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else if (activeTab === "organizations") {
+        await axios.patch(
+          `${API_BASE_URL}/admin/organizations/${editingRow.id}`,
+          { name: editOrgName, type: editOrgType },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        const userId = getUserId(activeTab, editingRow);
+        await axios.patch(
+          `${API_BASE_URL}/admin/users/${userId}`,
+          {
+            firstName: editFirstName,
+            lastName: editLastName,
+            email: editEmail,
+            grade: activeTab === "students" ? editGrade : undefined,
+            organizationId:
+              activeTab === "students" || activeTab === "teachers"
+                ? (editOrgId ? Number(editOrgId) : undefined)
+                : undefined,
+            classId: activeTab === "students" ? (editClassId ? Number(editClassId) : null) : undefined,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+      toast.success("تم الحفظ بنجاح");
+      setEditingRow(null);
+      fetchData();
+    } catch (error) {
+      toast.error(getErrorMessage(error, "تعذر حفظ التعديلات"));
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const getDeleteId = (tab: Tab, row: any): number =>
+    isUserLikeTab(tab) ? getUserId(tab, row) : row.id;
+
+  const handleDelete = async (tab: Tab, row: any) => {
+    const token = localStorage.getItem("token");
+    const id = getDeleteId(tab, row);
+    try {
+      const endpoint =
+        tab === "classes"
+          ? `${API_BASE_URL}/admin/classes/${id}`
+          : tab === "organizations"
+          ? `${API_BASE_URL}/admin/organizations/${id}`
+          : `${API_BASE_URL}/admin/users/${id}`;
+
+      await axios.delete(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success("تم الحذف بنجاح");
+      fetchData();
+    } catch (error: any) {
+      const data = error?.response?.data;
+      if (data?.studentCount !== undefined || data?.teacherCount !== undefined) {
+        toast.error(
+          `لا يمكن الحذف، توجد بيانات مرتبطة: ${data.studentCount ?? 0} طالب, ${data.teacherCount ?? 0} معلم, ${data.classCount ?? 0} فصل`
+        );
+      } else {
+        toast.error(getErrorMessage(error, "تعذر الحذف"));
+      }
+    } finally {
+      setConfirmDeleteId(null);
+    }
+  };
+
   const openCreateModal = () => {
     setCreateRole("Student");
     setCreateFirstName("");
@@ -116,7 +253,7 @@ const UserData: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!showCreateModal) return;
+    if (!showCreateModal && !editingRow) return;
     const token = localStorage.getItem("token");
     axios
       .get(`${API_BASE_URL}/admin/organizations`, {
@@ -125,7 +262,8 @@ const UserData: React.FC = () => {
       })
       .then((response) => setCreateOrganizations(response.data.data))
       .catch((error) => console.error("Error fetching organizations:", error));
-  }, [showCreateModal]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showCreateModal, editingRow]);
 
   useEffect(() => {
     if (!createOrgId) {
@@ -261,6 +399,10 @@ const UserData: React.FC = () => {
           "عدد الأبناء المرتبطين",
           "",
         ];
+      case "classes":
+        return ["ID", "اسم الفصل", "الفئة", "المؤسسة", "عدد الطلاب", ""];
+      case "organizations":
+        return ["ID", "الاسم", "النوع", ""];
       default:
         return [
           "ID",
@@ -275,9 +417,10 @@ const UserData: React.FC = () => {
   };
 
   const renderRow = (row: any) => {
-    const userId = getUserId(activeTab, row);
+    const userId = isUserLikeTab(activeTab) ? getUserId(activeTab, row) : -1;
     const name = getName(activeTab, row) || "-";
     const email = getEmail(activeTab, row);
+    const deleteId = getDeleteId(activeTab, row);
 
     let cells: React.ReactNode[] = [];
     switch (activeTab) {
@@ -308,6 +451,18 @@ const UserData: React.FC = () => {
           (row.Students ?? row.students ?? []).length,
         ];
         break;
+      case "classes":
+        cells = [
+          row.id,
+          row.classname,
+          row.category,
+          row.Organization?.name ?? "-",
+          (row.Students ?? []).length,
+        ];
+        break;
+      case "organizations":
+        cells = [row.id, row.name, row.type];
+        break;
       default:
         cells = [
           row.id,
@@ -333,29 +488,66 @@ const UserData: React.FC = () => {
           </td>
         ))}
         <td className="px-4 py-3 text-sm">
-          {confirmResetId === userId ? (
-            <div className="flex items-center gap-2">
-              <button
-                className="px-3 py-1 text-xs text-white bg-red-500 rounded-lg hover:bg-red-600"
-                onClick={() => handleResetPassword(userId)}
-              >
-                تأكيد
-              </button>
-              <button
-                className="px-3 py-1 text-xs bg-gray-200 rounded-lg hover:bg-gray-300"
-                onClick={() => setConfirmResetId(null)}
-              >
-                إلغاء
-              </button>
-            </div>
-          ) : (
+          <div className="flex items-center gap-2">
             <button
-              className="flex items-center gap-1 px-3 py-1 text-xs text-blue-700 rounded-lg bg-blue-50 hover:bg-blue-100"
-              onClick={() => setConfirmResetId(userId)}
+              className="p-2 text-blue-600 rounded-lg bg-blue-50 hover:bg-blue-100"
+              title="تعديل"
+              onClick={() => openEditModal(row)}
             >
-              <FaKey /> إعادة تعيين كلمة المرور
+              <FaEdit />
             </button>
-          )}
+
+            {confirmDeleteId === deleteId ? (
+              <>
+                <button
+                  className="px-3 py-1 text-xs text-white bg-red-500 rounded-lg hover:bg-red-600"
+                  onClick={() => handleDelete(activeTab, row)}
+                >
+                  تأكيد
+                </button>
+                <button
+                  className="px-3 py-1 text-xs bg-gray-200 rounded-lg hover:bg-gray-300"
+                  onClick={() => setConfirmDeleteId(null)}
+                >
+                  إلغاء
+                </button>
+              </>
+            ) : (
+              <button
+                className="p-2 text-red-600 rounded-lg bg-red-50 hover:bg-red-100"
+                title="حذف"
+                onClick={() => setConfirmDeleteId(deleteId)}
+              >
+                <FaTrash />
+              </button>
+            )}
+
+            {isUserLikeTab(activeTab) &&
+              (confirmResetId === userId ? (
+                <>
+                  <button
+                    className="px-3 py-1 text-xs text-white bg-orange-500 rounded-lg hover:bg-orange-600"
+                    onClick={() => handleResetPassword(userId)}
+                  >
+                    تأكيد
+                  </button>
+                  <button
+                    className="px-3 py-1 text-xs bg-gray-200 rounded-lg hover:bg-gray-300"
+                    onClick={() => setConfirmResetId(null)}
+                  >
+                    إلغاء
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="p-2 text-orange-600 rounded-lg bg-orange-50 hover:bg-orange-100"
+                  title="إعادة تعيين كلمة المرور"
+                  onClick={() => setConfirmResetId(userId)}
+                >
+                  <FaKey />
+                </button>
+              ))}
+          </div>
         </td>
       </tr>
     );
@@ -656,6 +848,190 @@ const UserData: React.FC = () => {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {editingRow && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md p-6 mx-4 bg-white shadow-2xl rounded-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800">تعديل</h2>
+              <button
+                onClick={() => setEditingRow(null)}
+                className="p-2 text-gray-400 rounded-lg hover:bg-gray-100"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {activeTab === "classes" ? (
+                <>
+                  <div>
+                    <label className="block mb-1 text-sm text-gray-600">اسم الفصل</label>
+                    <input
+                      type="text"
+                      value={editClassName}
+                      onChange={(e) => setEditClassName(e.target.value)}
+                      className="w-full p-3 bg-white text-gray-800 border-2 rounded-xl border-[#EAECF0]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-1 text-sm text-gray-600">الفئة</label>
+                    <input
+                      type="text"
+                      value={editCategory}
+                      onChange={(e) => setEditCategory(e.target.value)}
+                      className="w-full p-3 bg-white text-gray-800 border-2 rounded-xl border-[#EAECF0]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-1 text-sm text-gray-600">المؤسسة</label>
+                    <select
+                      value={editOrgId}
+                      onChange={(e) => setEditOrgId(e.target.value)}
+                      className="w-full p-3 bg-white text-black border-2 rounded-xl border-[#EAECF0]"
+                    >
+                      <option value="">اختر المؤسسة</option>
+                      {createOrganizations.map((org) => (
+                        <option key={org.id} value={org.id}>
+                          {org.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              ) : activeTab === "organizations" ? (
+                <>
+                  <div>
+                    <label className="block mb-1 text-sm text-gray-600">اسم المؤسسة</label>
+                    <input
+                      type="text"
+                      value={editOrgName}
+                      onChange={(e) => setEditOrgName(e.target.value)}
+                      className="w-full p-3 bg-white text-gray-800 border-2 rounded-xl border-[#EAECF0]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-1 text-sm text-gray-600">النوع</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {["School", "Company", "Charity"].map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => setEditOrgType(type)}
+                          className={`py-2 text-xs rounded-lg border-2 ${
+                            editOrgType === type
+                              ? "bg-blueprimary text-white border-blueprimary"
+                              : "border-[#EAECF0] text-gray-600"
+                          }`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label className="block mb-1 text-sm text-gray-600">الاسم الأول</label>
+                      <input
+                        type="text"
+                        value={editFirstName}
+                        onChange={(e) => setEditFirstName(e.target.value)}
+                        className="w-full p-3 bg-white text-gray-800 border-2 rounded-xl border-[#EAECF0]"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block mb-1 text-sm text-gray-600">اسم العائلة</label>
+                      <input
+                        type="text"
+                        value={editLastName}
+                        onChange={(e) => setEditLastName(e.target.value)}
+                        className="w-full p-3 bg-white text-gray-800 border-2 rounded-xl border-[#EAECF0]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 text-sm text-gray-600">البريد الإلكتروني</label>
+                    <input
+                      type="email"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      dir="ltr"
+                      className="w-full p-3 bg-white text-gray-800 border-2 rounded-xl border-[#EAECF0]"
+                    />
+                  </div>
+
+                  {activeTab === "students" && (
+                    <div>
+                      <label className="block mb-1 text-sm text-gray-600">المرحلة الدراسية</label>
+                      <select
+                        value={editGrade}
+                        onChange={(e) => setEditGrade(e.target.value)}
+                        className="w-full p-3 bg-white text-black border-2 rounded-xl border-[#EAECF0]"
+                      >
+                        <option value="">اختر المرحلة</option>
+                        <option value="primary">primary</option>
+                        <option value="preparatory">preparatory</option>
+                        <option value="secondary">secondary</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {(activeTab === "students" || activeTab === "teachers") && (
+                    <div>
+                      <label className="block mb-1 text-sm text-gray-600">المؤسسة</label>
+                      <select
+                        value={editOrgId}
+                        onChange={(e) => {
+                          setEditOrgId(e.target.value);
+                          setEditClassId("");
+                        }}
+                        className="w-full p-3 bg-white text-black border-2 rounded-xl border-[#EAECF0]"
+                      >
+                        <option value="">اختر المؤسسة</option>
+                        {createOrganizations.map((org) => (
+                          <option key={org.id} value={org.id}>
+                            {org.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {activeTab === "students" && (
+                    <div>
+                      <label className="block mb-1 text-sm text-gray-600">الفصل</label>
+                      <select
+                        value={editClassId}
+                        onChange={(e) => setEditClassId(e.target.value)}
+                        disabled={!editOrgId}
+                        className="w-full p-3 bg-white text-black border-2 rounded-xl border-[#EAECF0] disabled:opacity-50"
+                      >
+                        <option value="">بدون فصل</option>
+                        {editClassesOptions.map((cls) => (
+                          <option key={cls.id} value={cls.id}>
+                            {cls.classname} ({cls.category})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <button
+                onClick={handleSaveEdit}
+                disabled={isSavingEdit}
+                className="w-full py-3 font-bold text-white bg-blueprimary rounded-xl disabled:opacity-50"
+              >
+                {isSavingEdit ? "جاري الحفظ..." : "حفظ التعديلات"}
+              </button>
+            </div>
           </div>
         </div>
       )}
