@@ -9,8 +9,12 @@ import {
   FaUserFriends,
   FaUserShield,
   FaKey,
+  FaPlus,
+  FaTimes,
+  FaCopy,
 } from "react-icons/fa";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
+import { getErrorMessage } from "../../config/getErrorMessage";
 
 type Tab = "users" | "students" | "teachers" | "parents" | "admins";
 
@@ -85,6 +89,95 @@ const UserData: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [confirmResetId, setConfirmResetId] = useState<number | null>(null);
   const limit = 25;
+
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createRole, setCreateRole] = useState<"Student" | "Teacher" | "Parent" | "Admin">("Student");
+  const [createFirstName, setCreateFirstName] = useState("");
+  const [createLastName, setCreateLastName] = useState("");
+  const [createEmail, setCreateEmail] = useState("");
+  const [createGrade, setCreateGrade] = useState("");
+  const [createOrgId, setCreateOrgId] = useState("");
+  const [createClassId, setCreateClassId] = useState("");
+  const [createOrganizations, setCreateOrganizations] = useState<{ id: number; name: string }[]>([]);
+  const [createClasses, setCreateClasses] = useState<{ id: number; classname: string; category: string }[]>([]);
+  const [isCreating, setIsCreating] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string } | null>(null);
+
+  const openCreateModal = () => {
+    setCreateRole("Student");
+    setCreateFirstName("");
+    setCreateLastName("");
+    setCreateEmail("");
+    setCreateGrade("");
+    setCreateOrgId("");
+    setCreateClassId("");
+    setCreatedCredentials(null);
+    setShowCreateModal(true);
+  };
+
+  useEffect(() => {
+    if (!showCreateModal) return;
+    const token = localStorage.getItem("token");
+    axios
+      .get(`${API_BASE_URL}/admin/organizations`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { limit: 1000 },
+      })
+      .then((response) => setCreateOrganizations(response.data.data))
+      .catch((error) => console.error("Error fetching organizations:", error));
+  }, [showCreateModal]);
+
+  useEffect(() => {
+    if (!createOrgId) {
+      setCreateClasses([]);
+      return;
+    }
+    const token = localStorage.getItem("token");
+    axios
+      .get(`${API_BASE_URL}/admin/organizations/${createOrgId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((response) => setCreateClasses(response.data.data.Classes || []))
+      .catch((error) => console.error("Error fetching classes:", error));
+  }, [createOrgId]);
+
+  const handleCreateUser = async () => {
+    if (!createFirstName || !createEmail) {
+      toast.error("الاسم الأول والبريد الإلكتروني مطلوبان");
+      return;
+    }
+    if ((createRole === "Student" || createRole === "Teacher") && !createOrgId) {
+      toast.error("يرجى اختيار المؤسسة");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    setIsCreating(true);
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/admin/users`,
+        {
+          firstName: createFirstName,
+          lastName: createLastName,
+          email: createEmail,
+          role: createRole,
+          organizationId: createOrgId ? Number(createOrgId) : undefined,
+          classId: createClassId ? Number(createClassId) : undefined,
+          grade: createGrade || undefined,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCreatedCredentials({
+        email: response.data.data.email,
+        password: response.data.password,
+      });
+      fetchData();
+    } catch (error) {
+      toast.error(getErrorMessage(error, "تعذر إنشاء الحساب"));
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   const fetchData = async () => {
     const token = localStorage.getItem("token");
@@ -293,6 +386,14 @@ const UserData: React.FC = () => {
             <span className="font-medium">{tab.label}</span>
           </button>
         ))}
+
+        <button
+          onClick={openCreateModal}
+          className="flex items-center gap-3 px-4 py-3 mt-4 text-white rounded-xl bg-green-600 hover:bg-green-700"
+        >
+          <FaPlus />
+          <span className="font-medium">إنشاء حساب جديد</span>
+        </button>
       </aside>
 
       {/* Main content */}
@@ -378,6 +479,186 @@ const UserData: React.FC = () => {
           </div>
         )}
       </main>
+
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md p-6 mx-4 bg-white shadow-2xl rounded-2xl max-h-[90vh] overflow-y-auto">
+            {createdCredentials ? (
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div className="flex items-center justify-center w-14 h-14 text-2xl text-white bg-green-500 rounded-full">
+                  ✓
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">تم إنشاء الحساب بنجاح</h2>
+                <div className="w-full p-4 space-y-2 text-start bg-gray-50 rounded-xl">
+                  <div>
+                    <span className="text-xs text-gray-500">البريد الإلكتروني</span>
+                    <p className="font-medium text-gray-800" dir="ltr">{createdCredentials.email}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">كلمة المرور المؤقتة</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-mono font-medium text-gray-800" dir="ltr">
+                        {createdCredentials.password}
+                      </p>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(createdCredentials.password);
+                          toast.success("تم النسخ");
+                        }}
+                        className="p-2 text-gray-500 rounded-lg hover:bg-gray-200"
+                      >
+                        <FaCopy />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400">
+                  شارك هذه البيانات مع المستخدم لتسجيل الدخول لأول مرة
+                </p>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="w-full py-3 font-bold text-white bg-blueprimary rounded-xl"
+                >
+                  تم
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-800">إنشاء حساب جديد</h2>
+                  <button
+                    onClick={() => setShowCreateModal(false)}
+                    className="p-2 text-gray-400 rounded-lg hover:bg-gray-100"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <label className="block mb-1 text-sm text-gray-600">نوع الحساب</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {(["Student", "Teacher", "Parent", "Admin"] as const).map((role) => (
+                        <button
+                          key={role}
+                          onClick={() => {
+                            setCreateRole(role);
+                            setCreateOrgId("");
+                            setCreateClassId("");
+                          }}
+                          className={`py-2 text-xs rounded-lg border-2 ${
+                            createRole === role
+                              ? "bg-blueprimary text-white border-blueprimary"
+                              : "border-[#EAECF0] text-gray-600"
+                          }`}
+                        >
+                          {TABS.find((t) => t.key === role.toLowerCase() + "s")?.label ?? role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label className="block mb-1 text-sm text-gray-600">الاسم الأول</label>
+                      <input
+                        type="text"
+                        value={createFirstName}
+                        onChange={(e) => setCreateFirstName(e.target.value)}
+                        className="w-full p-3 border-2 rounded-xl border-[#EAECF0]"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block mb-1 text-sm text-gray-600">اسم العائلة</label>
+                      <input
+                        type="text"
+                        value={createLastName}
+                        onChange={(e) => setCreateLastName(e.target.value)}
+                        className="w-full p-3 border-2 rounded-xl border-[#EAECF0]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 text-sm text-gray-600">البريد الإلكتروني</label>
+                    <input
+                      type="email"
+                      value={createEmail}
+                      onChange={(e) => setCreateEmail(e.target.value)}
+                      dir="ltr"
+                      className="w-full p-3 border-2 rounded-xl border-[#EAECF0]"
+                    />
+                  </div>
+
+                  {createRole === "Student" && (
+                    <div>
+                      <label className="block mb-1 text-sm text-gray-600">المرحلة الدراسية</label>
+                      <select
+                        value={createGrade}
+                        onChange={(e) => setCreateGrade(e.target.value)}
+                        className="w-full p-3 text-black border-2 rounded-xl border-[#EAECF0]"
+                      >
+                        <option value="">اختر المرحلة</option>
+                        <option value="primary">primary</option>
+                        <option value="preparatory">preparatory</option>
+                        <option value="secondary">secondary</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {(createRole === "Student" || createRole === "Teacher") && (
+                    <div>
+                      <label className="block mb-1 text-sm text-gray-600">المؤسسة</label>
+                      <select
+                        value={createOrgId}
+                        onChange={(e) => {
+                          setCreateOrgId(e.target.value);
+                          setCreateClassId("");
+                        }}
+                        className="w-full p-3 text-black border-2 rounded-xl border-[#EAECF0]"
+                      >
+                        <option value="">اختر المؤسسة</option>
+                        {createOrganizations.map((org) => (
+                          <option key={org.id} value={org.id}>
+                            {org.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {createRole === "Student" && (
+                    <div>
+                      <label className="block mb-1 text-sm text-gray-600">الفصل (اختياري)</label>
+                      <select
+                        value={createClassId}
+                        onChange={(e) => setCreateClassId(e.target.value)}
+                        disabled={!createOrgId}
+                        className="w-full p-3 text-black border-2 rounded-xl border-[#EAECF0] disabled:opacity-50"
+                      >
+                        <option value="">اختر الفصل</option>
+                        {createClasses.map((cls) => (
+                          <option key={cls.id} value={cls.id}>
+                            {cls.classname} ({cls.category})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleCreateUser}
+                    disabled={isCreating}
+                    className="w-full py-3 font-bold text-white bg-blueprimary rounded-xl disabled:opacity-50"
+                  >
+                    {isCreating ? "جاري الإنشاء..." : "إنشاء الحساب"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
