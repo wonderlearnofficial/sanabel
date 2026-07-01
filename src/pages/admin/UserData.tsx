@@ -410,7 +410,7 @@ const UserData: React.FC = () => {
               setPage(1);
               setSearch(e.target.value);
             }}
-            className="px-4 py-2 border-2 border-gray-200 outline-none w-80 rounded-xl focus:border-blueprimary"
+            className="px-4 py-2 bg-white text-gray-800 border-2 border-gray-200 outline-none w-80 rounded-xl focus:border-blueprimary"
           />
         </div>
 
@@ -565,7 +565,7 @@ const UserData: React.FC = () => {
                         type="text"
                         value={createFirstName}
                         onChange={(e) => setCreateFirstName(e.target.value)}
-                        className="w-full p-3 border-2 rounded-xl border-[#EAECF0]"
+                        className="w-full p-3 bg-white text-gray-800 border-2 rounded-xl border-[#EAECF0]"
                       />
                     </div>
                     <div className="flex-1">
@@ -574,7 +574,7 @@ const UserData: React.FC = () => {
                         type="text"
                         value={createLastName}
                         onChange={(e) => setCreateLastName(e.target.value)}
-                        className="w-full p-3 border-2 rounded-xl border-[#EAECF0]"
+                        className="w-full p-3 bg-white text-gray-800 border-2 rounded-xl border-[#EAECF0]"
                       />
                     </div>
                   </div>
@@ -586,7 +586,7 @@ const UserData: React.FC = () => {
                       value={createEmail}
                       onChange={(e) => setCreateEmail(e.target.value)}
                       dir="ltr"
-                      className="w-full p-3 border-2 rounded-xl border-[#EAECF0]"
+                      className="w-full p-3 bg-white text-gray-800 border-2 rounded-xl border-[#EAECF0]"
                     />
                   </div>
 
@@ -596,7 +596,7 @@ const UserData: React.FC = () => {
                       <select
                         value={createGrade}
                         onChange={(e) => setCreateGrade(e.target.value)}
-                        className="w-full p-3 text-black border-2 rounded-xl border-[#EAECF0]"
+                        className="w-full p-3 bg-white text-black border-2 rounded-xl border-[#EAECF0]"
                       >
                         <option value="">اختر المرحلة</option>
                         <option value="primary">primary</option>
@@ -615,7 +615,7 @@ const UserData: React.FC = () => {
                           setCreateOrgId(e.target.value);
                           setCreateClassId("");
                         }}
-                        className="w-full p-3 text-black border-2 rounded-xl border-[#EAECF0]"
+                        className="w-full p-3 bg-white text-black border-2 rounded-xl border-[#EAECF0]"
                       >
                         <option value="">اختر المؤسسة</option>
                         {createOrganizations.map((org) => (
@@ -634,7 +634,7 @@ const UserData: React.FC = () => {
                         value={createClassId}
                         onChange={(e) => setCreateClassId(e.target.value)}
                         disabled={!createOrgId}
-                        className="w-full p-3 text-black border-2 rounded-xl border-[#EAECF0] disabled:opacity-50"
+                        className="w-full p-3 bg-white text-black border-2 rounded-xl border-[#EAECF0] disabled:opacity-50"
                       >
                         <option value="">اختر الفصل</option>
                         {createClasses.map((cls) => (
