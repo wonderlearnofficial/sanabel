@@ -147,6 +147,19 @@ const UserData: React.FC = () => {
     setEditOrgType(row.type ?? "School");
   };
 
+  const openCreateClassModal = () => {
+    setEditingRow({ isNew: true });
+    setEditClassName("");
+    setEditCategory("");
+    setEditOrgId("");
+  };
+
+  const openCreateOrgModal = () => {
+    setEditingRow({ isNew: true });
+    setEditOrgName("");
+    setEditOrgType("School");
+  };
+
   useEffect(() => {
     if (!editingRow || activeTab !== "students") {
       setEditClassesOptions([]);
@@ -166,21 +179,34 @@ const UserData: React.FC = () => {
   }, [editingRow, editOrgId, activeTab]);
 
   const handleSaveEdit = async () => {
+    const isNew = !!editingRow?.isNew;
+
+    if (activeTab === "classes" && (!editClassName || !editCategory || !editOrgId)) {
+      toast.error("اسم الفصل والفئة والمؤسسة مطلوبة");
+      return;
+    }
+    if (activeTab === "organizations" && !editOrgName) {
+      toast.error("اسم المؤسسة مطلوب");
+      return;
+    }
+
     const token = localStorage.getItem("token");
     setIsSavingEdit(true);
     try {
       if (activeTab === "classes") {
-        await axios.patch(
-          `${API_BASE_URL}/admin/classes/${editingRow.id}`,
-          { classname: editClassName, category: editCategory, organizationId: editOrgId ? Number(editOrgId) : undefined },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const body = { classname: editClassName, category: editCategory, organizationId: editOrgId ? Number(editOrgId) : undefined };
+        if (isNew) {
+          await axios.post(`${API_BASE_URL}/admin/classes`, body, { headers: { Authorization: `Bearer ${token}` } });
+        } else {
+          await axios.patch(`${API_BASE_URL}/admin/classes/${editingRow.id}`, body, { headers: { Authorization: `Bearer ${token}` } });
+        }
       } else if (activeTab === "organizations") {
-        await axios.patch(
-          `${API_BASE_URL}/admin/organizations/${editingRow.id}`,
-          { name: editOrgName, type: editOrgType },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const body = { name: editOrgName, type: editOrgType };
+        if (isNew) {
+          await axios.post(`${API_BASE_URL}/admin/organizations`, body, { headers: { Authorization: `Bearer ${token}` } });
+        } else {
+          await axios.patch(`${API_BASE_URL}/admin/organizations/${editingRow.id}`, body, { headers: { Authorization: `Bearer ${token}` } });
+        }
       } else {
         const userId = getUserId(activeTab, editingRow);
         await axios.patch(
@@ -199,7 +225,7 @@ const UserData: React.FC = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
       }
-      toast.success("تم الحفظ بنجاح");
+      toast.success(isNew ? "تم الإنشاء بنجاح" : "تم الحفظ بنجاح");
       setEditingRow(null);
       fetchData();
     } catch (error) {
@@ -580,11 +606,23 @@ const UserData: React.FC = () => {
         ))}
 
         <button
-          onClick={openCreateModal}
+          onClick={
+            activeTab === "classes"
+              ? openCreateClassModal
+              : activeTab === "organizations"
+              ? openCreateOrgModal
+              : openCreateModal
+          }
           className="flex items-center gap-3 px-4 py-3 mt-4 text-white rounded-xl bg-green-600 hover:bg-green-700"
         >
           <FaPlus />
-          <span className="font-medium">إنشاء حساب جديد</span>
+          <span className="font-medium">
+            {activeTab === "classes"
+              ? "إنشاء فصل جديد"
+              : activeTab === "organizations"
+              ? "إنشاء مؤسسة جديدة"
+              : "إنشاء حساب جديد"}
+          </span>
         </button>
       </aside>
 
@@ -856,7 +894,15 @@ const UserData: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md p-6 mx-4 bg-white shadow-2xl rounded-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-800">تعديل</h2>
+              <h2 className="text-xl font-bold text-gray-800">
+                {editingRow?.isNew
+                  ? activeTab === "classes"
+                    ? "إنشاء فصل جديد"
+                    : activeTab === "organizations"
+                    ? "إنشاء مؤسسة جديدة"
+                    : "إنشاء"
+                  : "تعديل"}
+              </h2>
               <button
                 onClick={() => setEditingRow(null)}
                 className="p-2 text-gray-400 rounded-lg hover:bg-gray-100"
@@ -1029,7 +1075,11 @@ const UserData: React.FC = () => {
                 disabled={isSavingEdit}
                 className="w-full py-3 font-bold text-white bg-blueprimary rounded-xl disabled:opacity-50"
               >
-                {isSavingEdit ? "جاري الحفظ..." : "حفظ التعديلات"}
+                {isSavingEdit
+                  ? "جاري الحفظ..."
+                  : editingRow?.isNew
+                  ? "إنشاء"
+                  : "حفظ التعديلات"}
               </button>
             </div>
           </div>
