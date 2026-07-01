@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import { useState } from "react";
 
 import PrimaryButton from "../../../components/PrimaryButton";
@@ -15,6 +16,7 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { RiLockPasswordLine } from "react-icons/ri";
+import { getErrorMessage } from "../../../config/getErrorMessage";
 
 const Toaster = () => (
   <ToastContainer
@@ -88,7 +90,7 @@ const ChangePassword: React.FC = () => {
 
     try {
       const response = await axios.patch(
-        "https://sanabel.wonderlearn.net/users/reset-password",
+        `${API_BASE_URL}/users/reset-password`,
         {
           email: email,
           newPassword: password,
@@ -102,7 +104,7 @@ const ChangePassword: React.FC = () => {
     } catch (error) {
       console.error("Error during password change:", error);
 
-      toast.error(t("passwordChangeFailed"));
+      toast.error(t(getErrorMessage(error, "passwordChangeFailed")));
     }
   };
   return (

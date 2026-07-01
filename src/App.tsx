@@ -88,9 +88,20 @@ import ParentView from "./pages/teacherorparent/ParentView";
 import { NotificationProvider } from "./pages/Notifications/NotificationContext";
 
 import Avatar from "./Avatar";
+import Simulation from "./Simulation";
 
 // No Internet Component
 import NoInternetPage from "./pages/common/NoInternet";
+
+// Admin
+import AdminRoute from "./components/AdminRoute";
+import AdminHome from "./pages/admin/AdminHome";
+import AdminProfile from "./pages/admin/AdminProfile";
+import OrganizationsList from "./pages/admin/organizations/OrganizationsList";
+import OrganizationForm from "./pages/admin/organizations/OrganizationForm";
+import StudentsManagement from "./pages/admin/students/StudentsManagement";
+import StudentDetailEdit from "./pages/admin/students/StudentDetailEdit";
+import UserData from "./pages/admin/UserData";
 
 setupIonicReact();
 
@@ -184,7 +195,13 @@ const App: React.FC = () => {
     <UserProvider>
       <ThemeProvider>
         <NotificationProvider>
-          {/* Outer container that fills the entire viewport */}
+          {/* Simulation & desktop admin pages: render outside the phone frame and Ionic router entirely */}
+          {window.location.pathname === "/simulation" ? (
+            <Simulation />
+          ) : window.location.pathname === "/admin/userdata" ? (
+            <UserData />
+          ) : (
+          /* Outer container that fills the entire viewport */
           <div className="flex items-center justify-center w-screen h-screen bg-white md:bg-gray-100">
             {/* Phone frame: full-screen on mobile, centered 430px card on desktop */}
             <div className="relative w-full h-full md:max-w-[430px] md:shadow-2xl overflow-hidden bg-white">
@@ -372,11 +389,41 @@ const App: React.FC = () => {
                   <Route exact path="/parent/home" component={ParentHome} />
                   <Route exact path="/parent/invite" component={ParentInvite} />
                   <Route exact path="/parent/view" component={ParentView} />
+
+                  {/* Admin */}
+                  <AdminRoute exact path="/admin/home" component={AdminHome} />
+                  <AdminRoute exact path="/admin/profile" component={AdminProfile} />
+                  <AdminRoute
+                    exact
+                    path="/admin/organizations"
+                    component={OrganizationsList}
+                  />
+                  <AdminRoute
+                    exact
+                    path="/admin/organizations/new"
+                    component={OrganizationForm}
+                  />
+                  <AdminRoute
+                    exact
+                    path="/admin/organizations/:organizationId"
+                    component={OrganizationForm}
+                  />
+                  <AdminRoute
+                    exact
+                    path="/admin/students"
+                    component={StudentsManagement}
+                  />
+                  <AdminRoute
+                    exact
+                    path="/admin/students/:studentId"
+                    component={StudentDetailEdit}
+                  />
                 </Switch>
               </IonRouterOutlet>
             </IonReactRouter>
             </div>
           </div>
+          )}
         </NotificationProvider>
       </ThemeProvider>
     </UserProvider>

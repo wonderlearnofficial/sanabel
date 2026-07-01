@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import axios from "axios";
 import React, {
   createContext,
@@ -35,7 +36,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
     const handleFetchData = async () => {
       try {
         const response = await axios.get(
-          "https://sanabel.wonderlearn.net/students/data",
+          `${API_BASE_URL}/students/data`,
           {
             headers: {
               Authorization: `Bearer ${token}`, // Properly formatted template literal

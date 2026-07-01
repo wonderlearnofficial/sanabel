@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../../config/api";
 import React, { useState } from "react";
 import EmailOTP from "./EmailOTP";
 import axios from "axios";
@@ -71,7 +72,7 @@ const Signup: React.FC = () => {
 
     try {
       const response = await axios.patch(
-        "https://sanabel.wonderlearn.net/users/registration",
+        `${API_BASE_URL}/users/registration`,
         formData,
       );
 

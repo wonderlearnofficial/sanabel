@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../../config/api";
 import React, { useState } from "react";
 import Step1 from "./Step1";
 import Step2 from "./Step2";
@@ -13,6 +14,7 @@ import axios from "axios";
 import { t } from "i18next";
 import { toast } from "react-toastify";
 import { useHistory } from "react-router-dom";
+import { getErrorMessage } from "../../../../config/getErrorMessage";
 
 const Signup: React.FC = () => {
   const [stepIndex, setStepIndex] = useState(0);
@@ -114,7 +116,7 @@ const Signup: React.FC = () => {
     // Handle API submission here
     try {
       const response = await axios.patch(
-        "https://sanabel.wonderlearn.net/users/registration",
+        `${API_BASE_URL}/users/registration`,
         formData,
       );
 
@@ -125,7 +127,7 @@ const Signup: React.FC = () => {
       }
     } catch (error) {
       console.error("Error", error);
-      toast.error(t("Error"));
+      toast.error(t(getErrorMessage(error, "registrationFailed")));
     }
   };
 

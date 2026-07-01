@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 
@@ -75,8 +76,8 @@ const SanabelType: React.FC = () => {
     try {
       const response = await axios.get(
         role == "Teacher"
-          ? "https://sanabel.wonderlearn.net/teachers/tasks-category"
-          : "https://sanabel.wonderlearn.net/parents/tasks-category",
+          ? `${API_BASE_URL}/teachers/tasks-category`
+          : `${API_BASE_URL}/parents/tasks-category`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -105,8 +106,8 @@ const SanabelType: React.FC = () => {
     try {
       const response = await axios.get(
         role == "Teacher"
-          ? `https://sanabel.wonderlearn.net/teachers/appear-Taskes-Type/${APIIndex}`
-          : `https://sanabel.wonderlearn.net/parents/appear-Taskes-Type/${APIIndex}`,
+          ? `${API_BASE_URL}/teachers/appear-Taskes-Type/${APIIndex}`
+          : `${API_BASE_URL}/parents/appear-Taskes-Type/${APIIndex}`,
 
         {
           headers: {

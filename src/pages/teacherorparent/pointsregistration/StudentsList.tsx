@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../../context/ThemeContext";
@@ -408,8 +409,8 @@ const StudentList = () => {
       // Using fetch instead of axios
       const response = await fetch(
         role == "Teacher"
-          ? `https://sanabel.wonderlearn.net/teachers/appear-student`
-          : `https://sanabel.wonderlearn.net/parents/appear-student-by-parent`,
+          ? `${API_BASE_URL}/teachers/appear-student`
+          : `${API_BASE_URL}/parents/appear-student-by-parent`,
         {
           headers: { Authorization: `Bearer ${authToken}` },
         },
@@ -459,8 +460,8 @@ const StudentList = () => {
       // Using fetch instead of axios
       const response = await fetch(
         role == "Teacher"
-          ? `https://sanabel.wonderlearn.net/teachers/add-pros`
-          : `https://sanabel.wonderlearn.net/parents/add-pros`,
+          ? `${API_BASE_URL}/teachers/add-pros`
+          : `${API_BASE_URL}/parents/add-pros`,
         {
           method: "POST",
           headers: {

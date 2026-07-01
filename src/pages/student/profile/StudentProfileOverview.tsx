@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import sanabelType1Img from "../../../assets/sanabeltype/سنابل الإحسان في العلاقة مع الأسرة والمجتمع.png";
 import sanabelType2Img from "../../../assets/sanabeltype/سنابل الإحسان في العلاقة مع النفس.png";
 import sanabelType3Img from "../../../assets/sanabeltype/سنابل-الإحسان-في-العلاقة-مع-الأرض-والكون.png";
@@ -59,7 +60,7 @@ const Profile: React.FC = () => {
 
     try {
       const response = await axios.get(
-        "https://sanabel.wonderlearn.net/students/calculate-completed-tasks-by-category",
+        `${API_BASE_URL}/students/calculate-completed-tasks-by-category`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,

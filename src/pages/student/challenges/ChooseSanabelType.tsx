@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 
@@ -45,7 +46,7 @@ const SanabelType: React.FC = () => {
 
     try {
       const response = await axios.get(
-        "https://sanabel.wonderlearn.net/students/tasks-category",
+        `${API_BASE_URL}/students/tasks-category`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,

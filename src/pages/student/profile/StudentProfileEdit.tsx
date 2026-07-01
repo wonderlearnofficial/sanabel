@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -789,7 +790,7 @@ const Step1 = () => {
       };
 
       const response = await axios.patch(
-        "https://sanabel.wonderlearn.net/students/update-profile-image",
+        `${API_BASE_URL}/students/update-profile-image`,
         formattedAvatarData,
         {
           headers: {

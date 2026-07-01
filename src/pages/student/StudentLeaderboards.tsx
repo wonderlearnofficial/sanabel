@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useTheme } from "../../context/ThemeContext";
 import StudentNavbar from "../../components/navbar/StudentNavbar";
 import { useTranslation } from "react-i18next";
@@ -115,15 +116,15 @@ const Leaderboards: React.FC = () => {
 
       let url = "";
       if (userRole === "Teacher") {
-        url = `https://sanabel.wonderlearn.net/teachers/leader-board${
+        url = `${API_BASE_URL}/teachers/leader-board${
           queryString ? `?${queryString}` : ""
         }`;
       } else if (userRole === "Parent") {
-        url = `https://sanabel.wonderlearn.net/parents/appear-leaderboard${
+        url = `${API_BASE_URL}/parents/appear-leaderboard${
           queryString ? `?${queryString}` : ""
         }`;
       } else {
-        url = `https://sanabel.wonderlearn.net/students/appear-Leaderboard${
+        url = `${API_BASE_URL}/students/appear-Leaderboard${
           queryString ? `?${queryString}` : ""
         }`;
       }
@@ -260,6 +261,12 @@ const Leaderboards: React.FC = () => {
       originalPosition: positionMap.get(item.id) || 0,
     }));
   }, [sortedData, leaderboardsData]);
+
+  const { user: currentUser } = useUserContext();
+  const myEntry = React.useMemo(() => {
+    if (!currentUser?.id || userRole !== "Student") return null;
+    return dataWithOriginalPositions.find((item) => item.id === currentUser.id) ?? null;
+  }, [dataWithOriginalPositions, currentUser, userRole]);
 
   // Animation Variants
   const columnVariants = {
@@ -683,6 +690,41 @@ const Leaderboards: React.FC = () => {
             </>
           )}
         </div>
+
+        {/* Sticky "Your rank" card for students */}
+        {myEntry && (
+          <div className="w-full px-1 pb-1">
+            <div className="flex flex-row-reverse items-center justify-between w-full p-2 border-2 border-blueprimary bg-blue-50 rounded-2xl shadow-md">
+              <div className="scale-90">
+                <MedalAndLevel
+                  level={myEntry.level}
+                  color="text-blueprimary"
+                  dir=""
+                  size="w-16"
+                />
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-xs font-bold text-blueprimary">
+                  {t("ترتيبك")}
+                </span>
+                <span className="text-xl font-bold text-blueprimary">
+                  #{myEntry.originalPosition}
+                </span>
+              </div>
+              <div className="flex-row-reverse gap-2 flex-center">
+                <div className="flex flex-col">
+                  <span className="text-black font-medium">
+                    {myEntry.user.firstName + " " + myEntry.user.lastName}
+                  </span>
+                  <span className="text-xs text-gray-500">{myEntry.xp} XP</span>
+                </div>
+                <div className="w-10 h-10 border-2 border-blueprimary rounded-full overflow-hidden">
+                  <GetAvatar userAvatarData={myEntry.user.profileImg ?? undefined} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Filter Modal */}
         <LeaderboardsFilter

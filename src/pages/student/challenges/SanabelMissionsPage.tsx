@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -21,7 +22,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useUserContext } from "../../../context/StudentUserProvider";
 
 const SanabelMissionsPage: React.FC = () => {
-  const { user } = useUserContext();
+  const { user, refreshUserData } = useUserContext();
 
   const grade = String(user?.grade);
   const canAssignTask = user?.canAssignTask;
@@ -83,7 +84,7 @@ const SanabelMissionsPage: React.FC = () => {
       try {
         // Fetch Category Name
         const categoryResponse = await axios.get(
-          "https://sanabel.wonderlearn.net/students/tasks-category",
+          `${API_BASE_URL}/students/tasks-category`,
           {
             headers: {
               Authorization: `Bearer ${authToken}`,
@@ -98,7 +99,7 @@ const SanabelMissionsPage: React.FC = () => {
 
           // Fetch Sanabel
           const sanabelResponse = await axios.get(
-            `https://sanabel.wonderlearn.net/students/appear-Taskes-Type/${APIIndex}`,
+            `${API_BASE_URL}/students/appear-Taskes-Type/${APIIndex}`,
             {
               headers: {
                 Authorization: `Bearer ${authToken}`,
@@ -119,7 +120,7 @@ const SanabelMissionsPage: React.FC = () => {
             // Fetch Missions
             if (uniqueTypes[subIndex]) {
               const missionsResponse = await axios.get(
-                `https://sanabel.wonderlearn.net/students/appear-Taskes-Type-Category/${APIIndex}/${uniqueTypes[subIndex]}`,
+                `${API_BASE_URL}/students/appear-Taskes-Type-Category/${APIIndex}/${uniqueTypes[subIndex]}`,
                 {
                   headers: {
                     Authorization: `Bearer ${authToken}`,
@@ -183,7 +184,7 @@ const SanabelMissionsPage: React.FC = () => {
 
     try {
       const response = await fetch(
-        "https://sanabel.wonderlearn.net/students/add-pros",
+        `${API_BASE_URL}/students/add-pros`,
         {
           method: "POST",
           headers: {
@@ -207,6 +208,9 @@ const SanabelMissionsPage: React.FC = () => {
               : mission
           )
         );
+
+        // Refresh the user context so inventory/xp reflect the new totals
+        await refreshUserData();
 
         setShowConfirmPopup(false);
         setShowCongratsPopup(true);

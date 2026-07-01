@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../../config/api";
 import { useState } from "react";
 import { useTheme } from "../../../../context/ThemeContext";
 import PrimaryButton from "../../../../components/PrimaryButton";
@@ -12,6 +13,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import i18n from "../../../../i18n";
 import Loading from "../../../../components/Loading";
+import { getErrorMessage } from "../../../../config/getErrorMessage";
 
 import studentImg from "../../../../assets/choosesignmethod/choosestudent.png";
 
@@ -77,7 +79,7 @@ const EmailOTP: React.FC<OTPProps> = ({
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "https://sanabel.wonderlearn.net/users/send-auth",
+        `${API_BASE_URL}/users/send-auth`,
         { email }
       );
 
@@ -90,8 +92,7 @@ const EmailOTP: React.FC<OTPProps> = ({
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
-      toast.error(t("Email"));
-      console.log(email);
+      toast.error(t(getErrorMessage(error, "otpSendFailed")));
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +108,7 @@ const EmailOTP: React.FC<OTPProps> = ({
 
     try {
       const response = await axios.patch(
-        "https://sanabel.wonderlearn.net/users/verfication-auth",
+        `${API_BASE_URL}/users/verfication-auth`,
         { email, otp: otpCode }
       );
 
@@ -117,7 +118,7 @@ const EmailOTP: React.FC<OTPProps> = ({
       }
     } catch (error) {
       console.error("Error verifying OTP:", error);
-      toast.error(t("invalidOTP"));
+      toast.error(t(getErrorMessage(error, "invalidOTP")));
     }
   };
 

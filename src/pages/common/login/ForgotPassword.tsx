@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import { useState } from "react";
 
 import PrimaryButton from "../../../components/PrimaryButton";
@@ -10,6 +11,7 @@ import axios from "axios";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { getErrorMessage } from "../../../config/getErrorMessage";
 
 const Toaster = () => (
   <ToastContainer
@@ -63,7 +65,7 @@ const ForgotPassword: React.FC = () => {
 
     try {
       const response = await axios.patch(
-        "https://sanabel.wonderlearn.net/users/send-otp",
+        `${API_BASE_URL}/users/send-otp`,
         { email },
       );
 
@@ -73,7 +75,7 @@ const ForgotPassword: React.FC = () => {
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
-      toast.error(t("invalidOTP"));
+      toast.error(t(getErrorMessage(error, "otpSendFailed")));
     }
   };
 
@@ -87,7 +89,7 @@ const ForgotPassword: React.FC = () => {
 
     try {
       const response = await axios.patch(
-        "https://sanabel.wonderlearn.net/users/verify-otp",
+        `${API_BASE_URL}/users/verify-otp`,
         { email, otp: otpCode },
       );
 
@@ -100,7 +102,7 @@ const ForgotPassword: React.FC = () => {
       }
     } catch (error) {
       console.error("Error verifying OTP:", error);
-      toast.error(t("invalidOTP"));
+      toast.error(t(getErrorMessage(error, "invalidOTP")));
     }
   };
 

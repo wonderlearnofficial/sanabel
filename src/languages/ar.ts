@@ -122,6 +122,26 @@ const ar = {
     passwordChangeFailed: "فشل تغيير كلمة المرور. يرجى المحاولة مرة أخرى.",
     fillEmailField: "يرجى ملء حقل البريد الإلكتروني.",
     invalidEmailFormat: "صيغة البريد الإلكتروني غير صالحة.",
+    otpSendFailed: "تعذر إرسال الرمز. يرجى المحاولة مرة أخرى.",
+    registrationFailed: "فشل إنشاء الحساب. يرجى المحاولة مرة أخرى.",
+    networkError: "تعذر الوصول إلى الخادم. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.",
+
+    // Known server error messages (translated when surfaced from the API)
+    "Incorrect email or password": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+    "Email already in use": "البريد الإلكتروني مستخدم بالفعل",
+    "User not found": "المستخدم غير موجود",
+    "Email is already registered. Login or use another email.":
+      "هذا البريد الإلكتروني مسجل بالفعل. سجل الدخول أو استخدم بريدًا آخر",
+    "OTP record not found. Verify OTP before registering.":
+      "لم يتم العثور على الرمز. يرجى إرسال رمز جديد أولاً",
+    "OTP not verified. Verify OTP before resetting password.":
+      "لم يتم التحقق من الرمز بعد. يرجى التحقق منه أولاً",
+    "Registration failed": "فشل إنشاء الحساب",
+    "Error sending OTP": "حدث خطأ أثناء إرسال الرمز",
+    "Error verifying OTP": "حدث خطأ أثناء التحقق من الرمز",
+    "Error resetting password": "حدث خطأ أثناء إعادة تعيين كلمة المرور",
+    "Incorrect current password": "كلمة المرور الحالية غير صحيحة",
+    "An error occurred during login": "حدث خطأ أثناء تسجيل الدخول",
 
     "Create Password": "إنشاء كلمة مرور",
     "Secure your account with a strong password": "أمّن حسابك بكلمة مرور قوية",
@@ -195,6 +215,14 @@ const ar = {
     "Total XP": " الـ XP",
     "Total Water Bought": "الماء",
     "Total Fertilizer Bought": "سماد",
+
+    // Admin translations
+    School: "مدرسة",
+    Company: "شركة",
+    Charity: "جمعية خيرية",
+    primary: "ابتدائي",
+    preparatory: "إعدادي",
+    secondary: "ثانوي",
   },
 };
 

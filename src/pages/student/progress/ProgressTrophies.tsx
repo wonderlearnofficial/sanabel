@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import StudentNavbar from "../../../components/navbar/StudentNavbar";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -49,8 +50,8 @@ const Progress: React.FC = () => {
     try {
       const response = await axios.get(
         trophyType === 1
-          ? "https://sanabel.wonderlearn.net/students/student-trophy-secondaire"
-          : "https://sanabel.wonderlearn.net/students/student-trophy-primaire",
+          ? `${API_BASE_URL}/students/student-trophy-secondaire`
+          : `${API_BASE_URL}/students/student-trophy-primaire`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,

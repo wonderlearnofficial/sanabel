@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -68,7 +69,7 @@ const Shop: React.FC = () => {
   const remainingWaterNeeded = Math.max(0, waterNeeded - waterCount);
   const remainingFertilizerNeeded = Math.max(
     0,
-    fertilizerNeeded - fertilizerCount
+    fertilizerNeeded - fertilizerCount,
   );
 
   // Check if tree progress is ready
@@ -76,7 +77,7 @@ const Shop: React.FC = () => {
 
   useEffect(() => {
     setIsProgressReady(
-      waterCount >= waterNeeded && fertilizerCount >= fertilizerNeeded
+      waterCount >= waterNeeded && fertilizerCount >= fertilizerNeeded,
     );
   }, [waterCount, fertilizerCount, waterNeeded, fertilizerNeeded]);
 
@@ -180,7 +181,7 @@ const Shop: React.FC = () => {
         buyFertilizerCount * fertilizerCost + buyWaterCount * waterCost;
 
       const response = await axios.patch(
-        "https://sanabel.wonderlearn.net/students/buy-water-seeder",
+        `${API_BASE_URL}/students/buy-water-seeder`,
         {
           water: buyWaterCount,
           seeders: buyFertilizerCount,
@@ -189,7 +190,7 @@ const Shop: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.status === 200) {
@@ -228,13 +229,13 @@ const Shop: React.FC = () => {
       const token = localStorage.getItem("token");
       console.log(token);
       const response = await axios.patch(
-        "https://sanabel.wonderlearn.net/students/grow-tree",
+        `${API_BASE_URL}/students/grow-tree`,
         {}, // Empty request body or you can add payload data here if needed
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.status === 200) {
@@ -247,7 +248,7 @@ const Shop: React.FC = () => {
   };
 
   return (
-    <div className="flex-col w-full h-full flex-center shadow-md p-2 border-[1px] border-[#33333325] rounded-xl">
+    <div className="flex-col w-full  flex-center shadow-md p-2 border-[1px] border-[#33333325] rounded-xl">
       <div className="absolute">
         <Toaster />
       </div>
@@ -525,7 +526,7 @@ const Shop: React.FC = () => {
 
           {/* Celebration Popup */}
           {isCelebrationVisible && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="fixed inset-0 z-50 flex items-center justify-center w-full mx-auto ">
               {/* Backdrop with blur effect */}
               <motion.div
                 className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm"
@@ -542,7 +543,7 @@ const Shop: React.FC = () => {
                 transition={{ type: "spring", damping: 12 }}
               >
                 {/* Confetti particles */}
-                <div className="absolute inset-0 overflow-hidden opacity-25 pointer-events-none">
+                <div className="absolute inset-0 overflow-hidden opacity-25 pointer-events-none flex-center">
                   {[...Array(20)].map((_, i) => (
                     <motion.div
                       key={i}
@@ -585,19 +586,19 @@ const Shop: React.FC = () => {
                 </div>
 
                 {/* Growing tree animation */}
-                <div className="relative h-[50vh] w-[70vw] flex-center items-center justify-center mx-auto">
+                <div className="relative items-center justify-center w-3/4 mx-auto mb-4 h-96 flex-center">
                   <AnimatePresence>
                     <motion.img
                       key={treeProgress - 1}
                       src={treeStages[treeProgress - 1 + 3]}
                       alt={`Current tree stage ${treeProgress}`}
-                      className="absolute w-full h-auto"
+                      className="absolute inset-0 object-contain object-bottom w-full h-full"
                     />
                     <motion.img
                       key={treeProgress + 1}
                       src={treeStages[treeProgress + 3]}
                       alt={`Next tree stage ${treeProgress + 1}`}
-                      className="absolute w-full h-auto "
+                      className="absolute inset-0 object-contain object-bottom w-full h-full"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 1 }}
@@ -611,7 +612,7 @@ const Shop: React.FC = () => {
                 </div>
 
                 {/* Congratulatory message */}
-                <div className="text-center">
+                <div className="mt-2 text-center">
                   <motion.h2
                     className="mb-3 text-xl font-bold text-green-700"
                     initial={{ opacity: 0, y: 10 }}
@@ -633,7 +634,7 @@ const Shop: React.FC = () => {
 
                 {/* Call to action button */}
                 <motion.button
-                  className="w-full py-3 font-bold text-white shadow-md bg-gradient-to-r from-green-500 to-blue-500 rounded-xl"
+                  className="w-full py-3 font-bold text-white shadow-md bg-gradient-to-r from-green-500 to-blue-500 rounded-xl flex-center"
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   initial={{ opacity: 0, y: 10 }}

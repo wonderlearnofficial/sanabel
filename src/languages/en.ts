@@ -1116,6 +1116,81 @@ const en = {
     "حدث خطأ في الاتصال بالسيرفر": "Connection error to server",
     "الطالب مرتبط بالفعل بولي أمر آخر":
       "Student is already connected to another parent",
+
+    // Admin translations
+    "لوحة تحكم المشرف": "Admin Dashboard",
+    المدارس: "Schools",
+    "المدارس والمؤسسات": "Schools & Organizations",
+    "إنشاء وتعديل وحذف المدارس والمؤسسات":
+      "Create, edit, and delete schools and organizations",
+    "البحث في كل الطلاب وتعديل بياناتهم":
+      "Search all students and edit their data",
+    "ابحث باسم المؤسسة": "Search by organization name",
+    School: "School",
+    Company: "Company",
+    Charity: "Charity",
+    "لا توجد نتائج": "No results",
+    "تم حذف المؤسسة بنجاح": "Organization deleted successfully",
+    "لا يمكن حذف المؤسسة، تحتوي على": "Cannot delete organization, it contains",
+    معلم: "Teacher",
+    "حدث خطأ أثناء حذف المؤسسة": "An error occurred while deleting the organization",
+    "إضافة مؤسسة": "Add Organization",
+    "تعديل المؤسسة": "Edit Organization",
+    "اسم المؤسسة": "Organization Name",
+    "نوع المؤسسة": "Organization Type",
+    "رابط الصورة (اختياري)": "Image URL (optional)",
+    "تم إنشاء المؤسسة بنجاح": "Organization created successfully",
+    "تم تحديث المؤسسة بنجاح": "Organization updated successfully",
+    "اسم المؤسسة مطلوب": "Organization name is required",
+    "يوجد مؤسسة بنفس هذا الاسم بالفعل":
+      "An organization with this name already exists",
+    "حدث خطأ أثناء الحفظ": "An error occurred while saving",
+    "تعذر تحميل بيانات المؤسسة": "Failed to load organization data",
+    "جاري الحفظ...": "Saving...",
+    "كل المؤسسات": "All Organizations",
+    "كل الفصول": "All Classes",
+    "كل المراحل": "All Stages",
+    primary: "Primary",
+    preparatory: "Preparatory",
+    secondary: "Secondary",
+    "تم حذف الطالب بنجاح": "Student deleted successfully",
+    "حدث خطأ أثناء حذف الطالب": "An error occurred while deleting the student",
+    "تعديل بيانات الطالب": "Edit Student Data",
+    "مهام مكتملة": "Completed Tasks",
+    "الاسم الأول": "First Name",
+    "اسم العائلة": "Last Name",
+    "اختر المرحلة": "Select Stage",
+    "اختر المؤسسة": "Select Organization",
+    "اختر الفصل": "Select Class",
+    "حفظ التعديلات": "Save Changes",
+    "تم تحديث بيانات الطالب بنجاح": "Student data updated successfully",
+    "تعذر تحميل بيانات الطالب": "Failed to load student data",
+    "حذف الطالب": "Delete Student",
+    "تأكيد حذف الطالب": "Confirm Student Deletion",
+    المؤسسة: "Organization",
+    الفصل: "Class",
+
+    // Generic error-toast fallbacks (used when the server gave no message)
+    otpSendFailed: "Couldn't send the code. Please try again.",
+    registrationFailed: "Registration failed. Please try again.",
+    networkError: "Couldn't reach the server. Check your connection and try again.",
+
+    // Known server error messages (surfaced as-is in English mode)
+    "Incorrect email or password": "Incorrect email or password",
+    "Email already in use": "Email already in use",
+    "User not found": "User not found",
+    "Email is already registered. Login or use another email.":
+      "Email is already registered. Login or use another email.",
+    "OTP record not found. Verify OTP before registering.":
+      "OTP record not found. Verify OTP before registering.",
+    "OTP not verified. Verify OTP before resetting password.":
+      "OTP not verified. Verify OTP before resetting password.",
+    "Registration failed": "Registration failed",
+    "Error sending OTP": "Error sending OTP",
+    "Error verifying OTP": "Error verifying OTP",
+    "Error resetting password": "Error resetting password",
+    "Incorrect current password": "Incorrect current password",
+    "An error occurred during login": "An error occurred during login",
   },
 };
 

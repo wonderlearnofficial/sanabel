@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import { useState } from "react";
 import { useTheme } from "../../../context/ThemeContext";
 import PrimaryButton from "../../../components/PrimaryButton";
@@ -11,6 +12,7 @@ import { useHistory } from "react-router-dom";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { getErrorMessage } from "../../../config/getErrorMessage";
 
 // Import AVATARS
 // Boys Avatars
@@ -117,7 +119,7 @@ const Step1: React.FC = () => {
     // Handle API submission here
     try {
       const response = await axios.post(
-        "https://sanabel.wonderlearn.net/users/registration",
+        `${API_BASE_URL}/users/registration`,
         formData
       );
       if (response.status === 200) {
@@ -125,7 +127,7 @@ const Step1: React.FC = () => {
       }
     } catch (error) {
       console.error("Error", error);
-      toast.error(t("Error"));
+      toast.error(t(getErrorMessage(error, "registrationFailed")));
     }
   };
   return (

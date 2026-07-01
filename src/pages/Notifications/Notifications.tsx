@@ -1,15 +1,14 @@
-import { useHistory } from "react-router-dom";
+import { API_BASE_URL } from "../../config/api";
 import { useTranslation } from "react-i18next";
 import GoBackButton from "../../components/GoBackButton";
 import nonotification from "../../assets/nonotification.png";
 import defaultAvatar from "../../assets/avatars/Boys/boy1.png";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { OtherTrophies } from "../../data/OtherTrophies";
 import { SanabelTrophies } from "../../data/SanabelTrophies";
 
-// Import tree stage images
 import treestage1 from "../../assets/trophies/Other Trophies/مرحلة - 1.png";
 import treestage2 from "../../assets/trophies/Other Trophies/مرحلة - 2.png";
 import treestage3 from "../../assets/trophies/Other Trophies/مرحلة - 3.png";
@@ -28,9 +27,31 @@ interface FilterOptions {
   sortBy: "newest" | "oldest";
 }
 
+const TIME_FILTERS: { value: FilterOptions["timeRange"]; label: string }[] = [
+  { value: "all", label: "الكل" },
+  { value: "today", label: "اليوم" },
+  { value: "week", label: "هذا الأسبوع" },
+  { value: "month", label: "هذا الشهر" },
+];
+
+const SkeletonCard = () => (
+  <div className="flex items-center gap-4 p-4 bg-white border border-gray-100 rounded-2xl animate-pulse">
+    <div className="w-16 h-16 bg-gray-200 rounded-2xl flex-shrink-0" />
+    <div className="flex-1 flex flex-col gap-2">
+      <div className="h-3 bg-gray-200 rounded w-3/4" />
+      <div className="h-3 bg-gray-200 rounded w-1/2" />
+      <div className="flex gap-2 mt-1">
+        <div className="h-6 w-12 bg-gray-200 rounded-full" />
+        <div className="h-6 w-12 bg-gray-200 rounded-full" />
+        <div className="h-6 w-12 bg-gray-200 rounded-full" />
+      </div>
+      <div className="h-2 bg-gray-200 rounded w-1/4 mt-1" />
+    </div>
+  </div>
+);
+
 const Notifications: React.FC = () => {
   const currentLanguage = localStorage.getItem("language");
-  const history = useHistory();
   const { t } = useTranslation();
   const [allTrophies, setAllTrophies] = useState<any[]>([]);
   const [filteredTrophies, setFilteredTrophies] = useState<any[]>([]);
@@ -39,17 +60,9 @@ const Notifications: React.FC = () => {
     timeRange: "all",
     sortBy: "newest",
   });
-  const [showFilters, setShowFilters] = useState<boolean>(false);
 
-  const treeStagesImg = [
-    treestage1,
-    treestage2,
-    treestage3,
-    treestage4,
-    treestage5,
-  ];
+  const treeStagesImg = [treestage1, treestage2, treestage3, treestage4, treestage5];
 
-  // Function to get trophy image
   const getTrophyImage = (trophy: any) => {
     if (trophy.challenge.title === "Tree Stage") {
       return treeStagesImg[trophy.challenge.point - 1] || defaultAvatar;
@@ -61,129 +74,80 @@ const Notifications: React.FC = () => {
     );
   };
 
-  // Function to format date
-  const formatDate = (dateString: string, currentLanguage: any) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffDays === 1) {
-      return t("اليوم"); // Today
-    } else if (diffDays === 2) {
-      return t("أمس"); // Yesterday
-    } else if (diffDays <= 7) {
-      return t("منذ {{days}} أيام", { days: diffDays });
-    } else {
-      return date.toLocaleDateString(
-        currentLanguage == "en" ? "en-US" : "ar-EG",
-        {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        },
-      );
-    }
+    if (diffMins < 60) return t("منذ {{m}} دقيقة", { m: diffMins || 1 });
+    if (diffHours < 24) return t("منذ {{h}} ساعة", { h: diffHours });
+    if (diffDays === 1) return t("أمس");
+    if (diffDays <= 7) return t("منذ {{days}} أيام", { days: diffDays });
+    return date.toLocaleDateString(currentLanguage === "en" ? "en-US" : "ar-EG", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   };
 
-  // Function to get trophy level text
   const getTrophyLevelText = (trophy: any) => {
     if (trophy.challenge.title === "Tree Stage") {
-      return `${t(trophy.challenge.title)} ${trophy.challenge.point}`;
+      return `${t("مرحلة الشجرة")} ${trophy.challenge.point}`;
     } else if (trophy.challenge.point > 1) {
-      return `${t(t(trophy.challenge.title))} - ${t("المستوى")} ${
-        trophy.challenge.point
-      }`;
-    } else {
-      return t(trophy.challenge.title);
+      return `${t(trophy.challenge.title)} — ${t("المستوى")} ${trophy.challenge.point}`;
     }
+    return t(trophy.challenge.title);
   };
 
-  // Filter and sort trophies
-  const filterAndSortTrophies = (trophies: any[], filters: FilterOptions) => {
+  const filterAndSortTrophies = (trophies: any[], f: FilterOptions) => {
     let filtered = [...trophies];
     const now = new Date();
 
-    // Apply time range filter
-    switch (filters.timeRange) {
-      case "today":
-        filtered = filtered.filter((trophy) => {
-          const trophyDate = new Date(trophy.updatedAt);
-          return trophyDate.toDateString() === now.toDateString();
-        });
-        break;
-      case "week":
-        filtered = filtered.filter((trophy) => {
-          const trophyDate = new Date(trophy.updatedAt);
-          const weekAgo = new Date();
-          weekAgo.setDate(now.getDate() - 7);
-          return trophyDate >= weekAgo;
-        });
-        break;
-      case "month":
-        filtered = filtered.filter((trophy) => {
-          const trophyDate = new Date(trophy.updatedAt);
-          const monthAgo = new Date();
-          monthAgo.setMonth(now.getMonth() - 1);
-          return trophyDate >= monthAgo;
-        });
-        break;
-      default:
-        break;
+    if (f.timeRange === "today") {
+      filtered = filtered.filter(
+        (tr) => new Date(tr.updatedAt).toDateString() === now.toDateString(),
+      );
+    } else if (f.timeRange === "week") {
+      const weekAgo = new Date(now);
+      weekAgo.setDate(now.getDate() - 7);
+      filtered = filtered.filter((tr) => new Date(tr.updatedAt) >= weekAgo);
+    } else if (f.timeRange === "month") {
+      const monthAgo = new Date(now);
+      monthAgo.setMonth(now.getMonth() - 1);
+      filtered = filtered.filter((tr) => new Date(tr.updatedAt) >= monthAgo);
     }
 
-    // Apply sorting
     filtered.sort((a, b) => {
-      const dateA = new Date(a.updatedAt).getTime();
-      const dateB = new Date(b.updatedAt).getTime();
-      return filters.sortBy === "newest" ? dateB - dateA : dateA - dateB;
+      const da = new Date(a.updatedAt).getTime();
+      const db = new Date(b.updatedAt).getTime();
+      return f.sortBy === "newest" ? db - da : da - db;
     });
 
     return filtered;
   };
 
-  // Update filtered trophies when filters change
   useEffect(() => {
-    const filtered = filterAndSortTrophies(allTrophies, filters);
-    setFilteredTrophies(filtered);
+    setFilteredTrophies(filterAndSortTrophies(allTrophies, filters));
   }, [allTrophies, filters]);
 
   const fetchAllTrophies = async () => {
     const authToken = localStorage.getItem("token");
-    if (!authToken) {
-      setIsLoading(false);
-      return;
-    }
-
+    if (!authToken) { setIsLoading(false); return; }
     setIsLoading(true);
     try {
-      // Fetch Sanabel trophies
-      const sanabelResponse = await axios.get(
-        "https://sanabel.wonderlearn.net/students/student-trophy-primaire-completed",
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        },
-      );
-
-      // Fetch Other trophies
-      const otherResponse = await axios.get(
-        "https://sanabel.wonderlearn.net/students/student-trophy-secondaire-completed",
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        },
-      );
-
-      if (sanabelResponse.status === 200 && otherResponse.status === 200) {
-        const combinedTrophies = [
-          ...sanabelResponse.data.data,
-          ...otherResponse.data.data,
-        ];
-
-        setAllTrophies(combinedTrophies);
+      const [sanabelRes, otherRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/students/student-trophy-primaire-completed`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }),
+        axios.get(`${API_BASE_URL}/students/student-trophy-secondaire-completed`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }),
+      ]);
+      if (sanabelRes.status === 200 && otherRes.status === 200) {
+        setAllTrophies([...sanabelRes.data.data, ...otherRes.data.data]);
       }
     } catch (error) {
       console.error("Error fetching trophies:", error);
@@ -192,220 +156,172 @@ const Notifications: React.FC = () => {
     }
   };
 
-  const handleFilterChange = (key: keyof FilterOptions, value: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+  useEffect(() => { fetchAllTrophies(); }, []);
 
-  useEffect(() => {
-    fetchAllTrophies();
-  }, []);
+  const getTrophyRewards = (trophy: any) =>
+    [
+      { value: trophy.challenge.snabelBlue || 0, icon: blueSanabel, label: "سنبلة زرقاء" },
+      { value: trophy.challenge.snabelRed || 0, icon: redSanabel, label: "سنبلة حمراء" },
+      { value: trophy.challenge.snabelYellow || 0, icon: yellowSanabel, label: "سنبلة صفراء" },
+      { value: trophy.challenge.xp || 0, icon: xpIcon, label: "XP" },
+      { value: trophy.challenge.water || 0, icon: water, label: "ماء" },
+      { value: trophy.challenge.seeder || 0, icon: fertilizer, label: "سماد" },
+    ].filter((r) => r.value > 0);
 
-  const getTrophyRewards = (trophy: any) => {
-    return [
-      { value: trophy.challenge.snabelBlue || 0, icon: blueSanabel },
-      { value: trophy.challenge.snabelRed || 0, icon: redSanabel },
-      { value: trophy.challenge.snabelYellow || 0, icon: yellowSanabel },
-      { value: trophy.challenge.xp || 0, icon: xpIcon },
-      { value: trophy.challenge.water || 0, icon: water },
-      { value: trophy.challenge.seeder || 0, icon: fertilizer },
-    ].filter((reward) => reward.value > 0);
-  };
-
-  console.log("Filtered Trophies:", filteredTrophies);
   return (
-    <div className="flex flex-col w-full h-full overflow-y-auto bg-gray-50">
+    <div className="flex flex-col w-full h-full bg-gray-50" dir="rtl">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-white shadow-sm">
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="p-2 transition-colors bg-gray-100 rounded-lg hover:bg-gray-200"
-        >
-          <svg
-            className="w-5 h-5 text-gray-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+      <div className="bg-white shadow-sm px-4 pt-4 pb-0">
+        <div className="flex items-center justify-between mb-3">
+          <GoBackButton />
+          <div className="flex flex-col items-center">
+            <h1 className="text-xl font-bold text-gray-900">{t("الإشعارات")}</h1>
+            {!isLoading && allTrophies.length > 0 && (
+              <span className="text-xs text-gray-400 font-medium">
+                {allTrophies.length} {t("إنجاز")}
+              </span>
+            )}
+          </div>
+          {/* Sort toggle */}
+          <button
+            onClick={() =>
+              setFilters((f) => ({
+                ...f,
+                sortBy: f.sortBy === "newest" ? "oldest" : "newest",
+              }))
+            }
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z"
-            />
-          </svg>
-        </button>
-        <h1 className="text-xl font-bold text-gray-800" dir="rtl">
-          {t("الإشعارات")}
-        </h1>
-        <GoBackButton />
+            {filters.sortBy === "newest" ? (
+              <>
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+                {t("الأحدث")}
+              </>
+            ) : (
+              <>
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                </svg>
+                {t("الأقدم")}
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Time filter tabs — always visible */}
+        <div className="flex gap-2 overflow-x-auto pb-3 no-scrollbar">
+          {TIME_FILTERS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setFilters((f) => ({ ...f, timeRange: opt.value }))}
+              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                filters.timeRange === opt.value
+                  ? "bg-blueprimary text-white shadow-sm"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              {t(opt.label)}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Filters */}
-      {showFilters && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          className="p-4 bg-white border-b border-gray-200"
-          dir="rtl"
-        >
-          <div className="flex flex-col gap-4">
-            {/* Time Range Filter */}
-            <div>
-              <h3 className="mb-2 text-sm font-semibold text-gray-700">
-                {t("الفترة الزمنية")}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { value: "all", label: "الكل" },
-                  { value: "today", label: "اليوم" },
-                  { value: "week", label: "هذا الأسبوع" },
-                  { value: "month", label: "هذا الشهر" },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() =>
-                      handleFilterChange("timeRange", option.value)
-                    }
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      filters.timeRange === option.value
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    {t(option.label)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Sort Filter */}
-            <div>
-              <h3 className="mb-2 text-sm font-semibold text-gray-700">
-                {t("ترتيب النتائج")}
-              </h3>
-              <div className="flex gap-2">
-                {[
-                  { value: "newest", label: t("الأحدث أولاً") },
-                  { value: "oldest", label: t("الأقدم أولاً") },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => handleFilterChange("sortBy", option.value)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      filters.sortBy === option.value
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 border-2 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
-              <p className="text-gray-600">{t("جاري التحميل...")}</p>
-            </div>
+          <div className="p-4 space-y-3">
+            {[...Array(5)].map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filteredTrophies.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full px-4">
+          <div className="flex flex-col items-center justify-center h-full px-6 gap-3">
             <img
               src={nonotification}
               alt="no notifications"
-              className="w-32 h-32 mb-4 opacity-70"
+              className="w-36 h-36 opacity-60"
             />
-            <h2 className="mb-2 text-lg font-semibold text-gray-800">
-              {filters.timeRange === "all"
-                ? t("لا يوجد إشعارات")
-                : t("لا يوجد إشعارات في هذه الفترة")}
+            <h2 className="text-lg font-bold text-gray-700">
+              {filters.timeRange === "all" ? t("لا يوجد إشعارات بعد") : t("لا يوجد إشعارات في هذه الفترة")}
             </h2>
-            <p className="text-center text-gray-500">
+            <p className="text-sm text-center text-gray-400 max-w-[240px]">
               {filters.timeRange === "all"
-                ? t("لم تحصل على أي كؤوس حتى الآن")
-                : t("جرب تغيير الفترة الزمنية للبحث")}
+                ? t("أكمل التحديات لتحصل على كؤوس ومكافآت!")
+                : t("جرّب تغيير الفترة الزمنية للعثور على إشعاراتك")}
             </p>
+            {filters.timeRange !== "all" && (
+              <button
+                onClick={() => setFilters((f) => ({ ...f, timeRange: "all" }))}
+                className="mt-1 px-5 py-2 text-sm font-medium text-white bg-blueprimary rounded-full"
+              >
+                {t("عرض الكل")}
+              </button>
+            )}
           </div>
         ) : (
-          <div className="h-full overflow-y-auto">
-            <div className="p-4 space-y-3">
-              {/* Results count */}
-              <div className="mb-4 text-sm text-right text-gray-500">
-                {t("عدد النتائج:")} {filteredTrophies.length}
-              </div>
-
-              {filteredTrophies.map((trophy, index) => (
-                <motion.div
-                  key={`trophy-${trophy.challengeId}-${trophy.updatedAt}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05, duration: 0.3 }}
-                  className="p-4 transition-shadow bg-white border border-gray-100 shadow-sm rounded-xl hover:shadow-md"
-                  dir="rtl"
-                >
-                  <div className="flex items-center gap-4">
-                    {/* Trophy Icon */}
-                    <div className="flex-shrink-0">
+          <div className="p-4 space-y-3">
+            <AnimatePresence>
+              {filteredTrophies.map((trophy, index) => {
+                const rewards = getTrophyRewards(trophy);
+                return (
+                  <motion.div
+                    key={`trophy-${trophy.challengeId}-${trophy.updatedAt}`}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.04, duration: 0.3, ease: "easeOut" }}
+                    className="flex items-center gap-4 p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    {/* Trophy image with golden background */}
+                    <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-50 to-amber-100 flex items-center justify-center shadow-inner">
                       <img
                         src={getTrophyImage(trophy)}
                         alt={trophy.challenge.title}
-                        className="object-contain w-16 h-16"
+                        className="w-12 h-12 object-contain"
                       />
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1 text-center">
-                        <h3 className="text-sm font-semibold text-gray-800">
-                          {t("تهانينا! حصلت على كأس جديد")}
-                        </h3>
+                      {/* Title row */}
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-base">🏆</span>
+                        <span className="text-sm font-bold text-gray-800 truncate">
+                          {t("حصلت على كأس جديد!")}
+                        </span>
                       </div>
 
-                      <p className="text-sm font-medium text-blue-600">
-                        {t(getTrophyLevelText(trophy))}
+                      {/* Trophy name */}
+                      <p className="text-sm font-semibold text-blueprimary mb-2">
+                        {getTrophyLevelText(trophy)}
                       </p>
 
-                      {/* Trophy Rewards */}
-                      <div className="flex items-center gap-2 mt-2 mb-2">
-                        {getTrophyRewards(trophy).map((reward, rewardIndex) => (
-                          <div
-                            key={rewardIndex}
-                            className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-50"
-                          >
-                            <img
-                              src={reward.icon}
-                              alt="reward"
-                              className="object-contain w-4 h-4"
-                            />
-                            <span className="text-xs font-medium text-gray-700">
-                              {reward.value}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                      {/* Rewards */}
+                      {rewards.length > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                          {rewards.map((reward, ri) => (
+                            <div
+                              key={ri}
+                              className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-100 rounded-full"
+                            >
+                              <img src={reward.icon} alt={reward.label} className="w-3.5 h-3.5 object-contain" />
+                              <span className="text-xs font-bold text-amber-700">+{reward.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                        <span className="text-xs text-gray-500" dir="ltr">
-                          {formatDate(trophy.updatedAt, currentLanguage)}
+                      {/* Date */}
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full" />
+                        <span className="text-xs text-gray-400">
+                          {formatDate(trophy.updatedAt)}
                         </span>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </div>
         )}
       </div>

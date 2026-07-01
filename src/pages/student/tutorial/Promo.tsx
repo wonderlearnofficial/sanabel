@@ -113,13 +113,13 @@ const SanabelFeaturesPage = () => {
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.7, ease: "easeOut" }}
-      className="h-[80vh] flex flex-col w-full items-center justify-center p-2"
+      className="flex flex-col w-full items-center justify-center gap-4 p-2"
     >
-      <motion.div className="w-[70%] h-auto  my-4">
+      <motion.div className="w-2/5 my-2">
         <img
           src={sanabelAlEhsanLogo}
           alt="Sanabel Al Ehsan Logo"
-          className="object-contain w-full h-full"
+          className="object-contain w-full h-auto"
         />
       </motion.div>
 
@@ -128,17 +128,16 @@ const SanabelFeaturesPage = () => {
           {features.map((_, i) => (
             <motion.div
               key={i}
-              className="h-full w-[15%] rounded-md border-2 bg-[#AAA]"
+              className="h-full flex-1 rounded-md border-2"
               style={{
-                backgroundColor: i <= index ? features[index].color : "",
-                opacity: i <= index ? 1 : 0.2,
+                backgroundColor: i <= index ? features[index].color : "#E5E7EB",
                 border: `1px solid ${
-                  i <= index ? features[index].color : "#e5e7eb"
+                  i <= index ? features[index].color : "#D1D5DB"
                 }`,
               }}
               animate={{
-                backgroundColor: i <= index ? features[index].color : "",
-                borderColor: i <= index ? features[index].color : "#e5e7eb",
+                backgroundColor: i <= index ? features[index].color : "#E5E7EB",
+                borderColor: i <= index ? features[index].color : "#D1D5DB",
                 scale: i === index ? [1, 1.1, 1] : 1,
               }}
               transition={{
@@ -175,7 +174,7 @@ const SanabelFeaturesPage = () => {
                 duration: 0.4,
               },
             }}
-            className="rounded-2xl p-2 gap-2 flex-center flex-col items-center text-center w-[90vw]  py-10"
+            className="rounded-2xl p-2 gap-2 flex-center flex-col items-center text-center w-[90vw] py-4"
           >
             <motion.div
               className="p-4 mb-4 rounded-full"
@@ -201,11 +200,11 @@ const SanabelFeaturesPage = () => {
               })}
             </motion.div>
             <motion.h3
-              className="text-2xl font-bold text-black"
+              className="text-2xl font-bold"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              style={{ color: features[index].color }}
+              style={{ color: colors.text }}
             >
               {t(features[index].title)}
             </motion.h3>

@@ -69,15 +69,21 @@ const Inventory: React.FC<Props> = ({
         >
           {inventory.map((items, index) => (
             <motion.div
-              key={index}
+              key={index} 
               variants={itemVariants}
-              className="w-1/6 h-[72px] sm:h-[80px] flex flex-col items-center rounded-lg bg-[#FFF8E5] p-1 text-xs sm:text-sm"
+              className="w-1/6 flex flex-col items-center justify-center rounded-lg bg-[#FFF8E5] p-1 gap-0.5 cursor-default"
             >
-              <h1 className="text-black">{t(items.name)}</h1>
-              <img className="h-2/5" src={items.img} />
-              <h1 className="text-[#E14E54] font-bold self-start">
-                x{items.count}
-              </h1>
+              <img
+                className="object-contain w-auto h-8"
+                src={items.img}
+                alt={items.name}
+              />
+              <span className="text-xl font-bold text-[#E14E54] leading-none">
+                {items.count}
+              </span>
+              <span className="text-[10px] text-gray-500 leading-tight">
+                {t(items.name)}
+              </span>
             </motion.div>
           ))}
         </motion.div>

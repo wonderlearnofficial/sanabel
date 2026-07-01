@@ -30,6 +30,8 @@ const SplashScreen: React.FC = () => {
           history.replace("/teacher/home");
         } else if (role === "Parent") {
           history.replace("/parent/home");
+        } else if (role === "Admin") {
+          history.replace("/admin/home");
         }
       } else if (!hasVisited) {
         // First-time visitor to app redirects to onboarding

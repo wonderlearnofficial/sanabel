@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import { useHistory, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
@@ -61,7 +62,7 @@ const ClassDetails: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://sanabel.wonderlearn.net/teachers/appear-student-class/${classId}`,
+        `${API_BASE_URL}/teachers/appear-student-class/${classId}`,
         {
           headers: { Authorization: `Bearer ${authToken}` },
         },

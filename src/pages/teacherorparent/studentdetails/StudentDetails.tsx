@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import { useEffect, useState } from "react";
 import { useParams, useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -90,8 +91,8 @@ const Profile: React.FC = () => {
     try {
       const response = await axios.get(
         role === "Teacher"
-          ? `https://sanabel.wonderlearn.net/teachers/appear-student-deatiled/${studentId}`
-          : `https://sanabel.wonderlearn.net/parents/appear-student-deatiled/${studentId}`,
+          ? `${API_BASE_URL}/teachers/appear-student-deatiled/${studentId}`
+          : `${API_BASE_URL}/parents/appear-student-deatiled/${studentId}`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,

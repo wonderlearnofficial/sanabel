@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import { motion } from "framer-motion";
 import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -44,7 +45,7 @@ const Profile: React.FC = () => {
 
     try {
       const response = await axios.get(
-        "https://sanabel.wonderlearn.net/students/student-task-completed",
+        `${API_BASE_URL}/students/student-task-completed`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,

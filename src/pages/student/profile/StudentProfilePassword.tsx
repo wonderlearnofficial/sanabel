@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import { useState } from "react";
 
 import PrimaryButton from "../../../components/PrimaryButton";
@@ -71,7 +72,7 @@ const ForgotPassword: React.FC = () => {
 
     try {
       const response = await axios.patch(
-        "https://sanabel.wonderlearn.net/users/send-otp",
+        `${API_BASE_URL}/users/send-otp`,
         { email: emailToUse }
       );
 
@@ -96,7 +97,7 @@ const ForgotPassword: React.FC = () => {
 
     try {
       const response = await axios.patch(
-        "https://sanabel.wonderlearn.net/users/verify-otp",
+        `${API_BASE_URL}/users/verify-otp`,
         { email: emailToUse, otp: otpCode }
       );
 

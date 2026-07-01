@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -20,7 +21,7 @@ const useFetchTasksCompleted = () => {
 
     try {
       const response = await axios.get(
-        "https://sanabel.wonderlearn.net/students/calculate-completed-tasks-by-category",
+        `${API_BASE_URL}/students/calculate-completed-tasks-by-category`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,

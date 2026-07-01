@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
@@ -110,7 +111,7 @@ const AddMissionModal = ({
     try {
       setLoading(true);
       const response = await axios.get(
-        "https://sanabel.wonderlearn.net/students/tasks-category",
+        `${API_BASE_URL}/students/tasks-category`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -142,7 +143,7 @@ const AddMissionModal = ({
     try {
       setLoading(true);
       const response = await axios.get(
-        `https://sanabel.wonderlearn.net/students/appear-Taskes-Type/${categoryId}`,
+        `${API_BASE_URL}/students/appear-Taskes-Type/${categoryId}`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -190,7 +191,7 @@ const AddMissionModal = ({
     try {
       setLoading(true);
       const response = await axios.get(
-        `https://sanabel.wonderlearn.net/students/appear-Taskes-Type-Category/${categoryId}/${type}`,
+        `${API_BASE_URL}/students/appear-Taskes-Type-Category/${categoryId}/${type}`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -392,7 +393,7 @@ const AddMissionModal = ({
 
 const TodoList = () => {
   const { t } = useTranslation();
-  const { user } = useUserContext();
+  const { user, refreshUserData } = useUserContext();
   const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -504,7 +505,7 @@ const TodoList = () => {
 
     try {
       const response = await fetch(
-        "https://sanabel.wonderlearn.net/students/add-pros",
+        `${API_BASE_URL}/students/add-pros`,
         {
           method: "POST",
           headers: {
@@ -525,6 +526,9 @@ const TodoList = () => {
             item.id === selectedMissionId ? { ...item, completed: true } : item,
           ),
         );
+
+        // Refresh the user context so inventory/xp reflect the new totals
+        await refreshUserData();
 
         setShowConfirmPopup(false);
         setShowCongratsPopup(true);

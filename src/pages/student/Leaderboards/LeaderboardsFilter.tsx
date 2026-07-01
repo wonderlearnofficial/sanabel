@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
@@ -57,10 +58,10 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
 
       const response = await axios.get<{ categories: string[] }>(
         userRole === "Teacher"
-          ? "https://sanabel.wonderlearn.net/teachers/class-categories"
+          ? `${API_BASE_URL}/teachers/class-categories`
           : userRole === "Student"
-          ? "https://sanabel.wonderlearn.net/students/class-categories"
-          : "https://sanabel.wonderlearn.net/parents/class-categories",
+          ? `${API_BASE_URL}/students/class-categories`
+          : `${API_BASE_URL}/parents/class-categories`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -91,10 +92,10 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
 
       const response = await axios.get<{ classes: ClassItem[] }>(
         userRole === "Teacher"
-          ? `https://sanabel.wonderlearn.net/teachers/classes-by-category?category=${category}`
+          ? `${API_BASE_URL}/teachers/classes-by-category?category=${category}`
           : userRole === "Student"
-          ? `https://sanabel.wonderlearn.net/students/classes-by-category?category=${category}`
-          : `https://sanabel.wonderlearn.net/parents/classes-by-category?category=${category}`,
+          ? `${API_BASE_URL}/students/classes-by-category?category=${category}`
+          : `${API_BASE_URL}/parents/classes-by-category?category=${category}`,
 
         {
           headers: {

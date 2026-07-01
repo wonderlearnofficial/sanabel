@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
@@ -44,7 +45,7 @@ const ParentView: React.FC = () => {
     }
     try {
       const response = await fetch(
-        `https://sanabel.wonderlearn.net/parents/appear-student-by-parent`,
+        `${API_BASE_URL}/parents/appear-student-by-parent`,
         {
           headers: { Authorization: `Bearer ${authToken}` },
         },

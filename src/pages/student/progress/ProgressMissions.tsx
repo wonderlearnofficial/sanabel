@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import StudentNavbar from "../../../components/navbar/StudentNavbar";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -74,7 +75,7 @@ const ProgressMissions: React.FC = () => {
 
     try {
       const response = await axios.get(
-        "https://sanabel.wonderlearn.net/students/calculate-completed-tasks-by-category",
+        `${API_BASE_URL}/students/calculate-completed-tasks-by-category`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,

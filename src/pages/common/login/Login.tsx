@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import { IonRouterLink } from "@ionic/react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,6 +15,7 @@ import loginImg from "../../../assets/login/logo.png";
 import sanabelVideo from "../../../assets/login/loginVideo.mp4";
 import { FaHome } from "react-icons/fa";
 import { useUserContext } from "../../../context/StudentUserProvider";
+import { getErrorMessage } from "../../../config/getErrorMessage";
 
 const Toaster = () => (
   <ToastContainer
@@ -53,7 +55,7 @@ const Login: React.FC = () => {
   const handleLogin = async () => {
     try {
       const response = await axios.patch(
-        "https://sanabel.wonderlearn.net/users/login",
+        `${API_BASE_URL}/users/login`,
         {
           email,
           password,
@@ -89,7 +91,7 @@ const Login: React.FC = () => {
         // Fetch user data immediately after login
         try {
           const userDataResponse = await axios.get(
-            "https://sanabel.wonderlearn.net/students/data",
+            `${API_BASE_URL}/students/data`,
             {
               headers: {
                 Authorization: `Bearer ${response.data.data.user.token}`,
@@ -138,7 +140,7 @@ const Login: React.FC = () => {
         history.push("/");
       }
     } catch (error) {
-      toast.error(t("login_failed"));
+      toast.error(t(getErrorMessage(error, "login_failed")));
     }
   };
 

@@ -48,31 +48,35 @@ function Navbar() {
       } justify-around w-full p-3`}
       dir="ltr"
     >
-      {navList.map((item, key) => (
-        <IonRouterLink routerLink={item.to}>
-          <div className="flex flex-col items-center gap-0 ">
+      {navList.map((item, key) => {
+        const isActive = location.pathname === item.to;
+        return (
+          <IonRouterLink routerLink={item.to} key={key}>
             <div
-              className={` flex items-center justify-end ${
-                location.pathname === item.to
-                  ? "text-blueprimary"
-                  : "text-[#666] dark:text-[#cccccc]"
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-2xl transition-all duration-200 ${
+                isActive ? "bg-blue-50" : ""
               }`}
             >
-              {item.icon}
+              <div
+                className={`flex items-center justify-center ${
+                  isActive ? "text-blueprimary" : "text-[#666] dark:text-[#cccccc]"
+                }`}
+              >
+                {item.icon}
+              </div>
+              <span
+                className={`text-xs font-medium ${
+                  isActive
+                    ? "text-blueprimary font-bold"
+                    : "text-[#666] dark:text-[#cccccc]"
+                }`}
+              >
+                {t(item.title)}
+              </span>
             </div>
-
-            <h1
-              className={`text-md  ${
-                location.pathname === item.to
-                  ? "text-blueprimary"
-                  : "text-[#666] dark:text-[#cccccc]"
-              }`}
-            >
-              {t(item.title)}
-            </h1>
-          </div>
-        </IonRouterLink>
-      ))}
+          </IonRouterLink>
+        );
+      })}
     </div>
   );
 }

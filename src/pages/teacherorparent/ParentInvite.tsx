@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
@@ -72,10 +73,10 @@ const TeacherView: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://sanabel.wonderlearn.net/parents/search-student-by-code/${code.trim()}`,
+        `${API_BASE_URL}/parents/search-student-by-code/${code.trim()}`,
         {
           headers: { Authorization: `Bearer ${authToken}` },
-        }
+        },
       );
 
       const data = await response.json();
@@ -125,7 +126,7 @@ const TeacherView: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://sanabel.wonderlearn.net/parents/connect-student-to-parent`,
+        `${API_BASE_URL}/parents/connect-student-to-parent`,
         {
           method: "PATCH",
           headers: {
@@ -133,7 +134,7 @@ const TeacherView: React.FC = () => {
             Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({ code: code.trim() }),
-        }
+        },
       );
 
       if (response.ok) {
@@ -161,7 +162,7 @@ const TeacherView: React.FC = () => {
 
   return (
     <div
-      className="flex flex-col items-center justify-between gap-5 p-4"
+      className="flex flex-col items-center justify-between gap-5 p-4 overflow-auto"
       id="page-height"
     >
       {/* Header */}
@@ -202,7 +203,7 @@ const TeacherView: React.FC = () => {
             </div>
             <p className="leading-relaxed text-blue-700">
               {t(
-                "يمكن للطفل العثور على الكود الخاص به من خلال الدخول إلى حسابه والذهاب إلى صفحة الملف الشخصي. سيجد الكود مُعرَّض بوضوح في قسم معلومات الحساب"
+                "يمكن للطفل العثور على الكود الخاص به من خلال الدخول إلى حسابه والذهاب إلى صفحة الملف الشخصي. سيجد الكود مُعرَّض بوضوح في قسم معلومات الحساب",
               )}
             </p>
           </div>

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -28,7 +29,7 @@ const StartJourney: React.FC = () => {
       }
 
       const response = await axios.patch(
-        "https://sanabel.wonderlearn.net/students/update-profile-image",
+        `${API_BASE_URL}/students/update-profile-image`,
         {
           profileImg: {
             avatarId: avatarData.avatarId,

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -43,8 +44,8 @@ const SanabelDataExtractor: React.FC = () => {
 
     const response = await axios.get(
       role === "Teacher"
-        ? "https://sanabel.wonderlearn.net/teachers/tasks-category"
-        : "https://sanabel.wonderlearn.net/parents/tasks-category",
+        ? `${API_BASE_URL}/teachers/tasks-category`
+        : `${API_BASE_URL}/parents/tasks-category`,
       {
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -64,8 +65,8 @@ const SanabelDataExtractor: React.FC = () => {
 
     const response = await axios.get(
       role === "Teacher"
-        ? `https://sanabel.wonderlearn.net/teachers/appear-Taskes-Type/${categoryId}`
-        : `https://sanabel.wonderlearn.net/parents/appear-Taskes-Type/${categoryId}`,
+        ? `${API_BASE_URL}/teachers/appear-Taskes-Type/${categoryId}`
+        : `${API_BASE_URL}/parents/appear-Taskes-Type/${categoryId}`,
       {
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -91,8 +92,8 @@ const SanabelDataExtractor: React.FC = () => {
 
     const response = await axios.get(
       role === "Teacher"
-        ? `https://sanabel.wonderlearn.net/teachers/appear-Taskes-Type-Category/${categoryId}/${sanabelType}`
-        : `https://sanabel.wonderlearn.net/parents/appear-Taskes-Type-Category/${categoryId}/${sanabelType}`,
+        ? `${API_BASE_URL}/teachers/appear-Taskes-Type-Category/${categoryId}/${sanabelType}`
+        : `${API_BASE_URL}/parents/appear-Taskes-Type-Category/${categoryId}/${sanabelType}`,
       {
         headers: {
           Authorization: `Bearer ${authToken}`,

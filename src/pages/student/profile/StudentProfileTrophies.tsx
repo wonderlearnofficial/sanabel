@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import { motion } from "framer-motion";
 import StudentNavbar from "../../../components/navbar/StudentNavbar";
 import { useHistory } from "react-router-dom";
@@ -61,7 +62,7 @@ const Profile: React.FC = () => {
     try {
       // Fetch Sanabel trophies
       const sanabelResponse = await axios.get(
-        "https://sanabel.wonderlearn.net/students/student-trophy-primaire-completed",
+        `${API_BASE_URL}/students/student-trophy-primaire-completed`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -71,7 +72,7 @@ const Profile: React.FC = () => {
 
       // Fetch Other trophies (using the same endpoint in your example, but you might want to change this)
       const otherResponse = await axios.get(
-        "https://sanabel.wonderlearn.net/students/student-trophy-secondaire-completed",
+        `${API_BASE_URL}/students/student-trophy-secondaire-completed`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,

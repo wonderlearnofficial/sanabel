@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
@@ -70,7 +71,7 @@ const TeacherView: React.FC = () => {
     }
     try {
       const response = await fetch(
-        `https://sanabel.wonderlearn.net/teachers/appear-student`,
+        `${API_BASE_URL}/teachers/appear-student`,
         {
           headers: { Authorization: `Bearer ${authToken}` },
         },
@@ -96,7 +97,7 @@ const TeacherView: React.FC = () => {
     }
     try {
       const response = await fetch(
-        `https://sanabel.wonderlearn.net/teachers/appear-class`,
+        `${API_BASE_URL}/teachers/appear-class`,
         {
           headers: { Authorization: `Bearer ${authToken}` },
         },
@@ -129,7 +130,7 @@ const TeacherView: React.FC = () => {
       for (const classItem of classesData) {
         try {
           const response = await fetch(
-            `https://sanabel.wonderlearn.net/teachers/appear-student-class/${classItem.classId}`,
+            `${API_BASE_URL}/teachers/appear-student-class/${classItem.classId}`,
             {
               headers: { Authorization: `Bearer ${authToken}` },
             },
@@ -183,7 +184,7 @@ const TeacherView: React.FC = () => {
       for (const classItem of classesData) {
         try {
           const response = await fetch(
-            `https://sanabel.wonderlearn.net/teachers/appear-student-class/${classItem.classId}`,
+            `${API_BASE_URL}/teachers/appear-student-class/${classItem.classId}`,
             {
               headers: { Authorization: `Bearer ${authToken}` },
             },

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useTheme } from "../../context/ThemeContext";
 import Notification from "../../components/Notification";
 import Navbar from "../../components/navbar/TeacherNavbar";
@@ -43,7 +44,7 @@ const TeacherHome = () => {
     }
     try {
       const response = await fetch(
-        `https://sanabel.wonderlearn.net/teachers/appear-student`,
+        `${API_BASE_URL}/teachers/appear-student`,
         {
           headers: { Authorization: `Bearer ${authToken}` },
         },
@@ -70,7 +71,7 @@ const TeacherHome = () => {
     }
     try {
       const response = await fetch(
-        `https://sanabel.wonderlearn.net/teachers/appear-class`,
+        `${API_BASE_URL}/teachers/appear-class`,
         {
           headers: { Authorization: `Bearer ${authToken}` },
         },
@@ -99,7 +100,7 @@ const TeacherHome = () => {
     try {
       // First, get all categories
       const categoriesResponse = await axios.get(
-        "https://sanabel.wonderlearn.net/teachers/tasks-category",
+        `${API_BASE_URL}/teachers/tasks-category`,
         {
           headers: { Authorization: `Bearer ${authToken}` },
         },
@@ -116,7 +117,7 @@ const TeacherHome = () => {
           try {
             // Get sanabel types for this category
             const typesResponse = await axios.get(
-              `https://sanabel.wonderlearn.net/teachers/appear-Taskes-Type/${categoryId}`,
+              `${API_BASE_URL}/teachers/appear-Taskes-Type/${categoryId}`,
               {
                 headers: { Authorization: `Bearer ${authToken}` },
               },
@@ -137,7 +138,7 @@ const TeacherHome = () => {
               for (const type of uniqueTypes) {
                 try {
                   const missionsResponse = await axios.get(
-                    `https://sanabel.wonderlearn.net/teachers/appear-Taskes-Type-Category/${categoryId}/${type}`,
+                    `${API_BASE_URL}/teachers/appear-Taskes-Type-Category/${categoryId}/${type}`,
                     {
                       headers: { Authorization: `Bearer ${authToken}` },
                     },

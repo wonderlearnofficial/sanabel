@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import React from "react";
 import Boy1 from "../../../assets/avatars/Boys/Boy1";
 import Boy2 from "../../../assets/avatars/Boys/Boy2";
@@ -151,7 +152,7 @@ const GetAvatar = ({ userAvatarData = {} }) => {
 
     try {
       const response = await axios.patch(
-        "https://sanabel.wonderlearn.net/students/update-profile-image",
+        `${API_BASE_URL}/students/update-profile-image`,
         {
           profileImg: {
             avatarId: avatarData.avatarId,

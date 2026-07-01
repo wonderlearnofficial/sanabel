@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import axios from "axios";
 import React, {
   createContext,
@@ -57,7 +58,11 @@ interface ParentUser extends BaseUser {
   // Add parent-specific fields here if needed
 }
 
-type User = StudentUser | TeacherUser | ParentUser;
+interface AdminUser extends BaseUser {
+  // Admin has no extra fields beyond BaseUser
+}
+
+type User = StudentUser | TeacherUser | ParentUser | AdminUser;
 
 interface UserContextProps {
   user: User | null;
@@ -71,9 +76,10 @@ const UserContext = createContext<UserContextProps | undefined>(undefined);
 
 // API endpoints mapping
 const API_ENDPOINTS = {
-  Student: "https://sanabel.wonderlearn.net/students/data",
-  Teacher: "https://sanabel.wonderlearn.net/teachers/teacher-data",
-  Parent: "https://sanabel.wonderlearn.net/parents/parent-data",
+  Student: `${API_BASE_URL}/students/data`,
+  Teacher: `${API_BASE_URL}/teachers/teacher-data`,
+  Parent: `${API_BASE_URL}/parents/parent-data`,
+  Admin: `${API_BASE_URL}/admin/me`,
 };
 
 // Provide the context
@@ -196,6 +202,33 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
             } as ParentUser);
             break;
 
+          case "Admin":
+            setUser({
+              id: userData.id,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              email: userData.email,
+              role: role,
+              profileImg: userData.profileImg ?? null,
+              gender: userData.gender,
+              dateOfBirth: userData.dateOfBirth,
+              isAccess: userData.isAccess,
+              grade: 0,
+              snabelRed: 0,
+              snabelBlue: 0,
+              snabelYellow: 0,
+              xp: 0,
+              water: 0,
+              fertilizer: 0,
+              waterNeeded: 0,
+              fertilizerNeeded: 0,
+              treeStage: 0,
+              treeProgress: 0,
+              connectCode: "",
+              canAssignTask: false,
+            } as AdminUser);
+            break;
+
           default:
             console.error(`Unhandled role: ${role}`);
         }
@@ -242,4 +275,8 @@ export const isTeacher = (user: User | null): user is TeacherUser => {
 
 export const isParent = (user: User | null): user is ParentUser => {
   return user?.role === "Parent";
+};
+
+export const isAdmin = (user: User | null): user is AdminUser => {
+  return user?.role === "Admin";
 };
