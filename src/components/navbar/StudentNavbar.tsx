@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import i18n from "i18next";
 
 import { useLocation } from "react-router-dom";
+import { useUserContext } from "../../context/StudentUserProvider";
 
 const navList = [
   { title: "الرئيسية", icon: <HomeIcon size={30} />, to: "/student/home" },
@@ -40,6 +41,14 @@ function Navbar() {
   const { t } = useTranslation();
   const currentLanguage = i18n.language;
   const location = useLocation();
+  const { user } = useUserContext();
+
+  // Students with no grade/school assigned get a "personal" experience —
+  // there's no cohort to rank them against, so hide the Leaderboards tab.
+  const isPersonal = !user?.grade;
+  const visibleNavList = isPersonal
+    ? navList.filter((item) => item.to !== "/student/leaderboards")
+    : navList;
 
   return (
    <div
@@ -48,7 +57,7 @@ function Navbar() {
       } justify-around w-full p-3`}
       dir="ltr"
     >
-      {navList.map((item, key) => {
+      {visibleNavList.map((item, key) => {
         const isActive = location.pathname === item.to;
         return (
           <IonRouterLink routerLink={item.to} key={key}>
