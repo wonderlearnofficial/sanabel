@@ -223,6 +223,155 @@ const ar = {
     primary: "ابتدائي",
     preparatory: "إعدادي",
     secondary: "ثانوي",
+
+    // ─── Admin UserData Panel ────────────────────────────────────────
+    "admin.backToDashboard": "العودة للوحة التحكم",
+    "admin.userDataTitle": "إدارة المستخدمين",
+    "admin.languageToggle": "English",
+
+    // Tabs
+    "admin.tab.users": "كل المستخدمين",
+    "admin.tab.students": "الطلاب",
+    "admin.tab.teachers": "المعلمون",
+    "admin.tab.parents": "أولياء الأمور",
+    "admin.tab.admins": "المشرفون",
+    "admin.tab.classes": "الفصول",
+    "admin.tab.organizations": "المدارس والمؤسسات",
+
+    // Stats cards
+    "admin.stats.totalUsers": "إجمالي المستخدمين",
+    "admin.stats.totalStudents": "الطلاب",
+    "admin.stats.totalTeachers": "المعلمون",
+    "admin.stats.totalParents": "أولياء الأمور",
+    "admin.stats.totalAdmins": "المشرفون",
+
+    // Table headers
+    "admin.th.id": "المعرّف",
+    "admin.th.name": "الاسم",
+    "admin.th.email": "البريد الإلكتروني",
+    "admin.th.role": "الدور",
+    "admin.th.verified": "تم التحقق",
+    "admin.th.createdAt": "تاريخ الإنشاء",
+    "admin.th.grade": "المرحلة",
+    "admin.th.organization": "المؤسسة",
+    "admin.th.class": "الفصل",
+    "admin.th.xp": "XP",
+    "admin.th.childCount": "عدد الأبناء المرتبطين",
+    "admin.th.className": "اسم الفصل",
+    "admin.th.category": "الفئة",
+    "admin.th.studentCount": "عدد الطلاب",
+    "admin.th.orgName": "الاسم",
+    "admin.th.orgType": "النوع",
+    "admin.th.actions": "الإجراءات",
+
+    // Roles
+    "admin.role.Student": "طالب",
+    "admin.role.Teacher": "معلم",
+    "admin.role.Parent": "ولي أمر",
+    "admin.role.Admin": "مشرف",
+
+    // Verified status
+    "admin.verified.yes": "نعم",
+    "admin.verified.no": "لا",
+
+    // Search
+    "admin.search.placeholder": "بحث بالاسم أو البريد الإلكتروني...",
+
+    // Create button
+    "admin.create.user": "إنشاء حساب جديد",
+    "admin.create.class": "إنشاء فصل جديد",
+    "admin.create.organization": "إنشاء مؤسسة جديدة",
+
+    // Create modal
+    "admin.modal.createUser": "إنشاء حساب جديد",
+    "admin.modal.accountType": "نوع الحساب",
+    "admin.modal.firstName": "الاسم الأول",
+    "admin.modal.lastName": "اسم العائلة",
+    "admin.modal.email": "البريد الإلكتروني",
+    "admin.modal.grade": "المرحلة الدراسية",
+    "admin.modal.selectGrade": "اختر المرحلة",
+    "admin.modal.org": "المؤسسة",
+    "admin.modal.selectOrg": "اختر المؤسسة",
+    "admin.modal.class": "الفصل (اختياري)",
+    "admin.modal.selectClass": "اختر الفصل",
+    "admin.modal.createBtn": "إنشاء الحساب",
+    "admin.modal.creating": "جاري الإنشاء...",
+
+    // Create success
+    "admin.created.title": "تم إنشاء الحساب بنجاح",
+    "admin.created.email": "البريد الإلكتروني",
+    "admin.created.tempPassword": "كلمة المرور المؤقتة",
+    "admin.created.shareNote": "شارك هذه البيانات مع المستخدم لتسجيل الدخول لأول مرة",
+    "admin.created.done": "تم",
+    "admin.created.copied": "تم النسخ!",
+
+    // Edit modal
+    "admin.modal.editUser": "تعديل المستخدم",
+    "admin.modal.editClass": "تعديل الفصل",
+    "admin.modal.editOrg": "تعديل المؤسسة",
+    "admin.modal.createClass": "إنشاء فصل جديد",
+    "admin.modal.createOrg": "إنشاء مؤسسة جديدة",
+    "admin.modal.className": "اسم الفصل",
+    "admin.modal.category": "الفئة",
+    "admin.modal.orgName": "اسم المؤسسة",
+    "admin.modal.orgType": "النوع",
+    "admin.modal.noClass": "بدون فصل",
+    "admin.modal.saveBtn": "حفظ التعديلات",
+    "admin.modal.saving": "جاري الحفظ...",
+    "admin.modal.createNewBtn": "إنشاء",
+
+    // Delete confirmation
+    "admin.delete.title": "تأكيد الحذف",
+    "admin.delete.message": "هل أنت متأكد من حذف",
+    "admin.delete.messageEnd": "؟ لا يمكن التراجع عن هذا الإجراء.",
+    "admin.delete.confirm": "حذف",
+    "admin.delete.cancel": "إلغاء",
+
+    // Reset password confirmation
+    "admin.reset.title": "إعادة تعيين كلمة المرور",
+    "admin.reset.message": "هل أنت متأكد من إعادة تعيين كلمة المرور لـ",
+    "admin.reset.messageEnd": "؟",
+    "admin.reset.confirm": "إعادة التعيين",
+    "admin.reset.cancel": "إلغاء",
+
+    // Pagination
+    "admin.pagination.showing": "عرض",
+    "admin.pagination.of": "من",
+    "admin.pagination.results": "نتيجة",
+    "admin.pagination.page": "صفحة",
+
+    // Loading & empty states
+    "admin.loading": "جاري تحميل البيانات...",
+    "admin.empty": "لا توجد نتائج",
+    "admin.empty.description": "حاول تعديل البحث أو الفلاتر",
+
+    // Toast messages
+    "admin.toast.saveSuccess": "تم الحفظ بنجاح",
+    "admin.toast.createSuccess": "تم الإنشاء بنجاح",
+    "admin.toast.deleteSuccess": "تم الحذف بنجاح",
+    "admin.toast.saveFailed": "تعذر حفظ التعديلات",
+    "admin.toast.deleteFailed": "تعذر الحذف",
+    "admin.toast.loadFailed": "تعذر تحميل البيانات",
+    "admin.toast.resetSuccess": "تم إعادة تعيين كلمة المرور إلى:",
+    "admin.toast.resetFailed": "تعذر إعادة تعيين كلمة المرور",
+    "admin.toast.firstNameEmailRequired": "الاسم الأول والبريد الإلكتروني مطلوبان",
+    "admin.toast.selectOrg": "يرجى اختيار المؤسسة",
+    "admin.toast.classNameCategoryOrgRequired": "اسم الفصل والفئة والمؤسسة مطلوبة",
+    "admin.toast.orgNameRequired": "اسم المؤسسة مطلوب",
+    "admin.toast.deleteHasRelated": "لا يمكن الحذف، توجد بيانات مرتبطة:",
+    "admin.toast.students": "طالب",
+    "admin.toast.teachers": "معلم",
+    "admin.toast.classes": "فصل",
+
+    // Org types
+    "admin.orgType.School": "مدرسة",
+    "admin.orgType.Company": "شركة",
+    "admin.orgType.Charity": "جمعية خيرية",
+
+    // Grade values
+    "admin.grade.primary": "ابتدائي",
+    "admin.grade.preparatory": "إعدادي",
+    "admin.grade.secondary": "ثانوي",
   },
 };
 

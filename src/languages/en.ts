@@ -1191,6 +1191,155 @@ const en = {
     "Error resetting password": "Error resetting password",
     "Incorrect current password": "Incorrect current password",
     "An error occurred during login": "An error occurred during login",
+
+    // ─── Admin UserData Panel ────────────────────────────────────────
+    "admin.backToDashboard": "Back to Dashboard",
+    "admin.userDataTitle": "User Management",
+    "admin.languageToggle": "العربية",
+
+    // Tabs
+    "admin.tab.users": "All Users",
+    "admin.tab.students": "Students",
+    "admin.tab.teachers": "Teachers",
+    "admin.tab.parents": "Parents",
+    "admin.tab.admins": "Admins",
+    "admin.tab.classes": "Classes",
+    "admin.tab.organizations": "Organizations",
+
+    // Stats cards
+    "admin.stats.totalUsers": "Total Users",
+    "admin.stats.totalStudents": "Students",
+    "admin.stats.totalTeachers": "Teachers",
+    "admin.stats.totalParents": "Parents",
+    "admin.stats.totalAdmins": "Admins",
+
+    // Table headers
+    "admin.th.id": "ID",
+    "admin.th.name": "Name",
+    "admin.th.email": "Email",
+    "admin.th.role": "Role",
+    "admin.th.verified": "Verified",
+    "admin.th.createdAt": "Created At",
+    "admin.th.grade": "Stage",
+    "admin.th.organization": "Organization",
+    "admin.th.class": "Class",
+    "admin.th.xp": "XP",
+    "admin.th.childCount": "Linked Children",
+    "admin.th.className": "Class Name",
+    "admin.th.category": "Category",
+    "admin.th.studentCount": "Students",
+    "admin.th.orgName": "Name",
+    "admin.th.orgType": "Type",
+    "admin.th.actions": "Actions",
+
+    // Roles
+    "admin.role.Student": "Student",
+    "admin.role.Teacher": "Teacher",
+    "admin.role.Parent": "Parent",
+    "admin.role.Admin": "Admin",
+
+    // Verified status
+    "admin.verified.yes": "Yes",
+    "admin.verified.no": "No",
+
+    // Search
+    "admin.search.placeholder": "Search by name or email...",
+
+    // Create button
+    "admin.create.user": "Create New Account",
+    "admin.create.class": "Create New Class",
+    "admin.create.organization": "Create New Organization",
+
+    // Create modal
+    "admin.modal.createUser": "Create New Account",
+    "admin.modal.accountType": "Account Type",
+    "admin.modal.firstName": "First Name",
+    "admin.modal.lastName": "Last Name",
+    "admin.modal.email": "Email",
+    "admin.modal.grade": "Stage",
+    "admin.modal.selectGrade": "Select Stage",
+    "admin.modal.org": "Organization",
+    "admin.modal.selectOrg": "Select Organization",
+    "admin.modal.class": "Class (optional)",
+    "admin.modal.selectClass": "Select Class",
+    "admin.modal.createBtn": "Create Account",
+    "admin.modal.creating": "Creating...",
+
+    // Create success
+    "admin.created.title": "Account Created Successfully",
+    "admin.created.email": "Email",
+    "admin.created.tempPassword": "Temporary Password",
+    "admin.created.shareNote": "Share these credentials with the user for first-time login",
+    "admin.created.done": "Done",
+    "admin.created.copied": "Copied!",
+
+    // Edit modal
+    "admin.modal.editUser": "Edit User",
+    "admin.modal.editClass": "Edit Class",
+    "admin.modal.editOrg": "Edit Organization",
+    "admin.modal.createClass": "Create New Class",
+    "admin.modal.createOrg": "Create New Organization",
+    "admin.modal.className": "Class Name",
+    "admin.modal.category": "Category",
+    "admin.modal.orgName": "Organization Name",
+    "admin.modal.orgType": "Type",
+    "admin.modal.noClass": "No Class",
+    "admin.modal.saveBtn": "Save Changes",
+    "admin.modal.saving": "Saving...",
+    "admin.modal.createNewBtn": "Create",
+
+    // Delete confirmation
+    "admin.delete.title": "Confirm Deletion",
+    "admin.delete.message": "Are you sure you want to delete",
+    "admin.delete.messageEnd": "? This action cannot be undone.",
+    "admin.delete.confirm": "Delete",
+    "admin.delete.cancel": "Cancel",
+
+    // Reset password confirmation
+    "admin.reset.title": "Reset Password",
+    "admin.reset.message": "Are you sure you want to reset the password for",
+    "admin.reset.messageEnd": "?",
+    "admin.reset.confirm": "Reset Password",
+    "admin.reset.cancel": "Cancel",
+
+    // Pagination
+    "admin.pagination.showing": "Showing",
+    "admin.pagination.of": "of",
+    "admin.pagination.results": "results",
+    "admin.pagination.page": "Page",
+
+    // Loading & empty states
+    "admin.loading": "Loading data...",
+    "admin.empty": "No results found",
+    "admin.empty.description": "Try adjusting your search or filters",
+
+    // Toast messages
+    "admin.toast.saveSuccess": "Saved successfully",
+    "admin.toast.createSuccess": "Created successfully",
+    "admin.toast.deleteSuccess": "Deleted successfully",
+    "admin.toast.saveFailed": "Could not save changes",
+    "admin.toast.deleteFailed": "Could not delete",
+    "admin.toast.loadFailed": "Could not load data",
+    "admin.toast.resetSuccess": "Password reset to:",
+    "admin.toast.resetFailed": "Could not reset password",
+    "admin.toast.firstNameEmailRequired": "First name and email are required",
+    "admin.toast.selectOrg": "Please select an organization",
+    "admin.toast.classNameCategoryOrgRequired": "Class name, category, and organization are required",
+    "admin.toast.orgNameRequired": "Organization name is required",
+    "admin.toast.deleteHasRelated": "Cannot delete — related data exists:",
+    "admin.toast.students": "students",
+    "admin.toast.teachers": "teachers",
+    "admin.toast.classes": "classes",
+
+    // Org types
+    "admin.orgType.School": "School",
+    "admin.orgType.Company": "Company",
+    "admin.orgType.Charity": "Charity",
+
+    // Grade values
+    "admin.grade.primary": "Primary",
+    "admin.grade.preparatory": "Preparatory",
+    "admin.grade.secondary": "Secondary",
   },
 };
 
