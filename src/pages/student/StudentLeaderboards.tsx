@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../../config/api";
+import { useHistory } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import StudentNavbar from "../../components/navbar/StudentNavbar";
 import { useTranslation } from "react-i18next";
@@ -43,7 +44,7 @@ interface LeaderboardItem {
   };
   class: {
     classname: string;
-    category: string;
+    grade: string;
   };
   originalPosition?: number;
 }
@@ -53,7 +54,7 @@ interface ApiResponse {
 }
 
 interface FilterState {
-  category: string;
+  grade: string;
   classId: string;
   className?: string;
   gender: string;
@@ -62,6 +63,14 @@ interface FilterState {
 const Leaderboards: React.FC = () => {
   const { darkMode, toggleDarkMode } = useTheme();
   const { t } = useTranslation();
+  const history = useHistory();
+  const { user } = useUserContext();
+
+  useEffect(() => {
+    if (user && user.role === "Student" && !user.classId) {
+      history.replace("/student/home");
+    }
+  }, [user, history]);
 
   const [leaderboardsData, setLeaderboardsData] = useState<LeaderboardItem[]>([
     {
@@ -74,7 +83,7 @@ const Leaderboards: React.FC = () => {
       xp: 0,
       class: {
         classname: "",
-        category: "",
+        grade: "",
       },
     },
   ]);
@@ -85,7 +94,7 @@ const Leaderboards: React.FC = () => {
   const [isSearchButton, setIsSearchButton] = useState(false);
 
   const [activeFilters, setActiveFilters] = useState<FilterState>({
-    category: "",
+    grade: "",
     classId: "",
     className: "",
     gender: "",
@@ -106,7 +115,7 @@ const Leaderboards: React.FC = () => {
     try {
       // Build query parameters based on filters
       const queryParams = new URLSearchParams();
-      if (filters?.category) queryParams.append("category", filters.category);
+      if (filters?.grade) queryParams.append("grade", filters.grade);
       if (filters?.className)
         queryParams.append("className", filters.className); // Changed from classId to className
       if (filters?.gender) queryParams.append("gender", filters.gender);
@@ -162,13 +171,13 @@ const Leaderboards: React.FC = () => {
   // Update the hasActiveFilters function
   const hasActiveFilters = () => {
     return (
-      activeFilters.category || activeFilters.className || activeFilters.gender // Changed from classId to className
+      activeFilters.grade || activeFilters.className || activeFilters.gender // Changed from classId to className
     );
   };
 
   // Update the clearAllFilters function
   const clearAllFilters = () => {
-    const emptyFilters: any = { category: "", className: "", gender: "" }; // Changed from classId to className
+    const emptyFilters: any = { grade: "", className: "", gender: "" }; // Changed from classId to className
     setActiveFilters(emptyFilters);
     fetchUserData(emptyFilters);
   };
@@ -409,9 +418,9 @@ const Leaderboards: React.FC = () => {
           {/* Active Filters Display */}
           {hasActiveFilters() && (
             <div className="flex flex-wrap justify-start w-full gap-2">
-              {activeFilters.category && (
+              {activeFilters.grade && (
                 <span className="px-3 py-1 text-sm text-blue-800 capitalize bg-blue-100 rounded-full">
-                  {activeFilters.category}
+                  {t(activeFilters.grade)}
                 </span>
               )}
               {activeFilters.classId && (
@@ -491,7 +500,7 @@ const Leaderboards: React.FC = () => {
                     {/* Rest of your existing JSX remains the same */}
                     <div className="flex-col text-center flex-center">
                       <h1 className="text-[#999] uppercase text-xs">
-                        {item.class.category}
+                        {t(item.class.grade)}
                       </h1>
                       <h1 className="text-[#999] uppercase text-xs">
                         {item.class.classname}
@@ -552,7 +561,7 @@ const Leaderboards: React.FC = () => {
                       sortedData[0].user.lastName}
                   </h1>
                   <h1 className="text-[#999] uppercase text-xs text-center">
-                    {sortedData[0].class.category}
+                    {t(sortedData[0].class.grade)}
                   </h1>
                   <h1 className="text-[#999] uppercase text-xs text-center">
                     {sortedData[0].class.classname}
@@ -586,7 +595,7 @@ const Leaderboards: React.FC = () => {
                       sortedData[1].user.lastName}
                   </h1>
                   <h1 className="text-[#999] uppercase text-xs text-center">
-                    {sortedData[1].class.category}
+                    {t(sortedData[1].class.grade)}
                   </h1>
                   <h1 className="text-[#999] uppercase text-xs text-center">
                     {sortedData[1].class.classname}
@@ -620,7 +629,7 @@ const Leaderboards: React.FC = () => {
                       sortedData[2].user.lastName}
                   </h1>
                   <h1 className="text-[#999] uppercase text-xs text-center">
-                    {sortedData[2].class.category}
+                    {t(sortedData[2].class.grade)}
                   </h1>
                   <h1 className="text-[#999] uppercase text-xs text-center">
                     {sortedData[2].class.classname}
@@ -662,7 +671,7 @@ const Leaderboards: React.FC = () => {
                       </div>
                       <div className="flex flex-col">
                         <h1 className="text-[#999] uppercase text-xs text-center">
-                          {item.class.category}
+                          {t(item.class.grade)}
                         </h1>
                         <h1 className="text-[#999] uppercase text-xs text-center">
                           {item.class.classname}

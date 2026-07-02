@@ -242,7 +242,7 @@ const ParentView: React.FC = () => {
                         {student.Class?.classname || null}
                       </span>
                       <span className="text-sm text-gray-500 uppercase">
-                        {student.Class?.category || null}
+                        {student.Class?.grade ? t(student.Class.grade) : null}
                       </span>
                     </div>
                     <MedalAndLevel
@@ -275,7 +275,7 @@ const ParentView: React.FC = () => {
                         {student.Class?.classname}
                       </span>
                       <span className="text-sm text-gray-500 uppercase">
-                        {student.Class?.category}
+                        {student.Class?.grade && t(student.Class.grade)}
                       </span>
                     </div>
                     <div className="flex flex-col items-center w-full">

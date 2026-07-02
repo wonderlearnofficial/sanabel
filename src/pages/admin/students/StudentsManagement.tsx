@@ -13,7 +13,7 @@ interface StudentRow {
   id: number;
   grade: string;
   user: { firstName: string; lastName: string; email: string; profileImg: any };
-  Class?: { id: number; classname: string; category: string } | null;
+  Class?: { id: number; classname: string; grade: string } | null;
   organization?: { id: number; name: string } | null;
 }
 
@@ -25,7 +25,7 @@ interface Organization {
 interface ClassOption {
   id: number;
   classname: string;
-  category: string;
+  grade: string;
 }
 
 const GRADES = ["primary", "preparatory", "secondary"];
@@ -187,7 +187,7 @@ const StudentsManagement: React.FC = () => {
           <option value="">{t("كل الفصول")}</option>
           {classes.map((cls) => (
             <option key={cls.id} value={cls.id}>
-              {cls.classname} ({cls.category})
+              {cls.classname} ({t(cls.grade)})
             </option>
           ))}
         </select>

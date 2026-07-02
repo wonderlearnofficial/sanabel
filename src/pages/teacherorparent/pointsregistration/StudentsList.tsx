@@ -755,7 +755,7 @@ const StudentList = () => {
                     {student.Class && <h1>-</h1>}
                     <h1 className="text-[#B3B3B3] capitalize">
                       {" "}
-                      {student.Class?.category}
+                      {student.Class?.grade && t(student.Class.grade)}
                     </h1>
                   </div>
                 </div>

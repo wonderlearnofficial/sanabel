@@ -563,7 +563,7 @@ const TeacherView: React.FC = () => {
                           {student.Class?.classname || t("لا يوجد فصل")}
                         </span>
                         <span className="text-sm text-gray-500 uppercase">
-                          {student.Class?.category || t("لا يوجد فصل")}
+                          {(student.Class?.grade && t(student.Class.grade)) || t("لا يوجد فصل")}
                         </span>
                       </div>
                       <MedalAndLevel
@@ -596,7 +596,7 @@ const TeacherView: React.FC = () => {
                           {student.Class?.classname || t("لا يوجد فصل")}
                         </span>
                         <span className="text-sm text-gray-500 uppercase">
-                          {student.Class?.category || t("لا يوجد فصل")}
+                          {(student.Class?.grade && t(student.Class.grade)) || t("لا يوجد فصل")}
                         </span>
                       </div>
                       <div className="flex flex-col items-center w-full">

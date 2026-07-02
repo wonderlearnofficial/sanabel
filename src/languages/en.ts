@@ -947,10 +947,12 @@ const en = {
 
     "الفترة الزمنية": "Time period",
     الإشعارات: "Notifications",
+    "تحديد الكل كمقروء": "Mark all as read",
+    "تحديد كمقروء": "Mark as read",
     "منذ {{days}} أيام": "{{days}} days ago",
     الرمز: "Code",
     "مجموع الجوائز": "Total Trophies",
-    "يمكن للطفل العثور على الكود الخاص به من خلال الدخول إلى حسابه والذهاب إلى صفحة الملف الشخصي. سيجد الكود مُعرَّض بوضوح في قسم معلومات الحساب":
+    "يمكن للطفل العثور على الكود الخاص به من خلال الدخول إلى حسابه والذهب إلى صفحة الملف الشخصي. سيجد الكود مُعرَّض بوضوح في قسم معلومات الحساب":
       "The kids can find their code by logging into their account and going to the profile page. The code will be clearly displayed in the account information section.",
 
     رجوع: "Back",
@@ -1224,7 +1226,6 @@ const en = {
     "admin.th.xp": "XP",
     "admin.th.childCount": "Linked Children",
     "admin.th.className": "Class Name",
-    "admin.th.category": "Category",
     "admin.th.studentCount": "Students",
     "admin.th.orgName": "School Name",
     "admin.th.actions": "Actions",
@@ -1277,7 +1278,6 @@ const en = {
     "admin.modal.createClass": "Create New Class",
     "admin.modal.createOrg": "Create New School",
     "admin.modal.className": "Class Name",
-    "admin.modal.category": "Category",
     "admin.modal.orgName": "School Name",
     "admin.modal.noClass": "No Class",
     "admin.modal.saveBtn": "Save Changes",
@@ -1320,7 +1320,7 @@ const en = {
     "admin.toast.resetFailed": "Could not reset password",
     "admin.toast.firstNameEmailRequired": "First name and email are required",
     "admin.toast.selectOrg": "Please select a school",
-    "admin.toast.classNameCategoryOrgRequired": "Class name, category, and school are required",
+    "admin.toast.classNameGradeOrgRequired": "Class name, grade, and school are required",
     "admin.toast.orgNameRequired": "School name is required",
     "admin.toast.deleteHasRelated": "Cannot delete — related data exists:",
     "admin.toast.students": "students",

@@ -35,10 +35,23 @@ import i18n from "../../i18n";
 // Types
 // ────────────────────────────────────────────────────────────────────
 
-type Tab = "users" | "students" | "teachers" | "parents" | "admins" | "classes" | "organizations";
+type Tab =
+  | "users"
+  | "students"
+  | "teachers"
+  | "parents"
+  | "admins"
+  | "classes"
+  | "organizations";
 type UserLikeTab = "users" | "students" | "teachers" | "parents" | "admins";
 
-const USER_LIKE_TABS: UserLikeTab[] = ["users", "students", "teachers", "parents", "admins"];
+const USER_LIKE_TABS: UserLikeTab[] = [
+  "users",
+  "students",
+  "teachers",
+  "parents",
+  "admins",
+];
 const isUserLikeTab = (tab: Tab): tab is UserLikeTab =>
   (USER_LIKE_TABS as Tab[]).includes(tab);
 
@@ -46,7 +59,15 @@ const isUserLikeTab = (tab: Tab): tab is UserLikeTab =>
 // Tab definitions
 // ────────────────────────────────────────────────────────────────────
 
-const TAB_KEYS: Tab[] = ["users", "students", "teachers", "parents", "admins", "classes", "organizations"];
+const TAB_KEYS: Tab[] = [
+  "users",
+  "students",
+  "teachers",
+  "parents",
+  "admins",
+  "classes",
+  "organizations",
+];
 
 const TAB_ICONS: Record<Tab, React.ReactNode> = {
   users: <FaUsers size={18} />,
@@ -134,8 +155,15 @@ const ROLE_STYLES: Record<string, string> = {
   Admin: "bg-purple-50 text-purple-700 border-purple-200",
 };
 
-const RoleBadge: React.FC<{ role: string; t: (k: string) => string }> = ({ role, t }) => (
-  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${ROLE_STYLES[role] ?? "bg-gray-50 text-gray-700 border-gray-200"}`}>
+const RoleBadge: React.FC<{ role: string; t: (k: string) => string }> = ({
+  role,
+  t,
+}) => (
+  <span
+    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+      ROLE_STYLES[role] ?? "bg-gray-50 text-gray-700 border-gray-200"
+    }`}
+  >
     {t(`admin.role.${role}`)}
   </span>
 );
@@ -148,7 +176,10 @@ const SkeletonRow: React.FC<{ cols: number }> = ({ cols }) => (
   <tr>
     {Array.from({ length: cols }).map((_, i) => (
       <td key={i} className="px-5 py-4">
-        <div className="w-full h-4 rounded-md bg-gray-200 animate-pulse" style={{ maxWidth: i === 0 ? 40 : i === cols - 1 ? 80 : 120 }} />
+        <div
+          className="w-full h-4 bg-gray-200 rounded-md animate-pulse"
+          style={{ maxWidth: i === 0 ? 40 : i === cols - 1 ? 80 : 120 }}
+        />
       </td>
     ))}
   </tr>
@@ -171,7 +202,15 @@ interface ConfirmModalProps {
 }
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({
-  open, title, message, confirmLabel, cancelLabel, confirmColor = "bg-red-500 hover:bg-red-600", icon, onConfirm, onCancel,
+  open,
+  title,
+  message,
+  confirmLabel,
+  cancelLabel,
+  confirmColor = "bg-red-500 hover:bg-red-600",
+  icon,
+  onConfirm,
+  onCancel,
 }) => (
   <AnimatePresence>
     {open && (
@@ -191,14 +230,24 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex flex-col items-center gap-3 text-center">
-            {icon && <div className="flex items-center justify-center w-14 h-14 rounded-full bg-red-50 text-red-500 text-2xl">{icon}</div>}
+            {icon && (
+              <div className="flex items-center justify-center text-2xl text-red-500 rounded-full w-14 h-14 bg-red-50">
+                {icon}
+              </div>
+            )}
             <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-            <p className="text-sm text-gray-500 leading-relaxed">{message}</p>
-            <div className="flex gap-3 w-full mt-2">
-              <button onClick={onCancel} className="flex-1 py-2.5 px-4 rounded-xl border-2 border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors">
+            <p className="text-sm leading-relaxed text-gray-500">{message}</p>
+            <div className="flex w-full gap-3 mt-2">
+              <button
+                onClick={onCancel}
+                className="flex-1 py-2.5 px-4 rounded-xl border-2 border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors"
+              >
                 {cancelLabel}
               </button>
-              <button onClick={onConfirm} className={`flex-1 py-2.5 px-4 rounded-xl text-white font-semibold transition-all ${confirmColor}`}>
+              <button
+                onClick={onConfirm}
+                className={`flex-1 py-2.5 px-4 rounded-xl text-white font-semibold transition-all ${confirmColor}`}
+              >
                 {confirmLabel}
               </button>
             </div>
@@ -245,17 +294,26 @@ const UserData: React.FC = () => {
 
   // ── Create user modal ───────────────────────────────────────────
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createRole, setCreateRole] = useState<"Student" | "Teacher" | "Parent" | "Admin">("Student");
+  const [createRole, setCreateRole] = useState<
+    "Student" | "Teacher" | "Parent" | "Admin"
+  >("Student");
   const [createFirstName, setCreateFirstName] = useState("");
   const [createLastName, setCreateLastName] = useState("");
   const [createEmail, setCreateEmail] = useState("");
   const [createGrade, setCreateGrade] = useState("");
   const [createOrgId, setCreateOrgId] = useState("");
   const [createClassId, setCreateClassId] = useState("");
-  const [createOrganizations, setCreateOrganizations] = useState<{ id: number; name: string }[]>([]);
-  const [createClasses, setCreateClasses] = useState<{ id: number; classname: string; category: string }[]>([]);
+  const [createOrganizations, setCreateOrganizations] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [createClasses, setCreateClasses] = useState<
+    { id: number; classname: string; grade: string }[]
+  >([]);
   const [isCreating, setIsCreating] = useState(false);
-  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string } | null>(null);
+  const [createdCredentials, setCreatedCredentials] = useState<{
+    email: string;
+    password: string;
+  } | null>(null);
 
   // ── Edit modal ──────────────────────────────────────────────────
   const [editingRow, setEditingRow] = useState<any>(null);
@@ -266,14 +324,23 @@ const UserData: React.FC = () => {
   const [editOrgId, setEditOrgId] = useState("");
   const [editClassId, setEditClassId] = useState("");
   const [editClassName, setEditClassName] = useState("");
-  const [editCategory, setEditCategory] = useState("");
   const [editOrgName, setEditOrgName] = useState("");
-  const [editClassesOptions, setEditClassesOptions] = useState<{ id: number; classname: string; category: string }[]>([]);
+  const [editClassesOptions, setEditClassesOptions] = useState<
+    { id: number; classname: string; grade: string }[]
+  >([]);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // ── Confirmation dialogs ────────────────────────────────────────
-  const [confirmDelete, setConfirmDelete] = useState<{ id: number; name: string; tab: Tab; row: any } | null>(null);
-  const [confirmReset, setConfirmReset] = useState<{ userId: number; name: string } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{
+    id: number;
+    name: string;
+    tab: Tab;
+    row: any;
+  } | null>(null);
+  const [confirmReset, setConfirmReset] = useState<{
+    userId: number;
+    name: string;
+  } | null>(null);
 
   // ── Refs for keyboard handling ──────────────────────────────────
   const searchRef = useRef<HTMLInputElement>(null);
@@ -319,12 +386,25 @@ const UserData: React.FC = () => {
   const fetchStats = useCallback(async () => {
     const token = localStorage.getItem("token");
     try {
-      const [usersRes, studentsRes, teachersRes, parentsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/admin/users`, { headers: { Authorization: `Bearer ${token}` }, params: { limit: 1 } }),
-        axios.get(`${API_BASE_URL}/admin/students`, { headers: { Authorization: `Bearer ${token}` }, params: { limit: 1 } }),
-        axios.get(`${API_BASE_URL}/admin/teachers`, { headers: { Authorization: `Bearer ${token}` }, params: { limit: 1 } }),
-        axios.get(`${API_BASE_URL}/admin/parents`, { headers: { Authorization: `Bearer ${token}` }, params: { limit: 1 } }),
-      ]);
+      const [usersRes, studentsRes, teachersRes, parentsRes] =
+        await Promise.all([
+          axios.get(`${API_BASE_URL}/admin/users`, {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { limit: 1 },
+          }),
+          axios.get(`${API_BASE_URL}/admin/students`, {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { limit: 1 },
+          }),
+          axios.get(`${API_BASE_URL}/admin/teachers`, {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { limit: 1 },
+          }),
+          axios.get(`${API_BASE_URL}/admin/parents`, {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { limit: 1 },
+          }),
+        ]);
       setStats({
         users: usersRes.data.total ?? 0,
         students: studentsRes.data.total ?? 0,
@@ -356,21 +436,24 @@ const UserData: React.FC = () => {
   // ── Open edit modal ─────────────────────────────────────────────
   const openEditModal = (row: any) => {
     setEditingRow(row);
-    setEditFirstName(row.firstName ?? row.user?.firstName ?? row.User?.firstName ?? "");
-    setEditLastName(row.lastName ?? row.user?.lastName ?? row.User?.lastName ?? "");
+    setEditFirstName(
+      row.firstName ?? row.user?.firstName ?? row.User?.firstName ?? "",
+    );
+    setEditLastName(
+      row.lastName ?? row.user?.lastName ?? row.User?.lastName ?? "",
+    );
     setEditEmail(row.email ?? row.user?.email ?? row.User?.email ?? "");
     setEditGrade(row.grade ?? "");
     setEditOrgId(String(row.organizationId ?? row.Organization?.id ?? ""));
     setEditClassId(String(row.classId ?? ""));
     setEditClassName(row.classname ?? "");
-    setEditCategory(row.category ?? "");
     setEditOrgName(row.name ?? "");
   };
 
   const openCreateClassModal = () => {
     setEditingRow({ isNew: true });
     setEditClassName("");
-    setEditCategory("");
+    setEditGrade("");
     setEditOrgId("");
   };
 
@@ -394,7 +477,9 @@ const UserData: React.FC = () => {
       .get(`${API_BASE_URL}/admin/organizations/${editOrgId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      .then((response) => setEditClassesOptions(response.data.data.Classes || []))
+      .then((response) =>
+        setEditClassesOptions(response.data.data.Classes || []),
+      )
       .catch((error) => console.error("Error fetching classes:", error));
   }, [editingRow, editOrgId, activeTab]);
 
@@ -402,8 +487,11 @@ const UserData: React.FC = () => {
   const handleSaveEdit = async () => {
     const isNew = !!editingRow?.isNew;
 
-    if (activeTab === "classes" && (!editClassName || !editCategory || !editOrgId)) {
-      toast.error(t("admin.toast.classNameCategoryOrgRequired"));
+    if (
+      activeTab === "classes" &&
+      (!editClassName || !editGrade || !editOrgId)
+    ) {
+      toast.error(t("admin.toast.classNameGradeOrgRequired"));
       return;
     }
     if (activeTab === "organizations" && !editOrgName) {
@@ -415,18 +503,34 @@ const UserData: React.FC = () => {
     setIsSavingEdit(true);
     try {
       if (activeTab === "classes") {
-        const body = { classname: editClassName, category: editCategory, organizationId: editOrgId ? Number(editOrgId) : undefined };
+        const body = {
+          classname: editClassName,
+          grade: editGrade,
+          organizationId: editOrgId ? Number(editOrgId) : undefined,
+        };
         if (isNew) {
-          await axios.post(`${API_BASE_URL}/admin/classes`, body, { headers: { Authorization: `Bearer ${token}` } });
+          await axios.post(`${API_BASE_URL}/admin/classes`, body, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
         } else {
-          await axios.patch(`${API_BASE_URL}/admin/classes/${editingRow.id}`, body, { headers: { Authorization: `Bearer ${token}` } });
+          await axios.patch(
+            `${API_BASE_URL}/admin/classes/${editingRow.id}`,
+            body,
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
         }
       } else if (activeTab === "organizations") {
         const body = { name: editOrgName };
         if (isNew) {
-          await axios.post(`${API_BASE_URL}/admin/organizations`, body, { headers: { Authorization: `Bearer ${token}` } });
+          await axios.post(`${API_BASE_URL}/admin/organizations`, body, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
         } else {
-          await axios.patch(`${API_BASE_URL}/admin/organizations/${editingRow.id}`, body, { headers: { Authorization: `Bearer ${token}` } });
+          await axios.patch(
+            `${API_BASE_URL}/admin/organizations/${editingRow.id}`,
+            body,
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
         }
       } else {
         const userId = getUserId(activeTab, editingRow);
@@ -439,14 +543,23 @@ const UserData: React.FC = () => {
             grade: activeTab === "students" ? editGrade : undefined,
             organizationId:
               activeTab === "students" || activeTab === "teachers"
-                ? (editOrgId ? Number(editOrgId) : null)
+                ? editOrgId
+                  ? Number(editOrgId)
+                  : null
                 : undefined,
-            classId: activeTab === "students" ? (editClassId ? Number(editClassId) : null) : undefined,
+            classId:
+              activeTab === "students"
+                ? editClassId
+                  ? Number(editClassId)
+                  : null
+                : undefined,
           },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
       }
-      toast.success(isNew ? t("admin.toast.createSuccess") : t("admin.toast.saveSuccess"));
+      toast.success(
+        isNew ? t("admin.toast.createSuccess") : t("admin.toast.saveSuccess"),
+      );
       setEditingRow(null);
       fetchData();
       fetchStats();
@@ -469,15 +582,24 @@ const UserData: React.FC = () => {
           ? `${API_BASE_URL}/admin/organizations/${id}`
           : `${API_BASE_URL}/admin/users/${id}`;
 
-      await axios.delete(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(endpoint, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       toast.success(t("admin.toast.deleteSuccess"));
       fetchData();
       fetchStats();
     } catch (error: any) {
       const data = error?.response?.data;
-      if (data?.studentCount !== undefined || data?.teacherCount !== undefined) {
+      if (
+        data?.studentCount !== undefined ||
+        data?.teacherCount !== undefined
+      ) {
         toast.error(
-          `${t("admin.toast.deleteHasRelated")} ${data.studentCount ?? 0} ${t("admin.toast.students")}, ${data.teacherCount ?? 0} ${t("admin.toast.teachers")}, ${data.classCount ?? 0} ${t("admin.toast.classes")}`
+          `${t("admin.toast.deleteHasRelated")} ${data.studentCount ?? 0} ${t(
+            "admin.toast.students",
+          )}, ${data.teacherCount ?? 0} ${t("admin.toast.teachers")}, ${
+            data.classCount ?? 0
+          } ${t("admin.toast.classes")}`,
         );
       } else {
         toast.error(getErrorMessage(error, t("admin.toast.deleteFailed")));
@@ -532,7 +654,10 @@ const UserData: React.FC = () => {
       toast.error(t("admin.toast.firstNameEmailRequired"));
       return;
     }
-    if ((createRole === "Student" || createRole === "Teacher") && !createOrgId) {
+    if (
+      (createRole === "Student" || createRole === "Teacher") &&
+      !createOrgId
+    ) {
       toast.error(t("admin.toast.selectOrg"));
       return;
     }
@@ -551,7 +676,7 @@ const UserData: React.FC = () => {
           classId: createClassId ? Number(createClassId) : undefined,
           grade: createGrade || undefined,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setCreatedCredentials({
         email: response.data.data.email,
@@ -576,7 +701,9 @@ const UserData: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } },
       );
       toast.success(
-        `${t("admin.toast.resetSuccess")} \u200E${response.data.newPassword}\u200E`,
+        `${t("admin.toast.resetSuccess")} \u200E${
+          response.data.newPassword
+        }\u200E`,
       );
     } catch (error) {
       console.error("Error resetting password:", error);
@@ -611,17 +738,52 @@ const UserData: React.FC = () => {
   const getHeaders = (): string[] => {
     switch (activeTab) {
       case "students":
-        return ["admin.th.id", "admin.th.name", "admin.th.email", "admin.th.grade", "admin.th.organization", "admin.th.class", "admin.th.xp", "admin.th.actions"];
+        return [
+          "admin.th.id",
+          "admin.th.name",
+          "admin.th.email",
+          "admin.th.grade",
+          "admin.th.organization",
+          "admin.th.class",
+          "admin.th.actions",
+        ];
       case "teachers":
-        return ["admin.th.id", "admin.th.name", "admin.th.email", "admin.th.organization", "admin.th.actions"];
+        return [
+          "admin.th.id",
+          "admin.th.name",
+          "admin.th.email",
+          "admin.th.organization",
+          "admin.th.actions",
+        ];
       case "parents":
-        return ["admin.th.id", "admin.th.name", "admin.th.email", "admin.th.childCount", "admin.th.actions"];
+        return [
+          "admin.th.id",
+          "admin.th.name",
+          "admin.th.email",
+          "admin.th.childCount",
+          "admin.th.actions",
+        ];
       case "classes":
-        return ["admin.th.id", "admin.th.className", "admin.th.category", "admin.th.organization", "admin.th.studentCount", "admin.th.actions"];
+        return [
+          "admin.th.id",
+          "admin.th.className",
+          "admin.th.grade",
+          "admin.th.organization",
+          "admin.th.studentCount",
+          "admin.th.actions",
+        ];
       case "organizations":
         return ["admin.th.id", "admin.th.orgName", "admin.th.actions"];
       default:
-        return ["admin.th.id", "admin.th.name", "admin.th.email", "admin.th.role", "admin.th.verified", "admin.th.createdAt", "admin.th.actions"];
+        return [
+          "admin.th.id",
+          "admin.th.name",
+          "admin.th.email",
+          "admin.th.role",
+          "admin.th.verified",
+          "admin.th.createdAt",
+          "admin.th.actions",
+        ];
     }
   };
 
@@ -638,58 +800,91 @@ const UserData: React.FC = () => {
     switch (activeTab) {
       case "students":
         cells = [
-          <span className="font-mono text-gray-400 text-xs">#{row.id}</span>,
+          <span className="font-mono text-xs text-gray-400">#{row.id}</span>,
           <span className="font-medium text-gray-900">{name}</span>,
-          <span className="text-gray-500" dir="ltr">{email}</span>,
-          row.grade ? <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">{t(`admin.grade.${row.grade}`)}</span> : <span className="text-gray-300">—</span>,
-          row.organization?.name ?? row.Organization?.name ?? <span className="text-gray-300">—</span>,
-          row.Class?.classname ?? row.class?.classname ?? <span className="text-gray-300">—</span>,
-          <span className="font-semibold text-blueprimary">{row.xp ?? 0}</span>,
+          <span className="text-gray-500" dir="ltr">
+            {email}
+          </span>,
+          row.grade ? (
+            <span className="px-2 py-1 text-xs text-gray-600 bg-gray-100 rounded-lg">
+              {t(`admin.grade.${row.grade}`)}
+            </span>
+          ) : (
+            <span className="text-gray-300">—</span>
+          ),
+          row.organization?.name ?? row.Organization?.name ?? (
+            <span className="text-gray-300">—</span>
+          ),
+          row.Class?.classname ?? row.class?.classname ?? (
+            <span className="text-gray-300">—</span>
+          ),
         ];
         break;
       case "teachers":
         cells = [
-          <span className="font-mono text-gray-400 text-xs">#{row.id}</span>,
+          <span className="font-mono text-xs text-gray-400">#{row.id}</span>,
           <span className="font-medium text-gray-900">{name}</span>,
-          <span className="text-gray-500" dir="ltr">{email}</span>,
-          row.Organization?.name ?? row.organization?.name ?? <span className="text-gray-300">—</span>,
+          <span className="text-gray-500" dir="ltr">
+            {email}
+          </span>,
+          row.Organization?.name ?? row.organization?.name ?? (
+            <span className="text-gray-300">—</span>
+          ),
         ];
         break;
       case "parents":
         cells = [
-          <span className="font-mono text-gray-400 text-xs">#{row.id}</span>,
+          <span className="font-mono text-xs text-gray-400">#{row.id}</span>,
           <span className="font-medium text-gray-900">{name}</span>,
-          <span className="text-gray-500" dir="ltr">{email}</span>,
-          <span className="font-semibold">{(row.Students ?? row.students ?? []).length}</span>,
+          <span className="text-gray-500" dir="ltr">
+            {email}
+          </span>,
+          <span className="font-semibold">
+            {(row.Students ?? row.students ?? []).length}
+          </span>,
         ];
         break;
       case "classes":
         cells = [
-          <span className="font-mono text-gray-400 text-xs">#{row.id}</span>,
+          <span className="font-mono text-xs text-gray-400">#{row.id}</span>,
           <span className="font-medium text-gray-900">{row.classname}</span>,
-          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">{row.category}</span>,
+          <span className="px-2 py-1 text-xs text-gray-600 bg-gray-100 rounded-lg">
+            {row.grade ? t(`admin.grade.${row.grade}`) : "—"}
+          </span>,
           row.Organization?.name ?? <span className="text-gray-300">—</span>,
           <span className="font-semibold">{(row.Students ?? []).length}</span>,
         ];
         break;
       case "organizations":
         cells = [
-          <span className="font-mono text-gray-400 text-xs">#{row.id}</span>,
+          <span className="font-mono text-xs text-gray-400">#{row.id}</span>,
           <span className="font-medium text-gray-900">{row.name}</span>,
         ];
         break;
       default:
         cells = [
-          <span className="font-mono text-gray-400 text-xs">#{row.id}</span>,
+          <span className="font-mono text-xs text-gray-400">#{row.id}</span>,
           <span className="font-medium text-gray-900">{name}</span>,
-          <span className="text-gray-500" dir="ltr">{email}</span>,
+          <span className="text-gray-500" dir="ltr">
+            {email}
+          </span>,
           <RoleBadge role={row.role} t={t} />,
           row.isAccess ? (
-            <span className="inline-flex items-center gap-1 text-emerald-600"><FaCheckCircle size={14} /> {t("admin.verified.yes")}</span>
+            <span className="inline-flex items-center gap-1 text-emerald-600">
+              <FaCheckCircle size={14} /> {t("admin.verified.yes")}
+            </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-red-400"><FaTimesCircle size={14} /> {t("admin.verified.no")}</span>
+            <span className="inline-flex items-center gap-1 text-red-400">
+              <FaTimesCircle size={14} /> {t("admin.verified.no")}
+            </span>
           ),
-          <span className="text-gray-500 text-xs">{row.createdAt ? new Date(row.createdAt).toLocaleDateString(i18n.language === "ar" ? "ar-EG" : "en-US") : "—"}</span>,
+          <span className="text-xs text-gray-500">
+            {row.createdAt
+              ? new Date(row.createdAt).toLocaleDateString(
+                  i18n.language === "ar" ? "ar-EG" : "en-US",
+                )
+              : "—"}
+          </span>,
         ];
     }
 
@@ -698,7 +893,7 @@ const UserData: React.FC = () => {
         key={`${activeTab}-${row.id}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="border-b border-gray-100/80 hover:bg-gradient-to-r hover:from-gray-50/80 hover:to-transparent transition-colors group"
+        className="transition-colors border-b border-gray-100/80 hover:bg-gradient-to-r hover:from-gray-50/80 hover:to-transparent group"
       >
         {cells.map((cell, i) => (
           <td key={i} className="px-5 py-3.5 text-sm whitespace-nowrap">
@@ -708,7 +903,7 @@ const UserData: React.FC = () => {
         <td className="px-5 py-3.5 text-sm">
           <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
             <button
-              className="p-2 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+              className="p-2 text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
               title={t("admin.modal.editUser")}
               onClick={() => openEditModal(row)}
             >
@@ -716,16 +911,23 @@ const UserData: React.FC = () => {
             </button>
 
             <button
-              className="p-2 text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+              className="p-2 text-red-500 transition-colors rounded-lg hover:bg-red-50"
               title={t("admin.delete.confirm")}
-              onClick={() => setConfirmDelete({ id: deleteId, name: name, tab: activeTab, row })}
+              onClick={() =>
+                setConfirmDelete({
+                  id: deleteId,
+                  name: name,
+                  tab: activeTab,
+                  row,
+                })
+              }
             >
               <FaTrash size={14} />
             </button>
 
             {isUserLikeTab(activeTab) && (
               <button
-                className="p-2 text-amber-600 rounded-lg hover:bg-amber-50 transition-colors"
+                className="p-2 transition-colors rounded-lg text-amber-600 hover:bg-amber-50"
                 title={t("admin.reset.title")}
                 onClick={() => setConfirmReset({ userId, name })}
               >
@@ -740,10 +942,34 @@ const UserData: React.FC = () => {
 
   // ── Stats cards data ────────────────────────────────────────────
   const statsCards = [
-    { key: "users", label: "admin.stats.totalUsers", icon: <FaUsers />, color: "from-blue-500 to-blue-600", value: stats.users },
-    { key: "students", label: "admin.stats.totalStudents", icon: <FaChild />, color: "from-cyan-500 to-cyan-600", value: stats.students },
-    { key: "teachers", label: "admin.stats.totalTeachers", icon: <FaChalkboardTeacher />, color: "from-emerald-500 to-emerald-600", value: stats.teachers },
-    { key: "parents", label: "admin.stats.totalParents", icon: <FaUserFriends />, color: "from-amber-500 to-amber-600", value: stats.parents },
+    {
+      key: "users",
+      label: "admin.stats.totalUsers",
+      icon: <FaUsers />,
+      color: "from-blue-500 to-blue-600",
+      value: stats.users,
+    },
+    {
+      key: "students",
+      label: "admin.stats.totalStudents",
+      icon: <FaChild />,
+      color: "from-cyan-500 to-cyan-600",
+      value: stats.students,
+    },
+    {
+      key: "teachers",
+      label: "admin.stats.totalTeachers",
+      icon: <FaChalkboardTeacher />,
+      color: "from-emerald-500 to-emerald-600",
+      value: stats.teachers,
+    },
+    {
+      key: "parents",
+      label: "admin.stats.totalParents",
+      icon: <FaUserFriends />,
+      color: "from-amber-500 to-amber-600",
+      value: stats.parents,
+    },
   ];
 
   // ── Create button label ─────────────────────────────────────────
@@ -762,7 +988,12 @@ const UserData: React.FC = () => {
     } else {
       pages.push(1);
       if (page > 3) pages.push("...");
-      for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
+      for (
+        let i = Math.max(2, page - 1);
+        i <= Math.min(totalPages - 1, page + 1);
+        i++
+      )
+        pages.push(i);
       if (page < totalPages - 2) pages.push("...");
       pages.push(totalPages);
     }
@@ -774,7 +1005,10 @@ const UserData: React.FC = () => {
   // ────────────────────────────────────────────────────────────────
 
   return (
-    <div className={`flex w-full min-h-screen bg-gray-50/50`} dir={isRTL ? "rtl" : "ltr"}>
+    <div
+      className={`flex w-full min-h-screen bg-gray-50/50`}
+      dir={isRTL ? "rtl" : "ltr"}
+    >
       <ToastContainer
         position="top-center"
         autoClose={3000}
@@ -789,20 +1023,26 @@ const UserData: React.FC = () => {
       />
 
       {/* ────────────── SIDEBAR ────────────── */}
-      <aside className={`flex flex-col w-72 shrink-0 bg-white border-gray-200 shadow-sm ${isRTL ? "border-l" : "border-r"}`}>
+      <aside
+        className={`flex flex-col w-72 shrink-0 bg-white border-gray-200 shadow-sm ${
+          isRTL ? "border-l" : "border-r"
+        }`}
+      >
         {/* Sidebar header */}
         <div className="px-6 pt-6 pb-4">
           <div className="flex items-center gap-3 mb-1">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+            <div className="flex items-center justify-center w-10 h-10 text-white rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
               <FaUsers size={18} />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">{t("admin.userDataTitle")}</h1>
+              <h1 className="text-lg font-bold text-gray-900">
+                {t("admin.userDataTitle")}
+              </h1>
             </div>
           </div>
           <button
             onClick={() => (window.location.href = "/admin/home")}
-            className="flex items-center gap-2 mt-3 text-sm text-gray-400 hover:text-blueprimary transition-colors"
+            className="flex items-center gap-2 mt-3 text-sm text-gray-400 transition-colors hover:text-blueprimary"
           >
             {isRTL ? <FaArrowRight size={12} /> : <FaArrowLeft size={12} />}
             {t("admin.backToDashboard")}
@@ -813,7 +1053,7 @@ const UserData: React.FC = () => {
         <div className="mx-4 border-b border-gray-100" />
 
         {/* Tabs */}
-        <nav className="flex flex-col gap-1 p-4 flex-1 overflow-y-auto">
+        <nav className="flex flex-col flex-1 gap-1 p-4 overflow-y-auto">
           {TAB_KEYS.map((tabKey) => {
             const isActive = activeTab === tabKey;
             return (
@@ -822,14 +1062,24 @@ const UserData: React.FC = () => {
                 onClick={() => handleTabChange(tabKey)}
                 className={`relative flex items-center gap-3 px-4 py-3 rounded-xl text-start transition-all duration-200 ${
                   isActive
-                    ? `bg-gradient-to-r ${TAB_COLORS[tabKey]} text-white shadow-md shadow-${tabKey === "users" ? "blue" : "gray"}-200/50`
+                    ? `bg-gradient-to-r ${
+                        TAB_COLORS[tabKey]
+                      } text-white shadow-md shadow-${
+                        tabKey === "users" ? "blue" : "gray"
+                      }-200/50`
                     : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
-                <span className={`flex items-center justify-center w-8 h-8 rounded-lg ${isActive ? "bg-white/20" : TAB_BG_COLORS[tabKey]}`}>
+                <span
+                  className={`flex items-center justify-center w-8 h-8 rounded-lg ${
+                    isActive ? "bg-white/20" : TAB_BG_COLORS[tabKey]
+                  }`}
+                >
                   {TAB_ICONS[tabKey]}
                 </span>
-                <span className="font-medium text-sm">{t(TAB_I18N[tabKey])}</span>
+                <span className="text-sm font-medium">
+                  {t(TAB_I18N[tabKey])}
+                </span>
                 {isActive && total > 0 && (
                   <span className="ms-auto bg-white/25 text-xs font-bold px-2 py-0.5 rounded-full">
                     {total}
@@ -853,26 +1103,35 @@ const UserData: React.FC = () => {
             className="flex items-center justify-center gap-2 w-full px-4 py-3 text-white rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-md shadow-emerald-200/50 transition-all duration-200 active:scale-[0.98]"
           >
             <FaPlus size={14} />
-            <span className="font-semibold text-sm">{createLabel}</span>
+            <span className="text-sm font-semibold">{createLabel}</span>
           </button>
         </div>
       </aside>
 
       {/* ────────────── MAIN CONTENT ────────────── */}
-      <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
+      <main className="flex flex-col flex-1 min-h-screen overflow-hidden">
         {/* Top bar */}
         <header className="flex items-center justify-between px-8 py-4 bg-white border-b border-gray-100">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">{t(TAB_I18N[activeTab])}</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              {t(TAB_I18N[activeTab])}
+            </h2>
             <p className="text-sm text-gray-400 mt-0.5">
-              {t("admin.pagination.showing")} {total > 0 ? `${startItem}–${endItem}` : "0"} {t("admin.pagination.of")} {total} {t("admin.pagination.results")}
+              {t("admin.pagination.showing")}{" "}
+              {total > 0 ? `${startItem}–${endItem}` : "0"}{" "}
+              {t("admin.pagination.of")} {total} {t("admin.pagination.results")}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Search */}
             <div className="relative">
-              <FaSearch className={`absolute top-1/2 -translate-y-1/2 text-gray-300 ${isRTL ? "right-3.5" : "left-3.5"}`} size={14} />
+              <FaSearch
+                className={`absolute top-1/2 -translate-y-1/2 text-gray-300 ${
+                  isRTL ? "right-3.5" : "left-3.5"
+                }`}
+                size={14}
+              />
               <input
                 ref={searchRef}
                 type="text"
@@ -882,7 +1141,9 @@ const UserData: React.FC = () => {
                   setPage(1);
                   setSearch(e.target.value);
                 }}
-                className={`w-80 py-2.5 bg-gray-50 text-gray-800 border border-gray-200 outline-none rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 transition-all ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
+                className={`w-80 py-2.5 bg-gray-50 text-gray-800 border border-gray-200 outline-none rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 transition-all ${
+                  isRTL ? "pr-10 pl-4" : "pl-10 pr-4"
+                }`}
               />
             </div>
 
@@ -906,21 +1167,29 @@ const UserData: React.FC = () => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className="relative overflow-hidden bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-default"
+                className="relative p-5 overflow-hidden transition-shadow bg-white border border-gray-100 shadow-sm cursor-default rounded-2xl hover:shadow-md"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-400 font-medium">{t(card.label)}</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">
-                      {card.value !== undefined ? card.value.toLocaleString() : "—"}
+                    <p className="text-sm font-medium text-gray-400">
+                      {t(card.label)}
+                    </p>
+                    <p className="mt-1 text-2xl font-bold text-gray-900">
+                      {card.value !== undefined
+                        ? card.value.toLocaleString()
+                        : "—"}
                     </p>
                   </div>
-                  <div className={`flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${card.color} text-white`}>
+                  <div
+                    className={`flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${card.color} text-white`}
+                  >
                     {card.icon}
                   </div>
                 </div>
                 {/* Decorative gradient line at bottom */}
-                <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${card.color}`} />
+                <div
+                  className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${card.color}`}
+                />
               </motion.div>
             ))}
           </div>
@@ -928,7 +1197,7 @@ const UserData: React.FC = () => {
 
         {/* Data table */}
         <div className="flex-1 px-8 py-4 overflow-auto">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
@@ -944,14 +1213,20 @@ const UserData: React.FC = () => {
               </thead>
               <tbody>
                 {loading ? (
-                  Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} cols={headers.length} />)
+                  Array.from({ length: 8 }).map((_, i) => (
+                    <SkeletonRow key={i} cols={headers.length} />
+                  ))
                 ) : rows.length === 0 ? (
                   <tr>
                     <td colSpan={headers.length} className="py-16">
                       <div className="flex flex-col items-center gap-3 text-gray-300">
                         <FaInbox size={40} />
-                        <p className="text-lg font-semibold text-gray-400">{t("admin.empty")}</p>
-                        <p className="text-sm text-gray-300">{t("admin.empty.description")}</p>
+                        <p className="text-lg font-semibold text-gray-400">
+                          {t("admin.empty")}
+                        </p>
+                        <p className="text-sm text-gray-300">
+                          {t("admin.empty.description")}
+                        </p>
                       </div>
                     </td>
                   </tr>
@@ -966,19 +1241,22 @@ const UserData: React.FC = () => {
           {total > limit && (
             <div className="flex items-center justify-between mt-4 mb-8">
               <p className="text-sm text-gray-400">
-                {t("admin.pagination.page")} {page} {t("admin.pagination.of")} {totalPages}
+                {t("admin.pagination.page")} {page} {t("admin.pagination.of")}{" "}
+                {totalPages}
               </p>
               <div className="flex items-center gap-1" dir="ltr">
                 <button
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-colors"
+                  className="p-2 transition-colors bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30"
                 >
                   <FaChevronLeft size={12} />
                 </button>
                 {getPageNumbers().map((p, i) =>
                   p === "..." ? (
-                    <span key={`dots-${i}`} className="px-2 text-gray-300">…</span>
+                    <span key={`dots-${i}`} className="px-2 text-gray-300">
+                      …
+                    </span>
                   ) : (
                     <button
                       key={p}
@@ -991,12 +1269,12 @@ const UserData: React.FC = () => {
                     >
                       {p}
                     </button>
-                  )
+                  ),
                 )}
                 <button
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => p + 1)}
-                  className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-colors"
+                  className="p-2 transition-colors bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30"
                 >
                   <FaChevronRight size={12} />
                 </button>
@@ -1030,27 +1308,40 @@ const UserData: React.FC = () => {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                 >
-                  <div className="flex items-center justify-center w-16 h-16 text-3xl text-white bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full shadow-lg shadow-emerald-200">
+                  <div className="flex items-center justify-center w-16 h-16 text-3xl text-white rounded-full shadow-lg bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-200">
                     ✓
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900">{t("admin.created.title")}</h2>
-                  <div className="w-full p-4 space-y-3 text-start bg-gray-50 rounded-xl border border-gray-100">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {t("admin.created.title")}
+                  </h2>
+                  <div className="w-full p-4 space-y-3 border border-gray-100 text-start bg-gray-50 rounded-xl">
                     <div>
-                      <span className="text-xs text-gray-400 uppercase tracking-wider">{t("admin.created.email")}</span>
-                      <p className="font-medium text-gray-900 mt-0.5" dir="ltr">{createdCredentials.email}</p>
+                      <span className="text-xs tracking-wider text-gray-400 uppercase">
+                        {t("admin.created.email")}
+                      </span>
+                      <p className="font-medium text-gray-900 mt-0.5" dir="ltr">
+                        {createdCredentials.email}
+                      </p>
                     </div>
-                    <div className="border-t border-gray-200 pt-3">
-                      <span className="text-xs text-gray-400 uppercase tracking-wider">{t("admin.created.tempPassword")}</span>
+                    <div className="pt-3 border-t border-gray-200">
+                      <span className="text-xs tracking-wider text-gray-400 uppercase">
+                        {t("admin.created.tempPassword")}
+                      </span>
                       <div className="flex items-center justify-between gap-2 mt-0.5">
-                        <p className="font-mono font-bold text-gray-900 text-lg" dir="ltr">
+                        <p
+                          className="font-mono text-lg font-bold text-gray-900"
+                          dir="ltr"
+                        >
                           {createdCredentials.password}
                         </p>
                         <button
                           onClick={() => {
-                            navigator.clipboard.writeText(createdCredentials.password);
+                            navigator.clipboard.writeText(
+                              createdCredentials.password,
+                            );
                             toast.success(t("admin.created.copied"));
                           }}
-                          className="p-2 text-gray-400 rounded-lg hover:bg-gray-200 hover:text-gray-600 transition-colors"
+                          className="p-2 text-gray-400 transition-colors rounded-lg hover:bg-gray-200 hover:text-gray-600"
                         >
                           <FaCopy />
                         </button>
@@ -1062,7 +1353,7 @@ const UserData: React.FC = () => {
                   </p>
                   <button
                     onClick={() => setShowCreateModal(false)}
-                    className="w-full py-3 font-bold text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md"
+                    className="w-full py-3 font-bold text-white transition-all shadow-md bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl hover:from-blue-600 hover:to-blue-700"
                   >
                     {t("admin.created.done")}
                   </button>
@@ -1070,10 +1361,12 @@ const UserData: React.FC = () => {
               ) : (
                 <>
                   <div className="flex items-center justify-between mb-5">
-                    <h2 className="text-lg font-bold text-gray-900">{t("admin.modal.createUser")}</h2>
+                    <h2 className="text-lg font-bold text-gray-900">
+                      {t("admin.modal.createUser")}
+                    </h2>
                     <button
                       onClick={() => setShowCreateModal(false)}
-                      className="p-2 text-gray-400 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="p-2 text-gray-400 transition-colors rounded-lg hover:bg-gray-100"
                     >
                       <FaTimes />
                     </button>
@@ -1082,9 +1375,13 @@ const UserData: React.FC = () => {
                   <div className="flex flex-col gap-4">
                     {/* Role selection */}
                     <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-600">{t("admin.modal.accountType")}</label>
+                      <label className="block mb-2 text-sm font-medium text-gray-600">
+                        {t("admin.modal.accountType")}
+                      </label>
                       <div className="grid grid-cols-4 gap-2">
-                        {(["Student", "Teacher", "Parent", "Admin"] as const).map((role) => (
+                        {(
+                          ["Student", "Teacher", "Parent", "Admin"] as const
+                        ).map((role) => (
                           <button
                             key={role}
                             onClick={() => {
@@ -1107,50 +1404,66 @@ const UserData: React.FC = () => {
                     {/* Name fields */}
                     <div className="flex gap-3">
                       <div className="flex-1">
-                        <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.firstName")}</label>
+                        <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                          {t("admin.modal.firstName")}
+                        </label>
                         <input
                           type="text"
                           value={createFirstName}
                           onChange={(e) => setCreateFirstName(e.target.value)}
-                          className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                          className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100"
                         />
                       </div>
                       <div className="flex-1">
-                        <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.lastName")}</label>
+                        <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                          {t("admin.modal.lastName")}
+                        </label>
                         <input
                           type="text"
                           value={createLastName}
                           onChange={(e) => setCreateLastName(e.target.value)}
-                          className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                          className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100"
                         />
                       </div>
                     </div>
 
                     {/* Email */}
                     <div>
-                      <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.email")}</label>
+                      <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                        {t("admin.modal.email")}
+                      </label>
                       <input
                         type="email"
                         value={createEmail}
                         onChange={(e) => setCreateEmail(e.target.value)}
                         dir="ltr"
-                        className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                        className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100"
                       />
                     </div>
 
                     {/* Grade (Student only) */}
                     {createRole === "Student" && (
                       <div>
-                        <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.grade")}</label>
+                        <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                          {t("admin.modal.grade")}
+                        </label>
                         <select
                           value={createGrade}
                           onChange={(e) => setCreateGrade(e.target.value)}
-                          className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                          className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100"
                         >
-                          <option value="">{t("admin.modal.selectGrade")}</option>
-                          <option value="primary">{t("admin.grade.primary")}</option>
-                          <option value="preparatory">{t("admin.grade.preparatory")}</option>
-                          <option value="secondary">{t("admin.grade.secondary")}</option>
+                          <option value="">
+                            {t("admin.modal.selectGrade")}
+                          </option>
+                          <option value="primary">
+                            {t("admin.grade.primary")}
+                          </option>
+                          <option value="preparatory">
+                            {t("admin.grade.preparatory")}
+                          </option>
+                          <option value="secondary">
+                            {t("admin.grade.secondary")}
+                          </option>
                         </select>
                       </div>
                     )}
@@ -1158,14 +1471,16 @@ const UserData: React.FC = () => {
                     {/* Organization (Student / Teacher) */}
                     {(createRole === "Student" || createRole === "Teacher") && (
                       <div>
-                        <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.org")}</label>
+                        <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                          {t("admin.modal.org")}
+                        </label>
                         <select
                           value={createOrgId}
                           onChange={(e) => {
                             setCreateOrgId(e.target.value);
                             setCreateClassId("");
                           }}
-                          className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                          className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100"
                         >
                           <option value="">{t("admin.modal.selectOrg")}</option>
                           {createOrganizations.map((org) => (
@@ -1180,17 +1495,21 @@ const UserData: React.FC = () => {
                     {/* Class (Student only) */}
                     {createRole === "Student" && (
                       <div>
-                        <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.class")}</label>
+                        <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                          {t("admin.modal.class")}
+                        </label>
                         <select
                           value={createClassId}
                           onChange={(e) => setCreateClassId(e.target.value)}
                           disabled={!createOrgId}
-                          className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all disabled:opacity-50"
+                          className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 disabled:opacity-50"
                         >
-                          <option value="">{t("admin.modal.selectClass")}</option>
+                          <option value="">
+                            {t("admin.modal.selectClass")}
+                          </option>
                           {createClasses.map((cls) => (
                             <option key={cls.id} value={cls.id}>
-                              {cls.classname} ({cls.category})
+                              {cls.classname} ({t(`admin.grade.${cls.grade}`)})
                             </option>
                           ))}
                         </select>
@@ -1202,7 +1521,9 @@ const UserData: React.FC = () => {
                       disabled={isCreating}
                       className="w-full py-3 font-bold text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl disabled:opacity-50 hover:from-blue-600 hover:to-blue-700 transition-all shadow-md active:scale-[0.98]"
                     >
-                      {isCreating ? t("admin.modal.creating") : t("admin.modal.createBtn")}
+                      {isCreating
+                        ? t("admin.modal.creating")
+                        : t("admin.modal.createBtn")}
                     </button>
                   </div>
                 </>
@@ -1246,7 +1567,7 @@ const UserData: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setEditingRow(null)}
-                  className="p-2 text-gray-400 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="p-2 text-gray-400 transition-colors rounded-lg hover:bg-gray-100"
                 >
                   <FaTimes />
                 </button>
@@ -1256,29 +1577,39 @@ const UserData: React.FC = () => {
                 {activeTab === "classes" ? (
                   <>
                     <div>
-                      <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.className")}</label>
+                      <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                        {t("admin.modal.className")}
+                      </label>
                       <input
                         type="text"
                         value={editClassName}
                         onChange={(e) => setEditClassName(e.target.value)}
-                        className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                        className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100"
                       />
                     </div>
                     <div>
-                      <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.category")}</label>
-                      <input
-                        type="text"
-                        value={editCategory}
-                        onChange={(e) => setEditCategory(e.target.value)}
-                        className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                      />
+                      <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                        {t("admin.modal.grade")}
+                      </label>
+                      <select
+                        value={editGrade}
+                        onChange={(e) => setEditGrade(e.target.value)}
+                        className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="">{t("admin.modal.selectGrade")}</option>
+                        <option value="primary">{t("admin.grade.primary")}</option>
+                        <option value="preparatory">{t("admin.grade.preparatory")}</option>
+                        <option value="secondary">{t("admin.grade.secondary")}</option>
+                      </select>
                     </div>
                     <div>
-                      <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.org")}</label>
+                      <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                        {t("admin.modal.org")}
+                      </label>
                       <select
                         value={editOrgId}
                         onChange={(e) => setEditOrgId(e.target.value)}
-                        className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                        className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100"
                       >
                         <option value="">{t("admin.modal.selectOrg")}</option>
                         {createOrganizations.map((org) => (
@@ -1292,12 +1623,14 @@ const UserData: React.FC = () => {
                 ) : activeTab === "organizations" ? (
                   <>
                     <div>
-                      <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.orgName")}</label>
+                      <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                        {t("admin.modal.orgName")}
+                      </label>
                       <input
                         type="text"
                         value={editOrgName}
                         onChange={(e) => setEditOrgName(e.target.value)}
-                        className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                        className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100"
                       />
                     </div>
                   </>
@@ -1305,62 +1638,80 @@ const UserData: React.FC = () => {
                   <>
                     <div className="flex gap-3">
                       <div className="flex-1">
-                        <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.firstName")}</label>
+                        <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                          {t("admin.modal.firstName")}
+                        </label>
                         <input
                           type="text"
                           value={editFirstName}
                           onChange={(e) => setEditFirstName(e.target.value)}
-                          className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                          className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100"
                         />
                       </div>
                       <div className="flex-1">
-                        <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.lastName")}</label>
+                        <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                          {t("admin.modal.lastName")}
+                        </label>
                         <input
                           type="text"
                           value={editLastName}
                           onChange={(e) => setEditLastName(e.target.value)}
-                          className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                          className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.email")}</label>
+                      <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                        {t("admin.modal.email")}
+                      </label>
                       <input
                         type="email"
                         value={editEmail}
                         onChange={(e) => setEditEmail(e.target.value)}
                         dir="ltr"
-                        className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                        className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100"
                       />
                     </div>
 
                     {activeTab === "students" && (
                       <div>
-                        <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.grade")}</label>
+                        <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                          {t("admin.modal.grade")}
+                        </label>
                         <select
                           value={editGrade}
                           onChange={(e) => setEditGrade(e.target.value)}
-                          className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                          className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100"
                         >
-                          <option value="">{t("admin.modal.selectGrade")}</option>
-                          <option value="primary">{t("admin.grade.primary")}</option>
-                          <option value="preparatory">{t("admin.grade.preparatory")}</option>
-                          <option value="secondary">{t("admin.grade.secondary")}</option>
+                          <option value="">
+                            {t("admin.modal.selectGrade")}
+                          </option>
+                          <option value="primary">
+                            {t("admin.grade.primary")}
+                          </option>
+                          <option value="preparatory">
+                            {t("admin.grade.preparatory")}
+                          </option>
+                          <option value="secondary">
+                            {t("admin.grade.secondary")}
+                          </option>
                         </select>
                       </div>
                     )}
 
                     {(activeTab === "students" || activeTab === "teachers") && (
                       <div>
-                        <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.org")}</label>
+                        <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                          {t("admin.modal.org")}
+                        </label>
                         <select
                           value={editOrgId}
                           onChange={(e) => {
                             setEditOrgId(e.target.value);
                             setEditClassId("");
                           }}
-                          className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                          className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100"
                         >
                           <option value="">{t("admin.modal.selectOrg")}</option>
                           {createOrganizations.map((org) => (
@@ -1374,17 +1725,19 @@ const UserData: React.FC = () => {
 
                     {activeTab === "students" && (
                       <div>
-                        <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.th.class")}</label>
+                        <label className="block mb-1.5 text-sm font-medium text-gray-600">
+                          {t("admin.th.class")}
+                        </label>
                         <select
                           value={editClassId}
                           onChange={(e) => setEditClassId(e.target.value)}
                           disabled={!editOrgId}
-                          className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all disabled:opacity-50"
+                          className="w-full p-3 text-gray-900 transition-all border border-gray-200 outline-none bg-gray-50 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 disabled:opacity-50"
                         >
                           <option value="">{t("admin.modal.noClass")}</option>
                           {editClassesOptions.map((cls) => (
                             <option key={cls.id} value={cls.id}>
-                              {cls.classname} ({cls.category})
+                              {cls.classname} ({t(`admin.grade.${cls.grade}`)})
                             </option>
                           ))}
                         </select>
@@ -1416,14 +1769,18 @@ const UserData: React.FC = () => {
         title={t("admin.delete.title")}
         message={
           <>
-            {t("admin.delete.message")} <strong>{confirmDelete?.name || "—"}</strong>{t("admin.delete.messageEnd")}
+            {t("admin.delete.message")}{" "}
+            <strong>{confirmDelete?.name || "—"}</strong>
+            {t("admin.delete.messageEnd")}
           </>
         }
         confirmLabel={t("admin.delete.confirm")}
         cancelLabel={t("admin.delete.cancel")}
         confirmColor="bg-red-500 hover:bg-red-600"
         icon={<FaExclamationTriangle />}
-        onConfirm={() => confirmDelete && handleDelete(confirmDelete.tab, confirmDelete.row)}
+        onConfirm={() =>
+          confirmDelete && handleDelete(confirmDelete.tab, confirmDelete.row)
+        }
         onCancel={() => setConfirmDelete(null)}
       />
 
@@ -1433,14 +1790,18 @@ const UserData: React.FC = () => {
         title={t("admin.reset.title")}
         message={
           <>
-            {t("admin.reset.message")} <strong>{confirmReset?.name || "—"}</strong>{t("admin.reset.messageEnd")}
+            {t("admin.reset.message")}{" "}
+            <strong>{confirmReset?.name || "—"}</strong>
+            {t("admin.reset.messageEnd")}
           </>
         }
         confirmLabel={t("admin.reset.confirm")}
         cancelLabel={t("admin.reset.cancel")}
         confirmColor="bg-amber-500 hover:bg-amber-600"
         icon={<FaKey />}
-        onConfirm={() => confirmReset && handleResetPassword(confirmReset.userId)}
+        onConfirm={() =>
+          confirmReset && handleResetPassword(confirmReset.userId)
+        }
         onCancel={() => setConfirmReset(null)}
       />
     </div>

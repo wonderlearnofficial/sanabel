@@ -11,13 +11,13 @@ interface FilterProps {
 }
 
 interface FilterState {
-  category: string;
+  grade: string;
   classId: string;
   className?: string; // Add this optional field
   gender: string;
 }
 
-interface Category {
+interface GradeOption {
   name: string;
   label: string;
 }
@@ -34,12 +34,12 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
 }) => {
   const { t } = useTranslation();
   const [filters, setFilters] = useState<FilterState>({
-    category: "",
+    grade: "",
     classId: "",
     gender: "",
   });
 
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [grades, setGrades] = useState<GradeOption[]>([]);
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(false);
 
@@ -50,18 +50,18 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
   ];
 
   // Memoize the fetch functions to prevent recreation on every render
-  const fetchCategories = useCallback(async () => {
+  const fetchGrades = useCallback(async () => {
     try {
       const authToken = localStorage.getItem("token");
       const userRole = localStorage.getItem("role");
       if (!authToken) return;
 
-      const response = await axios.get<{ categories: string[] }>(
+      const response = await axios.get<{ grades: string[] }>(
         userRole === "Teacher"
-          ? `${API_BASE_URL}/teachers/class-categories`
+          ? `${API_BASE_URL}/teachers/class-grades`
           : userRole === "Student"
-          ? `${API_BASE_URL}/students/class-categories`
-          : `${API_BASE_URL}/parents/class-categories`,
+          ? `${API_BASE_URL}/students/class-grades`
+          : `${API_BASE_URL}/parents/class-grades`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -69,21 +69,21 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
         },
       );
 
-      if (response.status === 200 && response.data.categories) {
-        setCategories(
-          response.data.categories.map((cat) => ({
-            name: cat,
-            label: cat,
+      if (response.status === 200 && response.data.grades) {
+        setGrades(
+          response.data.grades.map((g) => ({
+            name: g,
+            label: t(g),
           })),
         );
-        console.log("Fetched categories:", response.data);
+        console.log("Fetched grades:", response.data);
       }
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      console.error("Error fetching grades:", error);
     }
-  }, []);
+  }, [t]);
 
-  const fetchClassesByCategory = useCallback(async (category: string) => {
+  const fetchClassesByGrade = useCallback(async (grade: string) => {
     setLoadingClasses(true);
     try {
       const authToken = localStorage.getItem("token");
@@ -92,10 +92,10 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
 
       const response = await axios.get<{ classes: ClassItem[] }>(
         userRole === "Teacher"
-          ? `${API_BASE_URL}/teachers/classes-by-category?category=${category}`
+          ? `${API_BASE_URL}/teachers/classes-by-grade?grade=${grade}`
           : userRole === "Student"
-          ? `${API_BASE_URL}/students/classes-by-category?category=${category}`
-          : `${API_BASE_URL}/parents/classes-by-category?category=${category}`,
+          ? `${API_BASE_URL}/students/classes-by-grade?grade=${grade}`
+          : `${API_BASE_URL}/parents/classes-by-grade?grade=${grade}`,
 
         {
           headers: {
@@ -108,8 +108,8 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
       if (response.status === 200 && response.data.classes) {
         setClasses(response.data.classes);
         console.log(
-          "Fetched classes for category:",
-          category,
+          "Fetched classes for grade:",
+          grade,
           response.data.classes,
         );
       }
@@ -120,26 +120,26 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
     }
   }, []);
 
-  // Fetch categories on component mount
+  // Fetch grades on component mount
   useEffect(() => {
-    fetchCategories();
+    fetchGrades();
   }, []);
 
-  // Fetch classes when category changes - use the specific value, not the whole object
+  // Fetch classes when grade changes - use the specific value, not the whole object
   useEffect(() => {
-    if (filters.category) {
-      fetchClassesByCategory(filters.category);
+    if (filters.grade) {
+      fetchClassesByGrade(filters.grade);
     } else {
       setClasses([]);
     }
-  }, [filters.category, fetchClassesByCategory]); // Only depend on the category value
+  }, [filters.grade, fetchClassesByGrade]); // Only depend on the grade value
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters((prevFilters) => {
       const newFilters = { ...prevFilters, [key]: value };
 
-      // Reset class when category changes
-      if (key === "category") {
+      // Reset class when grade changes
+      if (key === "grade") {
         newFilters.classId = "";
       }
 
@@ -161,7 +161,7 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
 
   const resetFilters = () => {
     const resetState = {
-      category: "",
+      grade: "",
       classId: "",
       gender: "",
     };
@@ -185,24 +185,24 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
           </button>
         </div>
 
-        {/* Category Filter */}
+        {/* Grade Filter */}
         <div className="mb-4 overflow-y-auto">
           <label className="block mb-2 text-sm font-medium text-right text-gray-700">
             {t("المرحلة الدراسية")}
           </label>
           <select
-            value={filters.category}
-            onChange={(e) => handleFilterChange("category", e.target.value)}
+            value={filters.grade}
+            onChange={(e) => handleFilterChange("grade", e.target.value)}
             className="w-full p-3 text-right capitalize border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="">{t("جميع المراحل")}</option>
-            {categories.map((category) => (
+            {grades.map((grade) => (
               <option
-                key={category.name}
-                value={category.name}
+                key={grade.name}
+                value={grade.name}
                 className="capitalize"
               >
-                {category.label}
+                {grade.label}
               </option>
             ))}
           </select>
@@ -216,7 +216,7 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
           <select
             value={filters.classId}
             onChange={(e) => handleFilterChange("classId", e.target.value)}
-            disabled={!filters.category || loadingClasses}
+            disabled={!filters.grade || loadingClasses}
             className="w-full p-3 text-right capitalize border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
             <option value="">{t("جميع الفصول")}</option>

@@ -152,7 +152,7 @@ const Profile: React.FC = () => {
         </h1>
         <h1 className="text-[#B3B3B3] capitalize">
           {" "}
-          {student.class?.category}
+          {student.class?.grade && t(student.class.grade)}
         </h1>
       </div>
       {/* Navbar */}

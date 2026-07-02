@@ -16,7 +16,7 @@ interface Organization {
 interface ClassOption {
   id: number;
   classname: string;
-  category: string;
+  grade: string;
 }
 
 const GRADES = ["primary", "preparatory", "secondary"];
@@ -233,7 +233,7 @@ const StudentDetailEdit: React.FC = () => {
           <option value="">{t("بدون فصل")}</option>
           {classes.map((cls) => (
             <option key={cls.id} value={cls.id}>
-              {cls.classname} ({cls.category})
+              {cls.classname} ({t(cls.grade)})
             </option>
           ))}
         </select>
