@@ -1159,7 +1159,7 @@ const en = {
     "اختر المرحلة": "Select Stage",
     المدرسة: "School",
     "اختر المدرسة": "Select School",
-    "اختر الفصل": "Select Class",
+    "بدون فصل": "No Class",
     "حفظ التعديلات": "Save Changes",
     "تم تحديث بيانات الطالب بنجاح": "Student data updated successfully",
     "تعذر تحميل بيانات الطالب": "Failed to load student data",

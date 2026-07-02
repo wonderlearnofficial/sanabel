@@ -114,8 +114,8 @@ const StudentDetailEdit: React.FC = () => {
           lastName,
           email,
           grade,
-          organizationId: Number(organizationId),
-          classId: Number(classId),
+          organizationId: organizationId ? Number(organizationId) : null,
+          classId: classId ? Number(classId) : null,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -230,7 +230,7 @@ const StudentDetailEdit: React.FC = () => {
           disabled={!organizationId}
           onChange={(e) => setClassId(e.target.value)}
         >
-          <option value="">{t("اختر الفصل")}</option>
+          <option value="">{t("بدون فصل")}</option>
           {classes.map((cls) => (
             <option key={cls.id} value={cls.id}>
               {cls.classname} ({cls.category})
