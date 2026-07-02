@@ -14,6 +14,7 @@ const en = {
     "شجرة سنابل الإحسان": "Tree of Good Deeds",
     المتجر: "Store",
     "تأكيد الشراء": "Confirm Purchase",
+    "جاري الشراء...": "Purchasing...",
     الاجمالي: "Total",
     شراء: "Buy",
     إلغاء: "Cancel",

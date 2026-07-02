@@ -113,6 +113,7 @@ const Shop: React.FC = () => {
   const [isInsufficientFundsVisible, setIsInsufficientFundsVisible] =
     useState(false);
   const [missingSanabel, setMissingSanabel] = useState<any[]>([]);
+  const [isBuying, setIsBuying] = useState(false);
 
   // Function to calculate missing sanabel
   const calculateMissingSanabel = (totalCost: number) => {
@@ -175,6 +176,8 @@ const Shop: React.FC = () => {
 
   // Buy Shop
   const buyShop = async () => {
+    if (isBuying) return;
+    setIsBuying(true);
     try {
       const token = localStorage.getItem("token");
       const totalCost =
@@ -220,6 +223,8 @@ const Shop: React.FC = () => {
       setIsInsufficientFundsVisible(true);
 
       console.error("Error purchasing items:", error);
+    } finally {
+      setIsBuying(false);
     }
   };
 
@@ -403,14 +408,16 @@ const Shop: React.FC = () => {
 
                   <div className="flex justify-center gap-4 mt-4">
                     <button
-                      className="flex-1 px-6 py-3 font-bold text-white transition-transform transform shadow-md bg-blueprimary rounded-xl hover:scale-105 active:scale-95"
+                      className="flex-1 px-6 py-3 font-bold text-white transition-transform transform shadow-md bg-blueprimary rounded-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
                       onClick={buyShop}
+                      disabled={isBuying}
                     >
-                      {t("تأكيد الشراء")}
+                      {isBuying ? t("جاري الشراء...") : t("تأكيد الشراء")}
                     </button>
                     <button
-                      className="px-4 py-3 font-bold text-gray-700 transition-transform transform bg-white border-2 border-gray-300 shadow-sm rounded-xl hover:scale-105 active:scale-95"
+                      className="px-4 py-3 font-bold text-gray-700 transition-transform transform bg-white border-2 border-gray-300 shadow-sm rounded-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
                       onClick={() => setIsPopupVisible(false)}
+                      disabled={isBuying}
                     >
                       {t("إلغاء")}
                     </button>
