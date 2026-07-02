@@ -24,7 +24,7 @@ import { useUserContext } from "../../../context/StudentUserProvider";
 const SanabelMissionsPage: React.FC = () => {
   const { user, refreshUserData } = useUserContext();
 
-  const grade = String(user?.grade);
+  const grade = user?.grade;
   const canAssignTask = user?.canAssignTask;
   const { index, subIndex } = useParams<{ index: any; subIndex: any }>();
   // Ensure index is properly parsed as a number

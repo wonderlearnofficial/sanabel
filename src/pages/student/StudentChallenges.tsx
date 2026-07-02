@@ -38,7 +38,7 @@ const Challenges: React.FC = () => {
 
   const { user } = useUserContext();
 
-  const grade = String(user?.grade);
+  const grade = user?.grade;
   const canAssignTask = user?.canAssignTask;
   return (
     <motion.div

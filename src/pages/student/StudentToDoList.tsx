@@ -409,7 +409,7 @@ const TodoList = () => {
 
   const role = localStorage.getItem("role");
 
-  const grade = String(user?.grade);
+  const grade = user?.grade;
 
   const canAssignTask = user?.canAssignTask;
 
