@@ -237,6 +237,7 @@ const UserData: React.FC = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const loadedTabRef = useRef<Tab | null>(null);
   const limit = 25;
 
   // ── Stats state ─────────────────────────────────────────────────
@@ -290,7 +291,10 @@ const UserData: React.FC = () => {
   // ── Fetch data ──────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
     const token = localStorage.getItem("token");
-    setLoading(true);
+    // Only show the skeleton loader when switching to a tab we haven't
+    // loaded yet — a same-tab refresh (e.g. after saving an edit) keeps
+    // the existing rows visible instead of blanking and re-fading them in.
+    if (loadedTabRef.current !== activeTab) setLoading(true);
     try {
       const params: Record<string, string | number> = { page, limit };
       if (search) params.search = search;
@@ -302,6 +306,7 @@ const UserData: React.FC = () => {
       });
       setRows(response.data.data);
       setTotal(response.data.total);
+      loadedTabRef.current = activeTab;
     } catch (error) {
       console.error(`Error fetching ${activeTab}:`, error);
       toast.error(t("admin.toast.loadFailed"));
