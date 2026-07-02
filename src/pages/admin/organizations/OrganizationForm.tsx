@@ -8,8 +8,6 @@ import GoBackButton from "../../../components/GoBackButton";
 import GenericInput from "../../../components/GenericInput";
 import PrimaryButton from "../../../components/PrimaryButton";
 
-const ORG_TYPES = ["School", "Company", "Charity"];
-
 const Toaster = () => (
   <ToastContainer
     position="top-center"
@@ -32,7 +30,6 @@ const OrganizationForm: React.FC = () => {
   const isNew = !organizationId || organizationId === "new";
 
   const [name, setName] = useState("");
-  const [type, setType] = useState("School");
   const [img, setImg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -47,19 +44,18 @@ const OrganizationForm: React.FC = () => {
       .then((response) => {
         const org = response.data.data;
         setName(org.name);
-        setType(org.type);
         setImg(org.img || "");
       })
       .catch((error) => {
         console.error("Error fetching organization:", error);
-        toast.error(t("تعذر تحميل بيانات المؤسسة"));
+        toast.error(t("تعذر تحميل بيانات المدرسة"));
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      toast.error(t("اسم المؤسسة مطلوب"));
+      toast.error(t("اسم المدرسة مطلوب"));
       return;
     }
 
@@ -70,22 +66,22 @@ const OrganizationForm: React.FC = () => {
       if (isNew) {
         await axios.post(
           `${API_BASE_URL}/admin/organizations`,
-          { name, type, img: img || undefined },
+          { name, img: img || undefined },
           { headers: { Authorization: `Bearer ${token}` } },
         );
-        toast.success(t("تم إنشاء المؤسسة بنجاح"));
+        toast.success(t("تم إنشاء المدرسة بنجاح"));
       } else {
         await axios.patch(
           `${API_BASE_URL}/admin/organizations/${organizationId}`,
-          { name, type, img: img || undefined },
+          { name, img: img || undefined },
           { headers: { Authorization: `Bearer ${token}` } },
         );
-        toast.success(t("تم تحديث المؤسسة بنجاح"));
+        toast.success(t("تم تحديث المدرسة بنجاح"));
       }
       history.push("/admin/organizations");
     } catch (error: any) {
       if (error?.response?.status === 409) {
-        toast.error(t("يوجد مؤسسة بنفس هذا الاسم بالفعل"));
+        toast.error(t("يوجد مدرسة بنفس هذا الاسم بالفعل"));
       } else {
         toast.error(t("حدث خطأ أثناء الحفظ"));
       }
@@ -99,22 +95,18 @@ const OrganizationForm: React.FC = () => {
       <Toaster />
       <div className="flex flex-row-reverse items-center justify-between w-full">
         <h1 className="self-center text-xl font-bold text-black" dir="ltr">
-          {isNew ? t("إضافة مؤسسة") : t("تعديل المؤسسة")}
+          {isNew ? t("إضافة مدرسة") : t("تعديل المدرسة")}
         </h1>
         <GoBackButton />
       </div>
 
       <GenericInput
         type="text"
-        title={t("اسم المؤسسة")}
-        placeholder={t("اسم المؤسسة")}
+        title={t("اسم المدرسة")}
+        placeholder={t("اسم المدرسة")}
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
-
-      <div className="flex flex-col justify-end w-full gap-2">
-        <h1 className="text-[#121212]">{t("نوع المؤسسة")}</h1>
-      </div>
 
       <GenericInput
         type="text"

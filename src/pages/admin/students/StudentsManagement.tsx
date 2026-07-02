@@ -166,7 +166,7 @@ const StudentsManagement: React.FC = () => {
           setClassId("");
         }}
       >
-        <option value="">{t("كل المؤسسات")}</option>
+        <option value="">{t("كل المدارس")}</option>
         {organizations.map((org) => (
           <option key={org.id} value={org.id}>
             {org.name}

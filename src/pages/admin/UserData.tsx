@@ -267,7 +267,6 @@ const UserData: React.FC = () => {
   const [editClassName, setEditClassName] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [editOrgName, setEditOrgName] = useState("");
-  const [editOrgType, setEditOrgType] = useState("School");
   const [editClassesOptions, setEditClassesOptions] = useState<{ id: number; classname: string; category: string }[]>([]);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
@@ -361,7 +360,6 @@ const UserData: React.FC = () => {
     setEditClassName(row.classname ?? "");
     setEditCategory(row.category ?? "");
     setEditOrgName(row.name ?? "");
-    setEditOrgType(row.type ?? "School");
   };
 
   const openCreateClassModal = () => {
@@ -374,7 +372,6 @@ const UserData: React.FC = () => {
   const openCreateOrgModal = () => {
     setEditingRow({ isNew: true });
     setEditOrgName("");
-    setEditOrgType("School");
   };
 
   // ── Fetch edit classes ──────────────────────────────────────────
@@ -420,7 +417,7 @@ const UserData: React.FC = () => {
           await axios.patch(`${API_BASE_URL}/admin/classes/${editingRow.id}`, body, { headers: { Authorization: `Bearer ${token}` } });
         }
       } else if (activeTab === "organizations") {
-        const body = { name: editOrgName, type: editOrgType };
+        const body = { name: editOrgName };
         if (isNew) {
           await axios.post(`${API_BASE_URL}/admin/organizations`, body, { headers: { Authorization: `Bearer ${token}` } });
         } else {
@@ -437,7 +434,7 @@ const UserData: React.FC = () => {
             grade: activeTab === "students" ? editGrade : undefined,
             organizationId:
               activeTab === "students" || activeTab === "teachers"
-                ? (editOrgId ? Number(editOrgId) : undefined)
+                ? (editOrgId ? Number(editOrgId) : null)
                 : undefined,
             classId: activeTab === "students" ? (editClassId ? Number(editClassId) : null) : undefined,
           },
@@ -574,7 +571,7 @@ const UserData: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } },
       );
       toast.success(
-        `${t("admin.toast.resetSuccess")} ${response.data.newPassword}`,
+        `${t("admin.toast.resetSuccess")} \u200E${response.data.newPassword}\u200E`,
       );
     } catch (error) {
       console.error("Error resetting password:", error);
@@ -617,7 +614,7 @@ const UserData: React.FC = () => {
       case "classes":
         return ["admin.th.id", "admin.th.className", "admin.th.category", "admin.th.organization", "admin.th.studentCount", "admin.th.actions"];
       case "organizations":
-        return ["admin.th.id", "admin.th.orgName", "admin.th.orgType", "admin.th.actions"];
+        return ["admin.th.id", "admin.th.orgName", "admin.th.actions"];
       default:
         return ["admin.th.id", "admin.th.name", "admin.th.email", "admin.th.role", "admin.th.verified", "admin.th.createdAt", "admin.th.actions"];
     }
@@ -674,7 +671,6 @@ const UserData: React.FC = () => {
         cells = [
           <span className="font-mono text-gray-400 text-xs">#{row.id}</span>,
           <span className="font-medium text-gray-900">{row.name}</span>,
-          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">{t(`admin.orgType.${row.type}`)}</span>,
         ];
         break;
       default:
@@ -1298,24 +1294,6 @@ const UserData: React.FC = () => {
                         onChange={(e) => setEditOrgName(e.target.value)}
                         className="w-full p-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:border-blueprimary focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                       />
-                    </div>
-                    <div>
-                      <label className="block mb-1.5 text-sm font-medium text-gray-600">{t("admin.modal.orgType")}</label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {["School", "Company", "Charity"].map((type) => (
-                          <button
-                            key={type}
-                            onClick={() => setEditOrgType(type)}
-                            className={`py-2.5 text-xs rounded-xl font-semibold transition-all duration-200 ${
-                              editOrgType === type
-                                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
-                                : "border-2 border-gray-200 text-gray-500 hover:border-gray-300"
-                            }`}
-                          >
-                            {t(`admin.orgType.${type}`)}
-                          </button>
-                        ))}
-                      </div>
                     </div>
                   </>
                 ) : (

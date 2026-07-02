@@ -15,8 +15,8 @@ const AdminHome: React.FC = () => {
 
   const cards = [
     {
-      title: "المدارس والمؤسسات",
-      description: "إنشاء وتعديل وحذف المدارس والمؤسسات",
+      title: "المدارس",
+      description: "إنشاء وتعديل وحذف المدارس",
       icon: <ApplyClass size={36} />,
       to: "/admin/organizations",
     },
@@ -28,7 +28,8 @@ const AdminHome: React.FC = () => {
     },
     {
       title: "بيانات المستخدمين",
-      description: "عرض كل المستخدمين (طلاب، معلمون، أولياء أمور، مشرفون) وإعادة تعيين كلمات المرور",
+      description:
+        "عرض كل المستخدمين (طلاب، معلمون، أولياء أمور، مشرفون) وإعادة تعيين كلمات المرور",
       icon: <FaDatabase size={30} />,
       to: "/admin/userdata",
       // rendered outside the router (like /simulation), so it needs a full navigation, not client-side routing
@@ -59,16 +60,22 @@ const AdminHome: React.FC = () => {
             transition={{ delay: 0.1 * index }}
             whileTap={{ scale: 0.98 }}
             onClick={() =>
-              card.external ? (window.location.href = card.to) : history.push(card.to)
+              card.external
+                ? (window.location.href = card.to)
+                : history.push(card.to)
             }
             className="flex items-center w-full gap-4 p-4 bg-white shadow-md cursor-pointer rounded-2xl"
           >
-            <div className="flex items-center justify-center w-14 h-14 bg-blue-50 rounded-xl">
+            <div className="flex items-center justify-center flex-shrink-0 w-14 h-14 bg-blue-50 rounded-xl text-blue-600">
               {card.icon}
             </div>
-            <div className="flex flex-col">
-              <h2 className="text-lg font-bold text-black">{t(card.title)}</h2>
-              <p className="text-sm text-gray-500">{t(card.description)}</p>
+            <div className="flex flex-col min-w-0">
+              <h2 className="text-base font-bold text-black">
+                {t(card.title)}
+              </h2>
+              <p className="text-sm leading-snug text-gray-500">
+                {t(card.description)}
+              </p>
             </div>
           </motion.div>
         ))}

@@ -11,10 +11,7 @@ import { FaPlus, FaTrash, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 interface Organization {
   id: number;
   name: string;
-  type: string;
 }
-
-const ORG_TYPES = ["School", "Company", "Charity"];
 
 const Toaster = () => (
   <ToastContainer
@@ -37,7 +34,6 @@ const OrganizationsList: React.FC = () => {
 
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 20;
@@ -48,7 +44,6 @@ const OrganizationsList: React.FC = () => {
     try {
       const params: Record<string, string | number> = { page, limit };
       if (search) params.search = search;
-      if (typeFilter) params.type = typeFilter;
 
       const response = await axios.get(`${API_BASE_URL}/admin/organizations`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -66,7 +61,7 @@ const OrganizationsList: React.FC = () => {
     const timeout = setTimeout(fetchOrganizations, 300);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, typeFilter, page]);
+  }, [search, page]);
 
   const handleDelete = async (organizationId: number) => {
     const token = localStorage.getItem("token");
@@ -74,17 +69,17 @@ const OrganizationsList: React.FC = () => {
       await axios.delete(`${API_BASE_URL}/admin/organizations/${organizationId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success(t("تم حذف المؤسسة بنجاح"));
+      toast.success(t("تم حذف المدرسة بنجاح"));
       setConfirmDeleteId(null);
       fetchOrganizations();
     } catch (error: any) {
       const data = error?.response?.data;
       if (data?.studentCount !== undefined) {
         toast.error(
-          `${t("لا يمكن حذف المؤسسة، تحتوي على")} ${data.studentCount} ${t("طالب")}, ${data.teacherCount} ${t("معلم")}, ${data.classCount} ${t("فصل")}`
+          `${t("لا يمكن حذف المدرسة، تحتوي على")} ${data.studentCount} ${t("طالب")}, ${data.teacherCount} ${t("معلم")}, ${data.classCount} ${t("فصل")}`
         );
       } else {
-        toast.error(t("حدث خطأ أثناء حذف المؤسسة"));
+        toast.error(t("حدث خطأ أثناء حذف المدرسة"));
       }
       setConfirmDeleteId(null);
     }
@@ -95,7 +90,7 @@ const OrganizationsList: React.FC = () => {
       <Toaster />
       <div className="flex flex-row-reverse items-center justify-between w-full">
         <h1 className="self-center text-xl font-bold text-black" dir="ltr">
-          {t("المدارس والمؤسسات")}
+          {t("المدارس")}
         </h1>
         <GoBackButton />
       </div>
@@ -106,7 +101,7 @@ const OrganizationsList: React.FC = () => {
         </div>
         <input
           type="text"
-          placeholder={t("ابحث باسم المؤسسة") as string}
+          placeholder={t("ابحث باسم المدرسة") as string}
           className="w-full py-3 text-black bg-transparent outline-none drop-shadow-sm text-start"
           value={search}
           onChange={(e) => {
@@ -114,34 +109,6 @@ const OrganizationsList: React.FC = () => {
             setSearch(e.target.value);
           }}
         />
-      </div>
-
-      <div className="flex w-full gap-2 overflow-x-auto">
-        <button
-          onClick={() => {
-            setPage(1);
-            setTypeFilter("");
-          }}
-          className={`px-3 py-1 rounded-full text-sm whitespace-nowrap ${
-            typeFilter === "" ? "bg-blueprimary text-white" : "bg-gray-100 text-gray-600"
-          }`}
-        >
-          {t("الكل")}
-        </button>
-        {ORG_TYPES.map((type) => (
-          <button
-            key={type}
-            onClick={() => {
-              setPage(1);
-              setTypeFilter(type);
-            }}
-            className={`px-3 py-1 rounded-full text-sm whitespace-nowrap ${
-              typeFilter === type ? "bg-blueprimary text-white" : "bg-gray-100 text-gray-600"
-            }`}
-          >
-            {t(type)}
-          </button>
-        ))}
       </div>
 
       <div className="flex flex-col w-full gap-2 overflow-y-auto">
@@ -155,7 +122,6 @@ const OrganizationsList: React.FC = () => {
               onClick={() => history.push(`/admin/organizations/${org.id}`)}
             >
               <h2 className="font-bold text-black capitalize">{org.name}</h2>
-              <p className="text-sm text-gray-500">{t(org.type)}</p>
             </div>
             {confirmDeleteId === org.id ? (
               <div className="flex items-center gap-2">

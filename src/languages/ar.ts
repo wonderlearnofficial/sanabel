@@ -236,7 +236,7 @@ const ar = {
     "admin.tab.parents": "أولياء الأمور",
     "admin.tab.admins": "المشرفون",
     "admin.tab.classes": "الفصول",
-    "admin.tab.organizations": "المدارس والمؤسسات",
+    "admin.tab.organizations": "المدارس",
 
     // Stats cards
     "admin.stats.totalUsers": "إجمالي المستخدمين",
@@ -253,15 +253,14 @@ const ar = {
     "admin.th.verified": "تم التحقق",
     "admin.th.createdAt": "تاريخ الإنشاء",
     "admin.th.grade": "المرحلة",
-    "admin.th.organization": "المؤسسة",
+    "admin.th.organization": "المدرسة",
     "admin.th.class": "الفصل",
     "admin.th.xp": "XP",
     "admin.th.childCount": "عدد الأبناء المرتبطين",
     "admin.th.className": "اسم الفصل",
     "admin.th.category": "الفئة",
     "admin.th.studentCount": "عدد الطلاب",
-    "admin.th.orgName": "الاسم",
-    "admin.th.orgType": "النوع",
+    "admin.th.orgName": "اسم المدرسة",
     "admin.th.actions": "الإجراءات",
 
     // Roles
@@ -280,7 +279,7 @@ const ar = {
     // Create button
     "admin.create.user": "إنشاء حساب جديد",
     "admin.create.class": "إنشاء فصل جديد",
-    "admin.create.organization": "إنشاء مؤسسة جديدة",
+    "admin.create.organization": "إضافة مدرسة جديدة",
 
     // Create modal
     "admin.modal.createUser": "إنشاء حساب جديد",
@@ -290,8 +289,8 @@ const ar = {
     "admin.modal.email": "البريد الإلكتروني",
     "admin.modal.grade": "المرحلة الدراسية",
     "admin.modal.selectGrade": "اختر المرحلة",
-    "admin.modal.org": "المؤسسة",
-    "admin.modal.selectOrg": "اختر المؤسسة",
+    "admin.modal.org": "المدرسة",
+    "admin.modal.selectOrg": "اختر المدرسة",
     "admin.modal.class": "الفصل (اختياري)",
     "admin.modal.selectClass": "اختر الفصل",
     "admin.modal.createBtn": "إنشاء الحساب",
@@ -308,13 +307,12 @@ const ar = {
     // Edit modal
     "admin.modal.editUser": "تعديل المستخدم",
     "admin.modal.editClass": "تعديل الفصل",
-    "admin.modal.editOrg": "تعديل المؤسسة",
+    "admin.modal.editOrg": "تعديل المدرسة",
     "admin.modal.createClass": "إنشاء فصل جديد",
-    "admin.modal.createOrg": "إنشاء مؤسسة جديدة",
+    "admin.modal.createOrg": "إضافة مدرسة جديدة",
     "admin.modal.className": "اسم الفصل",
     "admin.modal.category": "الفئة",
-    "admin.modal.orgName": "اسم المؤسسة",
-    "admin.modal.orgType": "النوع",
+    "admin.modal.orgName": "اسم المدرسة",
     "admin.modal.noClass": "بدون فصل",
     "admin.modal.saveBtn": "حفظ التعديلات",
     "admin.modal.saving": "جاري الحفظ...",
@@ -355,18 +353,15 @@ const ar = {
     "admin.toast.resetSuccess": "تم إعادة تعيين كلمة المرور إلى:",
     "admin.toast.resetFailed": "تعذر إعادة تعيين كلمة المرور",
     "admin.toast.firstNameEmailRequired": "الاسم الأول والبريد الإلكتروني مطلوبان",
-    "admin.toast.selectOrg": "يرجى اختيار المؤسسة",
-    "admin.toast.classNameCategoryOrgRequired": "اسم الفصل والفئة والمؤسسة مطلوبة",
-    "admin.toast.orgNameRequired": "اسم المؤسسة مطلوب",
+    "admin.toast.selectOrg": "يرجى اختيار المدرسة",
+    "admin.toast.classNameCategoryOrgRequired": "اسم الفصل والفئة والمدرسة مطلوبة",
+    "admin.toast.orgNameRequired": "اسم المدرسة مطلوب",
     "admin.toast.deleteHasRelated": "لا يمكن الحذف، توجد بيانات مرتبطة:",
     "admin.toast.students": "طالب",
     "admin.toast.teachers": "معلم",
     "admin.toast.classes": "فصل",
 
-    // Org types
-    "admin.orgType.School": "مدرسة",
-    "admin.orgType.Company": "شركة",
-    "admin.orgType.Charity": "جمعية خيرية",
+
 
     // Grade values
     "admin.grade.primary": "ابتدائي",

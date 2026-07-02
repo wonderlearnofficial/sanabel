@@ -204,7 +204,7 @@ const StudentDetailEdit: React.FC = () => {
       </div>
 
       <div className="flex flex-col justify-end w-full gap-2">
-        <h1 className="text-[#121212]">{t("المؤسسة")}</h1>
+        <h1 className="text-[#121212]">{t("المدرسة")}</h1>
         <select
           className="w-full p-3 text-black border-2 rounded-xl border-[#EAECF0]"
           value={organizationId}
@@ -213,7 +213,7 @@ const StudentDetailEdit: React.FC = () => {
             setClassId("");
           }}
         >
-          <option value="">{t("اختر المؤسسة")}</option>
+          <option value="">{t("اختر المدرسة")}</option>
           {organizations.map((org) => (
             <option key={org.id} value={org.id}>
               {org.name}
