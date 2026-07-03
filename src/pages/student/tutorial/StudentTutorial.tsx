@@ -44,6 +44,7 @@ const StudentTutorial: React.FC = () => {
 
   const [trophyIndex, setTrophyIndex] = useState(0);
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false);
 
   const typeColors = [
     "bg-blueprimary",
@@ -143,6 +144,17 @@ const StudentTutorial: React.FC = () => {
     }
   }
 
+  // Skipping used to jump straight to the last step with no save at all, so
+  // an avatar chosen right before hitting Skip was lost exactly like the
+  // original end-of-tutorial-only save bug. Save it here too before jumping.
+  const confirmSkip = async () => {
+    setIsSavingAvatar(true);
+    await saveAvatarToServer();
+    setIsSavingAvatar(false);
+    setShowSkipConfirm(false);
+    setStepCount(steps.length - 1);
+  };
+
   // Only apply the background color when on the SanabelTypes step
 
   const [bgColor, setBgColor] = useState("bg-white");
@@ -202,7 +214,7 @@ const StudentTutorial: React.FC = () => {
       <div className="flex flex-col gap-2 overflow-y-auto">
         <div
           className="w-24 p-1 px-2 mx-auto text-center border-2 cursor-pointer rounded-3xl text-blueprimary text-md"
-          onClick={() => setStepCount(steps.length - 1)}
+          onClick={() => setShowSkipConfirm(true)}
         >
           {t("تخطي")}
         </div>
@@ -256,6 +268,49 @@ const StudentTutorial: React.FC = () => {
           <div className=""></div>
         ) : null}
       </div>
+
+      <AnimatePresence>
+        {showSkipConfirm && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => !isSavingAvatar && setShowSkipConfirm(false)}
+          >
+            <motion.div
+              className="w-full max-w-xs rounded-2xl bg-white p-5 text-center shadow-2xl"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="mb-2 text-lg font-bold text-gray-900">
+                {t("تخطي الجولة التعريفية؟")}
+              </h3>
+              <p className="mb-4 text-sm text-gray-500">
+                {t("لن تتمكن من رؤية هذه الخطوات مرة أخرى")}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowSkipConfirm(false)}
+                  disabled={isSavingAvatar}
+                  className="flex-1 rounded-xl border-2 border-gray-200 py-2.5 font-semibold text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {t("إلغاء")}
+                </button>
+                <button
+                  onClick={confirmSkip}
+                  disabled={isSavingAvatar}
+                  className="flex-1 rounded-xl bg-blueprimary py-2.5 font-semibold text-white transition-colors disabled:opacity-50"
+                >
+                  {isSavingAvatar ? t("جاري الحفظ...") : t("تخطي")}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

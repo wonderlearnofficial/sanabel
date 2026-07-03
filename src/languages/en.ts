@@ -1148,6 +1148,8 @@ const en = {
     "تعذر تحميل بيانات المدرسة": "Failed to load school data",
     "جاري الحفظ...": "Saving...",
     "تعذر حفظ الصورة الشخصية، حاول مرة أخرى": "Couldn't save your avatar, please try again",
+    "تخطي الجولة التعريفية؟": "Skip the tutorial?",
+    "لن تتمكن من رؤية هذه الخطوات مرة أخرى": "You won't be able to see these steps again",
     "كل المدارس": "All Schools",
     "كل الفصول": "All Classes",
     "كل المراحل": "All Stages",
