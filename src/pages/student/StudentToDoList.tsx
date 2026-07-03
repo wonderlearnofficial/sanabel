@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "../../config/api";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 
@@ -414,22 +414,46 @@ const TodoList = () => {
   const canAssignTask = user?.canAssignTask;
   const isPersonal = !user?.classId;
 
-  // Load todos from localStorage on component mount
+  // Load todos from localStorage on mount, resetting completion status once per day.
+  // This must be a single effect: splitting "load" and "reset" into separate
+  // useEffects let the save-effect below run in between with the pre-load empty
+  // array, wiping todoList out of localStorage before the reset check ever saw it.
+  const isInitialMount = useRef(true);
+
   useEffect(() => {
     const savedTodos = localStorage.getItem("todoList");
+    const lastReset = localStorage.getItem("lastResetDate");
+    const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
+
     if (savedTodos) {
       try {
-        const parsedTodos = JSON.parse(savedTodos);
-        setTodoItems(parsedTodos);
+        const parsedTodos: TodoItem[] = JSON.parse(savedTodos);
+        if (lastReset !== today) {
+          const resetTodos = parsedTodos.map((item) => ({
+            ...item,
+            completed: false,
+          }));
+          setTodoItems(resetTodos);
+          localStorage.setItem("todoList", JSON.stringify(resetTodos));
+        } else {
+          setTodoItems(parsedTodos);
+        }
       } catch (error) {
-        console.error("Error parsing saved todos:", error);
+        console.error("Error parsing/resetting todos:", error);
         localStorage.removeItem("todoList");
       }
     }
+    localStorage.setItem("lastResetDate", today);
   }, []);
 
-  // Save todos to localStorage whenever todoItems changes
+  // Save todos to localStorage whenever todoItems changes. Skip the initial
+  // mount — the load/reset effect above already owns localStorage for that
+  // first render, and running this then would use the stale pre-load state.
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     if (todoItems.length > 0) {
       localStorage.setItem("todoList", JSON.stringify(todoItems));
     } else {
@@ -457,41 +481,6 @@ const TodoList = () => {
     setSelectedMissionId(todoItemId);
     setShowConfirmPopup(true);
   };
-
-  useEffect(() => {
-    const savedTodos = localStorage.getItem("todoList");
-    const lastReset = localStorage.getItem("lastResetDate");
-
-    const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
-
-    if (lastReset !== today && savedTodos) {
-      try {
-        const parsedTodos: TodoItem[] = JSON.parse(savedTodos);
-
-        // Reset all tasks to uncompleted
-        const resetTodos = parsedTodos.map((item) => ({
-          ...item,
-          completed: false,
-        }));
-
-        setTodoItems(resetTodos);
-        localStorage.setItem("todoList", JSON.stringify(resetTodos));
-        localStorage.setItem("lastResetDate", today);
-      } catch (error) {
-        console.error("Error parsing/resetting todos:", error);
-        localStorage.removeItem("todoList");
-      }
-    } else if (savedTodos) {
-      try {
-        setTodoItems(JSON.parse(savedTodos));
-      } catch (error) {
-        console.error("Error parsing todos:", error);
-        localStorage.removeItem("todoList");
-      }
-    } else {
-      localStorage.setItem("lastResetDate", today);
-    }
-  }, []);
 
   const getCurrentTime = () => {
     const now = new Date();
