@@ -8,6 +8,22 @@ import { OtherTrophies } from "../../data/OtherTrophies";
 import { SanabelTrophies } from "../../data/SanabelTrophies";
 import { useNotifications } from "./NotificationContext";
 
+// Sanabel type icons — same 4 categories/colors used in ChooseSanabel,
+// ChooseSanabelType and the student's SanabelMissionsPage, indexed by
+// Task.categoryId (1-based) so approval cards match the mission's own look.
+import sanabelType1Img from "../../assets/sanabeltype/سنابل-الإحسان-في-العلاقة-مع-الله.png";
+import sanabelType2Img from "../../assets/sanabeltype/سنابل الإحسان في العلاقة مع النفس.png";
+import sanabelType3Img from "../../assets/sanabeltype/سنابل الإحسان في العلاقة مع الأسرة والمجتمع.png";
+import sanabelType4Img from "../../assets/sanabeltype/سنابل-الإحسان-في-العلاقة-مع-الأرض-والكون.png";
+
+const sanabelTypeImgs = [
+  sanabelType1Img,
+  sanabelType2Img,
+  sanabelType3Img,
+  sanabelType4Img,
+];
+const sanabelTypeColors = ["blueprimary", "redprimary", "yellowprimary", "greenprimary"];
+
 // Parent/Teacher: mission approval requests, reusing the same bell/route as
 // student trophy notifications rather than building a separate page.
 const ApprovalRequestsView: React.FC = () => {
@@ -100,15 +116,28 @@ const ApprovalRequestsView: React.FC = () => {
                 }`.trim();
                 const isActioning = actioningId === request.id;
                 const error = errorByRequest[request.id];
+
+                const catIndex =
+                  ((request.Mission?.categoryId || 1) - 1) % sanabelTypeColors.length;
+                const colorName = sanabelTypeColors[catIndex];
+                const typeImg = sanabelTypeImgs[catIndex];
+
+                const resources = [
+                  { icon: blueSanabel, value: request.Mission?.snabelBlue },
+                  { icon: redSanabel, value: request.Mission?.snabelRed },
+                  { icon: yellowSanabel, value: request.Mission?.snabelYellow },
+                  { icon: xpIcon, value: request.Mission?.xp },
+                ].filter((r) => r.value);
+
                 return (
                   <motion.div
                     key={request.id}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -20 }}
-                    className="p-4 bg-white border border-gray-100 shadow-sm rounded-2xl"
+                    className={`w-full bg-white border-t-2 border-t-${colorName} sanabel-shadow-bottom rounded-xl p-4`}
                   >
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-bold text-gray-800">
                         {studentName}
                       </span>
@@ -116,31 +145,39 @@ const ApprovalRequestsView: React.FC = () => {
                         {formatMissionDate(request.missionDate)}
                       </span>
                     </div>
-                    {request.Mission?.type && (
-                      <span className="inline-block px-2 py-0.5 mb-2 text-xs font-semibold rounded-full text-blueprimary bg-blue-50">
-                        {t(request.Mission.type)}
-                      </span>
-                    )}
-                    <p className="mb-2 text-sm font-semibold text-gray-800">
-                      {t(request.Mission?.title)}
-                    </p>
-                    <div className="flex items-center gap-3 mb-3">
-                      {[
-                        { icon: blueSanabel, value: request.Mission?.snabelBlue },
-                        { icon: redSanabel, value: request.Mission?.snabelRed },
-                        { icon: yellowSanabel, value: request.Mission?.snabelYellow },
-                        { icon: xpIcon, value: request.Mission?.xp },
-                      ]
-                        .filter((r) => r.value)
-                        .map((reward, i) => (
+
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <img
+                        src={typeImg}
+                        alt=""
+                        className="flex-shrink-0 w-12 h-12 object-contain"
+                        loading="lazy"
+                      />
+                      <div className="flex-1 min-w-0">
+                        {request.Mission?.type && (
+                          <h2 className={`text-xs font-bold text-${colorName} mb-0.5`}>
+                            {t(request.Mission.type)}
+                          </h2>
+                        )}
+                        <p className="text-sm font-semibold text-gray-800">
+                          {t(request.Mission?.title)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {resources.length > 0 && (
+                      <div className="flex items-center gap-3 mb-3">
+                        {resources.map((reward, i) => (
                           <div key={i} className="flex items-center gap-1">
-                            <img src={reward.icon} alt="" className="w-4 h-4" />
+                            <img src={reward.icon} alt="" className="w-5 h-5" />
                             <span className="text-xs font-bold text-gray-600">
                               {reward.value}
                             </span>
                           </div>
                         ))}
-                    </div>
+                      </div>
+                    )}
+
                     {error && (
                       <p className="mb-2 text-xs font-medium text-red-600">
                         {error}
