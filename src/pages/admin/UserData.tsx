@@ -1077,6 +1077,12 @@ const UserData: React.FC = () => {
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
+    // Clear rows immediately instead of waiting for fetchData's debounce to
+    // kick in — otherwise there's a window where activeTab has already
+    // switched (e.g. to "grades") but rows[] still holds the previous tab's
+    // differently-shaped data, and renderRow crashes trying to read fields
+    // that don't exist on that shape (e.g. a student row has no `.name`).
+    setRows([]);
     setSearch("");
     setPage(1);
     setSelectedIds(new Set());
@@ -1620,7 +1626,9 @@ const UserData: React.FC = () => {
     const userId = isUserLikeTab(activeTab) ? getUserId(activeTab, row) : -1;
     const selId = isUserLikeTab(activeTab) ? userId : row.id;
     const name =
-      activeTab === "grades" ? row.name : getName(activeTab, row) || "—";
+      activeTab === "grades"
+        ? row.name ?? "—"
+        : getName(activeTab, row) || "—";
     const email = getEmail(activeTab, row);
     const deleteId = getDeleteId(activeTab, row);
     const isSel = selectedIds.has(selId);
