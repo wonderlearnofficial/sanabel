@@ -81,6 +81,9 @@ const SanabelMissionsPage: React.FC = () => {
 
   // Approval-workflow state (school students only)
   const [hasApprovers, setHasApprovers] = useState<boolean | null>(null);
+  const [approverNames, setApproverNames] = useState<
+    { type: "parent" | "teacher"; name: string }[]
+  >([]);
   const [requestStatusMap, setRequestStatusMap] = useState<
     Record<number, ApprovalStatus>
   >({});
@@ -194,8 +197,9 @@ const SanabelMissionsPage: React.FC = () => {
         { headers: { Authorization: `Bearer ${authToken}` } }
       );
       if (approversResponse.status === 200) {
-        const { hasParent, hasTeacher } = approversResponse.data.data;
+        const { hasParent, hasTeacher, approvers } = approversResponse.data.data;
         setHasApprovers(hasParent || hasTeacher);
+        setApproverNames(approvers || []);
       }
 
       const today = getTodayDateOnly();
@@ -555,13 +559,34 @@ const SanabelMissionsPage: React.FC = () => {
                 <h2 className="mb-2 text-xl font-bold text-gray-800">
                   {isPersonal ? t("تأكيد الإنجاز") : t("إرسال طلب الموافقة")}
                 </h2>
-                <p className="mb-6 text-gray-600">
-                  {isPersonal
-                    ? t("هل أنت متأكد من أنك أنجزت هذه المهمة؟")
-                    : t(
-                        "سيتم إرسال طلب إلى ولي أمرك أو معلمك للموافقة على إنجاز هذه المهمة"
-                      )}
-                </p>
+                {isPersonal ? (
+                  <p className="mb-6 text-gray-600">
+                    {t("هل أنت متأكد من أنك أنجزت هذه المهمة؟")}
+                  </p>
+                ) : (
+                  <div className="mb-6">
+                    <p className="mb-2 text-gray-600">
+                      {t("سيتم إرسال الطلب إلى:")}
+                    </p>
+                    <div className="flex flex-col items-center gap-1">
+                      {approverNames.map((approver, i) => (
+                        <span
+                          key={i}
+                          className="text-sm font-semibold text-gray-800"
+                        >
+                          {approver.name || t("بدون اسم")}{" "}
+                          <span className="text-xs font-normal text-gray-400">
+                            (
+                            {approver.type === "parent"
+                              ? t("ولي الأمر")
+                              : t("معلم")}
+                            )
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowConfirmPopup(false)}
