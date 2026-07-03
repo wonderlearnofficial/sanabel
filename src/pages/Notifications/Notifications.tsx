@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { OtherTrophies } from "../../data/OtherTrophies";
 import { SanabelTrophies } from "../../data/SanabelTrophies";
 import { useNotifications } from "./NotificationContext";
+import GetAvatar from "../student/tutorial/GetAvatar";
 
 // Sanabel type icons — same 4 categories/colors used in ChooseSanabel,
 // ChooseSanabelType and the student's SanabelMissionsPage, indexed by
@@ -114,6 +115,9 @@ const ApprovalRequestsView: React.FC = () => {
                 const studentName = `${request.Student?.User?.firstName || ""} ${
                   request.Student?.User?.lastName || ""
                 }`.trim();
+                const studentClassName = request.Student?.Class?.classname;
+                const studentGrade =
+                  request.Student?.Class?.grade || request.Student?.grade;
                 const isActioning = actioningId === request.id;
                 const error = errorByRequest[request.id];
 
@@ -138,9 +142,24 @@ const ApprovalRequestsView: React.FC = () => {
                     className={`w-full bg-white border-t-2 border-t-${colorName} sanabel-shadow-bottom rounded-xl p-4`}
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-bold text-gray-800">
-                        {studentName}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-shrink-0 w-10 h-10">
+                          <GetAvatar userAvatarData={request.Student?.User?.profileImg} />
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-gray-800">
+                            {studentName}
+                          </p>
+                          {(studentClassName || studentGrade) && (
+                            <p className="text-xs text-gray-400">
+                              {[studentClassName, studentGrade]
+                                .filter(Boolean)
+                                .map((v) => t(v))
+                                .join(" · ")}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                       <span className="text-xs text-gray-400">
                         {formatMissionDate(request.missionDate)}
                       </span>
