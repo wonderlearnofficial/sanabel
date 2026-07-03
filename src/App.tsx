@@ -103,6 +103,9 @@ import StudentsManagement from "./pages/admin/students/StudentsManagement";
 import StudentDetailEdit from "./pages/admin/students/StudentDetailEdit";
 import UserData from "./pages/admin/UserData";
 
+// Dev-only quick-login tool
+import DevLogin from "./pages/dev/DevLogin";
+
 setupIonicReact();
 
 // Custom hook for internet connection detection
@@ -200,6 +203,8 @@ const App: React.FC = () => {
             <Simulation />
           ) : window.location.pathname === "/admin/userdata" ? (
             <UserData />
+          ) : window.location.pathname === "/dev/login" && import.meta.env.DEV ? (
+            <DevLogin />
           ) : (
           /* Outer container that fills the entire viewport */
           <div className="flex items-center justify-center w-screen h-screen bg-white md:bg-gray-100">
