@@ -8,6 +8,149 @@ import { OtherTrophies } from "../../data/OtherTrophies";
 import { SanabelTrophies } from "../../data/SanabelTrophies";
 import { useNotifications } from "./NotificationContext";
 
+// Parent/Teacher: mission approval requests, reusing the same bell/route as
+// student trophy notifications rather than building a separate page.
+const ApprovalRequestsView: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  const {
+    pendingApprovalRequests,
+    isLoading,
+    refreshNotifications,
+    approveApprovalRequest,
+    denyApprovalRequest,
+  } = useNotifications();
+  const [actioningId, setActioningId] = useState<number | null>(null);
+  const [errorByRequest, setErrorByRequest] = useState<Record<number, string>>(
+    {}
+  );
+
+  useEffect(() => {
+    refreshNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const formatMissionDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString(i18n.language === "en" ? "en-US" : "ar-EG", {
+      day: "numeric",
+      month: "short",
+    });
+  };
+
+  const handleDecision = async (
+    requestId: number,
+    decision: "approve" | "deny"
+  ) => {
+    setActioningId(requestId);
+    setErrorByRequest((prev) => ({ ...prev, [requestId]: "" }));
+    try {
+      if (decision === "approve") {
+        await approveApprovalRequest(requestId);
+      } else {
+        await denyApprovalRequest(requestId);
+      }
+    } catch (error: any) {
+      setErrorByRequest((prev) => ({
+        ...prev,
+        [requestId]:
+          error?.response?.data?.message || t("حدث خطأ، حاول مرة أخرى"),
+      }));
+    } finally {
+      setActioningId(null);
+    }
+  };
+
+  return (
+    <div className="flex flex-col w-full h-full bg-gray-50" dir="rtl">
+      <div className="flex items-center justify-between px-4 pt-4 pb-3 bg-white shadow-sm">
+        <GoBackButton />
+        <h1 className="text-xl font-bold text-gray-900">
+          {t("طلبات الموافقة")}
+        </h1>
+        <div className="w-6" />
+      </div>
+
+      <div className="flex-1 p-4 overflow-y-auto">
+        {isLoading ? (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : pendingApprovalRequests.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full gap-3 px-6">
+            <img
+              src={nonotification}
+              alt="no notifications"
+              className="w-36 h-36 opacity-60"
+            />
+            <h2 className="text-lg font-bold text-gray-700">
+              {t("لا توجد طلبات موافقة حاليًا")}
+            </h2>
+            <p className="text-sm text-center text-gray-400 max-w-[240px]">
+              {t("ستظهر هنا طلبات إنجاز المهام التي يرسلها أبناؤك أو طلابك")}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <AnimatePresence>
+              {pendingApprovalRequests.map((request: any) => {
+                const studentName = `${request.Student?.User?.firstName || ""} ${
+                  request.Student?.User?.lastName || ""
+                }`.trim();
+                const isActioning = actioningId === request.id;
+                const error = errorByRequest[request.id];
+                return (
+                  <motion.div
+                    key={request.id}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="p-4 bg-white border border-gray-100 shadow-sm rounded-2xl"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-bold text-gray-800">
+                        {studentName}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {formatMissionDate(request.missionDate)}
+                      </span>
+                    </div>
+                    <p className="mb-3 text-sm font-semibold text-blueprimary">
+                      {t(request.Mission?.title)}
+                    </p>
+                    {error && (
+                      <p className="mb-2 text-xs font-medium text-red-600">
+                        {error}
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleDecision(request.id, "approve")}
+                        disabled={isActioning}
+                        className="flex-1 py-2 text-sm font-bold text-white transition-colors rounded-lg bg-greenprimary hover:opacity-80 disabled:opacity-50"
+                      >
+                        {t("موافقة")}
+                      </button>
+                      <button
+                        onClick={() => handleDecision(request.id, "deny")}
+                        disabled={isActioning}
+                        className="flex-1 py-2 text-sm font-bold text-white transition-colors bg-red-500 rounded-lg hover:opacity-80 disabled:opacity-50"
+                      >
+                        {t("رفض")}
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 import treestage1 from "../../assets/trophies/Other Trophies/مرحلة - 1.png";
 import treestage2 from "../../assets/trophies/Other Trophies/مرحلة - 2.png";
 import treestage3 from "../../assets/trophies/Other Trophies/مرحلة - 3.png";
@@ -51,6 +194,7 @@ const SkeletonCard = () => (
 
 const Notifications: React.FC = () => {
   const currentLanguage = localStorage.getItem("language");
+  const role = localStorage.getItem("role");
   const { t } = useTranslation();
   const [filteredTrophies, setFilteredTrophies] = useState<any[]>([]);
   const [filters, setFilters] = useState<FilterOptions>({
@@ -154,6 +298,10 @@ const Notifications: React.FC = () => {
     ].filter((r) => r.value > 0);
 
   const hasUnread = allTrophies.some((t) => !readChallengeIds.includes(t.challengeId));
+
+  if (role === "Parent" || role === "Teacher") {
+    return <ApprovalRequestsView />;
+  }
 
   return (
     <div className="flex flex-col w-full h-full bg-gray-50" dir="rtl">

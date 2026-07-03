@@ -33,6 +33,11 @@ interface NotificationContextType {
   unreadCount: number;
   isLoading: boolean;
   refreshNotifications: () => Promise<void>;
+
+  // Mission approval requests (Parent/Teacher)
+  pendingApprovalRequests: any[];
+  approveApprovalRequest: (requestId: number) => Promise<void>;
+  denyApprovalRequest: (requestId: number) => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
@@ -46,6 +51,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
   const [allTrophies, setAllTrophies] = useState<any[]>([]);
   const [readChallengeIds, setReadChallengeIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [pendingApprovalRequests, setPendingApprovalRequests] = useState<any[]>([]);
 
   // Initialize read IDs from localStorage
   useEffect(() => {
@@ -67,10 +73,40 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
   const refreshNotifications = async () => {
     const authToken = localStorage.getItem("token");
     const role = localStorage.getItem("role");
-    if (!authToken || role !== "Student") {
+    if (!authToken) {
       setAllTrophies([]);
+      setPendingApprovalRequests([]);
       return;
     }
+
+    if (role === "Parent" || role === "Teacher") {
+      setAllTrophies([]);
+      setIsLoading(true);
+      try {
+        const endpoint =
+          role === "Parent"
+            ? `${API_BASE_URL}/parents/pendingRequests`
+            : `${API_BASE_URL}/teachers/pendingRequests`;
+        const response = await axios.get(endpoint, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+        if (response.status === 200) {
+          setPendingApprovalRequests(response.data.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching pending approval requests:", error);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    if (role !== "Student") {
+      setAllTrophies([]);
+      setPendingApprovalRequests([]);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const [sanabelRes, otherRes] = await Promise.all([
@@ -91,6 +127,40 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  // Shared approve/deny — first-approval-wins is enforced server-side, this
+  // just calls the role-appropriate endpoint and refreshes the list so a
+  // request resolved by someone else disappears here too.
+  const resolveRequest = async (
+    requestId: number,
+    decision: "approve" | "deny"
+  ) => {
+    const authToken = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    if (!authToken || (role !== "Parent" && role !== "Teacher")) return;
+
+    const endpoint =
+      role === "Parent"
+        ? `${API_BASE_URL}/parents/${decision === "approve" ? "approveRequest" : "denyRequest"}`
+        : `${API_BASE_URL}/teachers/${decision === "approve" ? "approveRequest" : "denyRequest"}`;
+
+    try {
+      await axios.post(
+        endpoint,
+        { requestId },
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+    } finally {
+      // Refresh regardless of outcome — if someone else already resolved
+      // this request (409), it should disappear from the list either way.
+      await refreshNotifications();
+    }
+  };
+
+  const approveApprovalRequest = (requestId: number) =>
+    resolveRequest(requestId, "approve");
+  const denyApprovalRequest = (requestId: number) =>
+    resolveRequest(requestId, "deny");
+
   // Fetch notifications on mount and when storage event fires (e.g. login)
   useEffect(() => {
     refreshNotifications();
@@ -99,7 +169,19 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
       refreshNotifications();
     };
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+
+    // Parents/teachers can receive new requests, or lose one to another
+    // approver, at any time — poll so the bell badge doesn't go stale.
+    const role = localStorage.getItem("role");
+    let interval: number | undefined;
+    if (role === "Parent" || role === "Teacher") {
+      interval = window.setInterval(refreshNotifications, 20000);
+    }
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      if (interval) window.clearInterval(interval);
+    };
   }, []);
 
   // For compatibility with old system
@@ -141,7 +223,11 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
   ).length;
 
   const unreadLocalCount = notifications.filter((n) => !n.isRead).length;
-  const unreadCount = unreadTrophiesCount + unreadLocalCount;
+  // Pending approval requests have no separate read/unread state — a request
+  // is inherently "unread" until someone resolves it, at which point it
+  // disappears from the list entirely.
+  const unreadCount =
+    unreadTrophiesCount + unreadLocalCount + pendingApprovalRequests.length;
 
   return (
     <NotificationContext.Provider
@@ -156,6 +242,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
         unreadCount,
         isLoading,
         refreshNotifications,
+        pendingApprovalRequests,
+        approveApprovalRequest,
+        denyApprovalRequest,
       }}
     >
       {children}

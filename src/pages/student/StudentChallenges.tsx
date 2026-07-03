@@ -38,8 +38,9 @@ const Challenges: React.FC = () => {
 
   const { user } = useUserContext();
 
-  const grade = user?.grade;
-  const canAssignTask = user?.canAssignTask;
+  // Students with no class assigned get the "personal" to-do list; school
+  // students choose a Sanabel type first, matching StudentNavbar's gating.
+  const isPersonal = !user?.classId;
   return (
     <motion.div
       className="flex flex-col items-center w-full h-full overflow-y-auto" // Added pb-4 for bottom padding
@@ -50,7 +51,7 @@ const Challenges: React.FC = () => {
     >
       {/* Dynamic View Rendering */}
       <div className="w-full max-w-md overflow-y-auto bg-white shadow-md rounded-xl">
-        {!grade || canAssignTask ? <StudentToDoList /> : <ChooseSanabelType />}
+        {isPersonal ? <StudentToDoList /> : <ChooseSanabelType />}
       </div>
 
       {/* Navbar */}

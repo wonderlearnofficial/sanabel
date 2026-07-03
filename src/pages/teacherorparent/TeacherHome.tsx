@@ -268,6 +268,10 @@ const TeacherHome = () => {
           <div className="absolute w-40 h-40 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-full top-1/2 left-1/2"></div>
         </div>
 
+        <div className="absolute z-10 top-4 left-4">
+          <Notification />
+        </div>
+
         <div className="relative z-10 text-center">
           <motion.h1
             className="mb-2 text-3xl font-extrabold"
