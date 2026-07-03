@@ -116,9 +116,31 @@ const ApprovalRequestsView: React.FC = () => {
                         {formatMissionDate(request.missionDate)}
                       </span>
                     </div>
-                    <p className="mb-3 text-sm font-semibold text-blueprimary">
+                    {request.Mission?.type && (
+                      <span className="inline-block px-2 py-0.5 mb-2 text-xs font-semibold rounded-full text-blueprimary bg-blue-50">
+                        {t(request.Mission.type)}
+                      </span>
+                    )}
+                    <p className="mb-2 text-sm font-semibold text-gray-800">
                       {t(request.Mission?.title)}
                     </p>
+                    <div className="flex items-center gap-3 mb-3">
+                      {[
+                        { icon: blueSanabel, value: request.Mission?.snabelBlue },
+                        { icon: redSanabel, value: request.Mission?.snabelRed },
+                        { icon: yellowSanabel, value: request.Mission?.snabelYellow },
+                        { icon: xpIcon, value: request.Mission?.xp },
+                      ]
+                        .filter((r) => r.value)
+                        .map((reward, i) => (
+                          <div key={i} className="flex items-center gap-1">
+                            <img src={reward.icon} alt="" className="w-4 h-4" />
+                            <span className="text-xs font-bold text-gray-600">
+                              {reward.value}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
                     {error && (
                       <p className="mb-2 text-xs font-medium text-red-600">
                         {error}
