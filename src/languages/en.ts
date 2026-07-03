@@ -1147,6 +1147,7 @@ const en = {
     "حدث خطأ أثناء الحفظ": "An error occurred while saving",
     "تعذر تحميل بيانات المدرسة": "Failed to load school data",
     "جاري الحفظ...": "Saving...",
+    "تعذر حفظ الصورة الشخصية، حاول مرة أخرى": "Couldn't save your avatar, please try again",
     "كل المدارس": "All Schools",
     "كل الفصول": "All Classes",
     "كل المراحل": "All Stages",

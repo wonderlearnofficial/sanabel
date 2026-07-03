@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/api";
 import { useTranslation } from "react-i18next";
 import PrimaryButton from "../../../components/PrimaryButton";
 import i18n from "../../../i18n";
@@ -8,6 +9,8 @@ import { medalsImgs } from "../../../data/Medals";
 import xpIcon from "../../../assets/resources/اكس بي.png";
 import lock from "../../../icons/lock.svg";
 import { AnimatePresence, motion, useAnimation } from "framer-motion";
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
 import Intro from "./Intro";
 import Promo from "./Promo";
 import ProfilePicture from "./ProfilePicture";
@@ -40,6 +43,7 @@ const StudentTutorial: React.FC = () => {
   const [isShopDone, seIsShopDone] = useState(false);
 
   const [trophyIndex, setTrophyIndex] = useState(0);
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
 
   const typeColors = [
     "bg-blueprimary",
@@ -78,9 +82,50 @@ const StudentTutorial: React.FC = () => {
     <Outro />,
   ];
 
+  // Persist the chosen avatar as soon as the student leaves the avatar step,
+  // instead of waiting until the very end of the tutorial — otherwise closing
+  // the app partway through the (long) tutorial loses the avatar entirely,
+  // since until now it only ever got saved on the final Outro screen.
+  const saveAvatarToServer = async () => {
+    const authToken = localStorage.getItem("token");
+    const avatarDataString = localStorage.getItem("avatarData");
+    if (!authToken || !avatarDataString) return true;
+
+    try {
+      const avatarData = JSON.parse(avatarDataString);
+      await axios.patch(
+        `${API_BASE_URL}/students/update-profile-image`,
+        {
+          profileImg: {
+            avatarId: avatarData.avatarId,
+            bgColor: avatarData.bgColor,
+            bgPattern: avatarData.bgPattern,
+            gender: avatarData.gender,
+            hairColor: avatarData.hairColor,
+            skinColor: avatarData.skinColor,
+            tshirtColor: avatarData.tshirtColor,
+          },
+        },
+        { headers: { Authorization: `Bearer ${authToken}` } },
+      );
+      return true;
+    } catch (error) {
+      console.error("Error saving avatar:", error);
+      toast.error(t("تعذر حفظ الصورة الشخصية، حاول مرة أخرى"));
+      return false;
+    }
+  };
+
   // Handle step navigation
-  function changeStepIncrement() {
+  async function changeStepIncrement() {
     if (stepCount < steps.length - 1) {
+      if (stepCount === 0) {
+        setIsSavingAvatar(true);
+        const saved = await saveAvatarToServer();
+        setIsSavingAvatar(false);
+        if (!saved) return;
+      }
+
       setStepCount(stepCount + 1);
 
       setTreeProgress(0);
@@ -123,12 +168,19 @@ const StudentTutorial: React.FC = () => {
       <div className="flex-1 border-2 border-white rounded-2xl">
         <PrimaryButton
           style="fill"
-          text={stepCount === steps.length - 1 ? t("ابدأ الآن") : t("متابعة")}
+          text={
+            isSavingAvatar
+              ? t("جاري الحفظ...")
+              : stepCount === steps.length - 1
+              ? t("ابدأ الآن")
+              : t("متابعة")
+          }
           arrow={isRTL ? "left" : "right"}
           onClick={changeStepIncrement}
+          disabled={isSavingAvatar}
         />
       </div>
-      {stepCount > 0 && (
+      {stepCount > 0 && !isSavingAvatar && (
         <div
           className="flex-center p-3 border-2 border-[#EAECF0] bg-white rounded-xl w-14 h-14 shadow-sm hover:bg-gray-50 transition-colors cursor-pointer"
           onClick={changeStepDecrement}
@@ -146,6 +198,7 @@ const StudentTutorial: React.FC = () => {
     <div
       className={`flex flex-col items-center justify-between p-4 overflow-y-auto h-full w-full ${bgColor} transition-colors duration-500`}
     >
+      <ToastContainer position="top-center" autoClose={2500} rtl />
       <div className="flex flex-col gap-2 overflow-y-auto">
         <div
           className="w-24 p-1 px-2 mx-auto text-center border-2 cursor-pointer rounded-3xl text-blueprimary text-md"
