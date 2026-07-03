@@ -19,7 +19,7 @@ interface ClassOption {
   grade: string;
 }
 
-const GRADES = ["primary", "preparatory", "secondary"];
+// Dynamic grades list will be loaded dynamically from the backend
 
 const Toaster = () => (
   <ToastContainer
@@ -50,6 +50,7 @@ const StudentDetailEdit: React.FC = () => {
 
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [gradesList, setGradesList] = useState<{ id: number; name: string }[]>([]);
 
   const [totalCompletedTasks, setTotalCompletedTasks] = useState(0);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
@@ -68,6 +69,14 @@ const StudentDetailEdit: React.FC = () => {
       .catch((error) => console.error("Error fetching organizations:", error));
 
     axios
+      .get(`${API_BASE_URL}/admin/grades`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { limit: 1000 },
+      })
+      .then((response) => setGradesList(response.data.data))
+      .catch((error) => console.error("Error fetching grades list:", error));
+
+    axios
       .get(`${API_BASE_URL}/admin/students/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -76,7 +85,7 @@ const StudentDetailEdit: React.FC = () => {
         setFirstName(student.user?.firstName || "");
         setLastName(student.user?.lastName || "");
         setEmail(student.user?.email || "");
-        setGrade(student.grade || "");
+        setGrade(student.gradeId ? String(student.gradeId) : (student.grade || ""));
         setOrganizationId(String(student.organizationId || ""));
         setClassId(String(student.classId || ""));
         setTotalCompletedTasks(totalCompletedTasks);
@@ -113,7 +122,7 @@ const StudentDetailEdit: React.FC = () => {
           firstName,
           lastName,
           email,
-          grade,
+          gradeId: grade ? Number(grade) : null,
           organizationId: organizationId ? Number(organizationId) : null,
           classId: classId ? Number(classId) : null,
         },
@@ -195,9 +204,9 @@ const StudentDetailEdit: React.FC = () => {
           onChange={(e) => setGrade(e.target.value)}
         >
           <option value="">{t("اختر المرحلة")}</option>
-          {GRADES.map((g) => (
-            <option key={g} value={g}>
-              {t(g)}
+          {gradesList.map((g) => (
+            <option key={g.id} value={g.id}>
+              {t(`admin.grade.${g.name}`) !== `admin.grade.${g.name}` ? t(`admin.grade.${g.name}`) : g.name}
             </option>
           ))}
         </select>
@@ -231,9 +240,9 @@ const StudentDetailEdit: React.FC = () => {
           onChange={(e) => setClassId(e.target.value)}
         >
           <option value="">{t("بدون فصل")}</option>
-          {classes.map((cls) => (
+          {classes.map((cls: any) => (
             <option key={cls.id} value={cls.id}>
-              {cls.classname} ({t(cls.grade)})
+              {cls.classname} ({cls.GradeEntity?.name ? (t(`admin.grade.${cls.GradeEntity.name}`) !== `admin.grade.${cls.GradeEntity.name}` ? t(`admin.grade.${cls.GradeEntity.name}`) : cls.GradeEntity.name) : (t(cls.grade) || "—")})
             </option>
           ))}
         </select>

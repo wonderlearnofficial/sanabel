@@ -1,13 +1,12 @@
-import { API_BASE_URL } from "../../config/api";
 import { useTranslation } from "react-i18next";
 import GoBackButton from "../../components/GoBackButton";
 import nonotification from "../../assets/nonotification.png";
 import defaultAvatar from "../../assets/avatars/Boys/boy1.png";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { OtherTrophies } from "../../data/OtherTrophies";
 import { SanabelTrophies } from "../../data/SanabelTrophies";
+import { useNotifications } from "./NotificationContext";
 
 import treestage1 from "../../assets/trophies/Other Trophies/مرحلة - 1.png";
 import treestage2 from "../../assets/trophies/Other Trophies/مرحلة - 2.png";
@@ -53,13 +52,20 @@ const SkeletonCard = () => (
 const Notifications: React.FC = () => {
   const currentLanguage = localStorage.getItem("language");
   const { t } = useTranslation();
-  const [allTrophies, setAllTrophies] = useState<any[]>([]);
   const [filteredTrophies, setFilteredTrophies] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [filters, setFilters] = useState<FilterOptions>({
     timeRange: "all",
     sortBy: "newest",
   });
+
+  const {
+    allTrophies,
+    readChallengeIds,
+    markAsRead,
+    markAllAsRead,
+    isLoading,
+    refreshNotifications,
+  } = useNotifications();
 
   const treeStagesImg = [treestage1, treestage2, treestage3, treestage4, treestage5];
 
@@ -133,30 +139,9 @@ const Notifications: React.FC = () => {
     setFilteredTrophies(filterAndSortTrophies(allTrophies, filters));
   }, [allTrophies, filters]);
 
-  const fetchAllTrophies = async () => {
-    const authToken = localStorage.getItem("token");
-    if (!authToken) { setIsLoading(false); return; }
-    setIsLoading(true);
-    try {
-      const [sanabelRes, otherRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/students/student-trophy-primaire-completed`, {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }),
-        axios.get(`${API_BASE_URL}/students/student-trophy-secondaire-completed`, {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }),
-      ]);
-      if (sanabelRes.status === 200 && otherRes.status === 200) {
-        setAllTrophies([...sanabelRes.data.data, ...otherRes.data.data]);
-      }
-    } catch (error) {
-      console.error("Error fetching trophies:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchAllTrophies(); }, []);
+  useEffect(() => {
+    refreshNotifications();
+  }, []);
 
   const getTrophyRewards = (trophy: any) =>
     [
@@ -167,6 +152,8 @@ const Notifications: React.FC = () => {
       { value: trophy.challenge.water || 0, icon: water, label: "ماء" },
       { value: trophy.challenge.seeder || 0, icon: fertilizer, label: "سماد" },
     ].filter((r) => r.value > 0);
+
+  const hasUnread = allTrophies.some((t) => !readChallengeIds.includes(t.challengeId));
 
   return (
     <div className="flex flex-col w-full h-full bg-gray-50" dir="rtl">
@@ -182,32 +169,49 @@ const Notifications: React.FC = () => {
               </span>
             )}
           </div>
-          {/* Sort toggle */}
-          <button
-            onClick={() =>
-              setFilters((f) => ({
-                ...f,
-                sortBy: f.sortBy === "newest" ? "oldest" : "newest",
-              }))
-            }
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-          >
-            {filters.sortBy === "newest" ? (
-              <>
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          
+          <div className="flex items-center gap-2">
+            {/* Mark all as read */}
+            {hasUnread && (
+              <button
+                onClick={() => markAllAsRead(allTrophies.map((t) => t.challengeId))}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blueprimary hover:bg-blue-100 transition-colors"
+                title={t("تحديد الكل كمقروء")}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
-                {t("الأحدث")}
-              </>
-            ) : (
-              <>
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-                </svg>
-                {t("الأقدم")}
-              </>
+                <span className="hidden sm:inline">{t("تحديد الكل كمقروء")}</span>
+              </button>
             )}
-          </button>
+
+            {/* Sort toggle */}
+            <button
+              onClick={() =>
+                setFilters((f) => ({
+                  ...f,
+                  sortBy: f.sortBy === "newest" ? "oldest" : "newest",
+                }))
+              }
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+            >
+              {filters.sortBy === "newest" ? (
+                <>
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                  {t("الأحدث")}
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                  </svg>
+                  {t("الأقدم")}
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Time filter tabs — always visible */}
@@ -263,13 +267,19 @@ const Notifications: React.FC = () => {
             <AnimatePresence>
               {filteredTrophies.map((trophy, index) => {
                 const rewards = getTrophyRewards(trophy);
+                const isUnread = !readChallengeIds.includes(trophy.challengeId);
                 return (
                   <motion.div
                     key={`trophy-${trophy.challengeId}-${trophy.updatedAt}`}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.04, duration: 0.3, ease: "easeOut" }}
-                    className="flex items-center gap-4 p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
+                    onClick={() => isUnread && markAsRead(trophy.challengeId)}
+                    className={`flex items-center gap-4 p-3 border rounded-2xl shadow-sm hover:shadow-md transition-shadow relative ${
+                      isUnread
+                        ? "bg-blue-50/20 border-blue-100/70"
+                        : "bg-white border-gray-100"
+                    }`}
                   >
                     {/* Trophy image with golden background */}
                     <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-50 to-amber-100 flex items-center justify-center shadow-inner">
@@ -310,12 +320,25 @@ const Notifications: React.FC = () => {
                         </div>
                       )}
 
-                      {/* Date */}
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full" />
-                        <span className="text-xs text-gray-400">
-                          {formatDate(trophy.updatedAt)}
-                        </span>
+                      {/* Date & Mark as read */}
+                      <div className="flex items-center justify-between mt-1">
+                        <div className="flex items-center gap-1.5">
+                          <div className={`w-1.5 h-1.5 rounded-full ${isUnread ? "bg-blueprimary" : "bg-gray-300"}`} />
+                          <span className="text-xs text-gray-400">
+                            {formatDate(trophy.updatedAt)}
+                          </span>
+                        </div>
+                        {isUnread && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(trophy.challengeId);
+                            }}
+                            className="text-xs text-blueprimary hover:text-blue-700 font-bold transition-colors cursor-pointer"
+                          >
+                            {t("تحديد كمقروء")}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </motion.div>

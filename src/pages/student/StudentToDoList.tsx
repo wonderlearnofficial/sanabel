@@ -412,6 +412,7 @@ const TodoList = () => {
   const grade = user?.grade;
 
   const canAssignTask = user?.canAssignTask;
+  const isPersonal = !user?.classId;
 
   // Load todos from localStorage on component mount
   useEffect(() => {
@@ -721,7 +722,7 @@ const TodoList = () => {
                     </div>
 
                     {item.task.completionStatus !== "Completed" &&
-                      (!grade || canAssignTask) && (
+                      (isPersonal || !grade || canAssignTask) && (
                         <div
                           onClick={() =>
                             handleToggleCompleteClick(item.task.id)

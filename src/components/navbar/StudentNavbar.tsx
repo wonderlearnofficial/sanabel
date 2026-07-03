@@ -45,7 +45,7 @@ function Navbar() {
 
   // Students with no grade/school assigned get a "personal" experience —
   // there's no cohort to rank them against, so hide the Leaderboards tab.
-  const isPersonal = !user?.grade;
+  const isPersonal = !user?.classId;
   const visibleNavList = isPersonal
     ? navList.filter((item) => item.to !== "/student/leaderboards")
     : navList;

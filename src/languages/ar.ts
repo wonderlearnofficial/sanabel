@@ -237,6 +237,7 @@ const ar = {
     "admin.tab.admins": "المشرفون",
     "admin.tab.classes": "الفصول",
     "admin.tab.organizations": "المدارس",
+    "admin.tab.grades": "المراحل الدراسية",
 
     // Stats cards
     "admin.stats.totalUsers": "إجمالي المستخدمين",
@@ -260,6 +261,7 @@ const ar = {
     "admin.th.className": "اسم الفصل",
     "admin.th.studentCount": "عدد الطلاب",
     "admin.th.orgName": "اسم المدرسة",
+    "admin.th.gradeName": "اسم المرحلة",
     "admin.th.actions": "الإجراءات",
 
     // Roles
@@ -279,6 +281,8 @@ const ar = {
     "admin.create.user": "إنشاء حساب جديد",
     "admin.create.class": "إنشاء فصل جديد",
     "admin.create.organization": "إضافة مدرسة جديدة",
+    "admin.create.grade": "إضافة مرحلة جديدة",
+    "admin.button.createGrade": "إضافة مرحلة جديدة",
 
     // Create modal
     "admin.modal.createUser": "إنشاء حساب جديد",
@@ -290,6 +294,9 @@ const ar = {
     "admin.modal.selectGrade": "اختر المرحلة",
     "admin.modal.org": "المدرسة",
     "admin.modal.selectOrg": "اختر المدرسة",
+    "admin.modal.gradeName": "اسم المرحلة",
+    "admin.modal.createGrade": "إضافة مرحلة جديدة",
+    "admin.modal.editGrade": "تعديل المرحلة",
     "admin.modal.class": "الفصل (اختياري)",
     "admin.modal.selectClass": "اختر الفصل",
     "admin.modal.createBtn": "إنشاء الحساب",
@@ -365,6 +372,56 @@ const ar = {
     "admin.grade.primary": "ابتدائي",
     "admin.grade.preparatory": "إعدادي",
     "admin.grade.secondary": "ثانوي",
+
+    // Bulk actions
+    "admin.bulk.selected": "عنصر محدد",
+    "admin.bulk.delete": "حذف المحددة",
+    "admin.bulk.resetPasswords": "إعادة تعيين كلمات المرور",
+    "admin.bulk.deselectAll": "إلغاء التحديد",
+    "admin.bulk.confirmDelete": "حذف العناصر المحددة؟",
+    "admin.bulk.deleteSuccess": "تم حذف {count} عنصر",
+    "admin.bulk.resetSuccess": "تم إعادة تعيين كلمات المرور وتنزيل الملف",
+
+    // Filters
+    "admin.filter.title": "الفلاتر",
+    "admin.filter.clear": "مسح الكل",
+    "admin.filter.school": "المدرسة",
+    "admin.filter.grade": "المرحلة",
+    "admin.filter.role": "الدور",
+    "admin.filter.verified": "المتحقق فقط",
+    "admin.filter.all": "الكل",
+
+    // Sorting
+    "admin.sort.asc": "ترتيب تصاعدي",
+    "admin.sort.desc": "ترتيب تنازلي",
+
+    // Export / Import
+    "admin.export.button": "تصدير CSV",
+    "admin.export.toast": "تم تصدير CSV بنجاح",
+    "admin.import.button": "استيراد",
+    "admin.import.title": "استيراد من جدول بيانات",
+    "admin.import.dropzone": "ألقِ ملف CSV هنا، أو اضغط للتصفح",
+    "admin.import.preview": "تعيين الأعمدة",
+    "admin.import.csvCol": "عمود CSV",
+    "admin.import.dbField": "يـعِيَن إلى",
+    "admin.import.upload": "رفع",
+    "admin.import.uploading": "جار الرفع...",
+    "admin.import.success": "تم الاستيراد بنجاح",
+    "admin.import.skip": "-- تخطِّ --",
+
+    // Analytics charts
+    "admin.chart.distribution": "توزيع الأدوار",
+    "admin.chart.byGrade": "الطلاب حسب المرحلة",
+    "admin.chart.growth": "نمو التسجيلات",
+
+    // Quick-actions
+    "admin.action.copyEmail": "نسخ البريد",
+    "admin.action.copyCode": "نسخ كود الربط",
+    "admin.action.copied": "تم النسخ!",
+
+    // Misc
+    "admin.gradeNameRequired": "اسم المرحلة مطلوب",
+    "admin.toast.gradeNameRequired": "اسم المرحلة مطلوب",
   },
 };
 

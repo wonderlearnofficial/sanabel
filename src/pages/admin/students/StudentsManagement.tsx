@@ -28,7 +28,7 @@ interface ClassOption {
   grade: string;
 }
 
-const GRADES = ["primary", "preparatory", "secondary"];
+// Dynamic grades list will be fetched inside the component
 
 const Toaster = () => (
   <ToastContainer
@@ -52,6 +52,7 @@ const StudentsManagement: React.FC = () => {
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [gradesList, setGradesList] = useState<{ id: number; name: string }[]>([]);
 
   const [search, setSearch] = useState("");
   const [organizationId, setOrganizationId] = useState("");
@@ -72,6 +73,14 @@ const StudentsManagement: React.FC = () => {
       })
       .then((response) => setOrganizations(response.data.data))
       .catch((error) => console.error("Error fetching organizations:", error));
+
+    axios
+      .get(`${API_BASE_URL}/admin/grades`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { limit: 1000 },
+      })
+      .then((response) => setGradesList(response.data.data))
+      .catch((error) => console.error("Error fetching grades:", error));
   }, []);
 
   useEffect(() => {
@@ -95,7 +104,13 @@ const StudentsManagement: React.FC = () => {
       if (search) params.search = search;
       if (organizationId) params.organizationId = organizationId;
       if (classId) params.classId = classId;
-      if (grade) params.grade = grade;
+      if (grade) {
+        if (!isNaN(Number(grade))) {
+          params.gradeId = Number(grade);
+        } else {
+          params.grade = grade;
+        }
+      }
 
       const response = await axios.get(`${API_BASE_URL}/admin/students`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -185,9 +200,9 @@ const StudentsManagement: React.FC = () => {
           }}
         >
           <option value="">{t("كل الفصول")}</option>
-          {classes.map((cls) => (
+          {classes.map((cls: any) => (
             <option key={cls.id} value={cls.id}>
-              {cls.classname} ({t(cls.grade)})
+              {cls.classname} ({cls.GradeEntity?.name ? (t(`admin.grade.${cls.GradeEntity.name}`) !== `admin.grade.${cls.GradeEntity.name}` ? t(`admin.grade.${cls.GradeEntity.name}`) : cls.GradeEntity.name) : (t(cls.grade) || "—")})
             </option>
           ))}
         </select>
@@ -201,9 +216,9 @@ const StudentsManagement: React.FC = () => {
           }}
         >
           <option value="">{t("كل المراحل")}</option>
-          {GRADES.map((g) => (
-            <option key={g} value={g}>
-              {t(g)}
+          {gradesList.map((g) => (
+            <option key={g.id} value={g.id}>
+              {t(`admin.grade.${g.name}`) !== `admin.grade.${g.name}` ? t(`admin.grade.${g.name}`) : g.name}
             </option>
           ))}
         </select>

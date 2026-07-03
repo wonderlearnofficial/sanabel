@@ -1205,6 +1205,7 @@ const en = {
     "admin.tab.admins": "Admins",
     "admin.tab.classes": "Classes",
     "admin.tab.organizations": "Schools",
+    "admin.tab.grades": "Grades",
 
     // Stats cards
     "admin.stats.totalUsers": "Total Users",
@@ -1228,6 +1229,7 @@ const en = {
     "admin.th.className": "Class Name",
     "admin.th.studentCount": "Students",
     "admin.th.orgName": "School Name",
+    "admin.th.gradeName": "Grade Name",
     "admin.th.actions": "Actions",
 
     // Roles
@@ -1247,6 +1249,8 @@ const en = {
     "admin.create.user": "Create New Account",
     "admin.create.class": "Create New Class",
     "admin.create.organization": "Create New School",
+    "admin.create.grade": "Create New Grade",
+    "admin.button.createGrade": "Create New Grade",
 
     // Create modal
     "admin.modal.createUser": "Create New Account",
@@ -1258,6 +1262,9 @@ const en = {
     "admin.modal.selectGrade": "Select Stage",
     "admin.modal.org": "School",
     "admin.modal.selectOrg": "Select School",
+    "admin.modal.gradeName": "Grade Name",
+    "admin.modal.createGrade": "Create New Grade",
+    "admin.modal.editGrade": "Edit Grade",
     "admin.modal.class": "Class (optional)",
     "admin.modal.selectClass": "Select Class",
     "admin.modal.createBtn": "Create Account",
@@ -1333,6 +1340,56 @@ const en = {
     "admin.grade.primary": "Primary",
     "admin.grade.preparatory": "Preparatory",
     "admin.grade.secondary": "Secondary",
+
+    // Bulk actions
+    "admin.bulk.selected": "items selected",
+    "admin.bulk.delete": "Delete Selected",
+    "admin.bulk.resetPasswords": "Reset Passwords",
+    "admin.bulk.deselectAll": "Deselect All",
+    "admin.bulk.confirmDelete": "Delete selected items?",
+    "admin.bulk.deleteSuccess": "Deleted {count} items",
+    "admin.bulk.resetSuccess": "Passwords reset & CSV downloaded",
+
+    // Filters
+    "admin.filter.title": "Filters",
+    "admin.filter.clear": "Clear All",
+    "admin.filter.school": "School",
+    "admin.filter.grade": "Grade",
+    "admin.filter.role": "Role",
+    "admin.filter.verified": "Verified Only",
+    "admin.filter.all": "All",
+
+    // Sorting
+    "admin.sort.asc": "Sort ascending",
+    "admin.sort.desc": "Sort descending",
+
+    // Export / Import
+    "admin.export.button": "Export CSV",
+    "admin.export.toast": "CSV exported successfully",
+    "admin.import.button": "Import",
+    "admin.import.title": "Import from Spreadsheet",
+    "admin.import.dropzone": "Drop CSV file here, or click to browse",
+    "admin.import.preview": "Column Mapping",
+    "admin.import.csvCol": "CSV Column",
+    "admin.import.dbField": "Maps To",
+    "admin.import.upload": "Upload",
+    "admin.import.uploading": "Uploading...",
+    "admin.import.success": "Import completed successfully",
+    "admin.import.skip": "-- Skip --",
+
+    // Analytics charts
+    "admin.chart.distribution": "Role Distribution",
+    "admin.chart.byGrade": "Students by Grade",
+    "admin.chart.growth": "Signup Trend",
+
+    // Quick-actions
+    "admin.action.copyEmail": "Copy Email",
+    "admin.action.copyCode": "Copy Connect Code",
+    "admin.action.copied": "Copied!",
+
+    // Misc
+    "admin.gradeNameRequired": "Grade name is required",
+    "admin.toast.gradeNameRequired": "Grade name is required",
   },
 };
 

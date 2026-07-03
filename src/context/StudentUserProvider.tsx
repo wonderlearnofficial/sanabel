@@ -20,6 +20,7 @@ interface BaseUser {
   dateOfBirth?: string | null;
   isAccess?: boolean;
   grade: number;
+  gradeId?: number | null;
   snabelRed: number;
   snabelBlue: number;
   snabelYellow: number;
@@ -32,10 +33,13 @@ interface BaseUser {
   treeProgress: number;
   connectCode: string;
   canAssignTask: boolean;
+  classId?: number | null;
+  organizationId?: number | null;
 }
 
 interface StudentUser extends BaseUser {
   grade: number;
+  gradeId?: number | null;
   snabelRed: number;
   snabelBlue: number;
   snabelYellow: number;
@@ -126,6 +130,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
               email: userData.student.user.email,
               role: role,
               grade: userData.student.grade,
+              gradeId: userData.student.gradeId,
               snabelRed: userData.student.snabelRed,
               snabelBlue: userData.student.snabelBlue,
               snabelYellow: userData.student.snabelYellow,
@@ -134,6 +139,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
               fertilizer: userData.student.seeders,
               connectCode: userData.student.connectCode,
               canAssignTask: userData.student.canAssignTask,
+              classId: userData.student.classId,
+              organizationId: userData.student.organizationId,
               waterNeeded: userData.treePoint.water,
               fertilizerNeeded: userData.treePoint.seeders,
               treeStage: userData.treePoint.stage,
