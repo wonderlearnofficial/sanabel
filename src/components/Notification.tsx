@@ -10,6 +10,7 @@ function Notification() {
 
   return (
     <div
+      data-guide-id="notifications-bell"
       className="flex-center p-2 border-2 border-[#EAECF0] rounded-xl relative cursor-pointer"
       onClick={() => history.push("/notifications")}
     >

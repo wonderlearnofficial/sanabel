@@ -1428,6 +1428,140 @@ const en = {
     // Misc
     "admin.gradeNameRequired": "Grade name is required",
     "admin.toast.gradeNameRequired": "Grade name is required",
+
+    // Contextual guided onboarding
+    "ابدأ من مهام اليوم": "Start with today's missions",
+    "أهم شيء هنا: افتح التحديات اليومية وأنجز مهمة واحدة. باقي الصفحة يعرض مستواك وتقدم شجرتك.":
+      "Most important: open today's challenges and finish one mission. The rest shows your level and tree progress.",
+    "مهامك اليومية": "Your daily missions",
+    "اختر مهمة، أنجزها، ثم اضغط تم الإنجاز لتحصل على المكافأة.":
+      "Choose a mission, do it, then tap Completed to get the reward.",
+    "ابدأ باختيار قسم واحد. بعد إنجاز المهمة أرسل طلب الموافقة.":
+      "Start by choosing one category. After finishing the mission, send the approval request.",
+    "المستوى ونقاط الخبرة": "Level and XP",
+    "تكسب XP من المهام. عندما يزيد مستواك تفتح أوسمة ومكافآت جديدة.":
+      "You earn XP from missions. Higher levels unlock new medals and rewards.",
+    "التقدم والشجرة": "Progress and tree",
+    "هنا ترى نمو الشجرة ومواردك. استخدم المتجر فقط عندما تريد رعاية الشجرة.":
+      "Here you see tree growth and resources. Use the store only when you want to care for the tree.",
+    "اشتر الماء أو السماد عندما تحتاجهما لرعاية الشجرة.":
+      "Buy water or fertilizer when you need them to care for the tree.",
+    "هنا ترى ترتيبك بين زملائك وتستخدم البحث أو الفلاتر عند الحاجة.":
+      "Here you see your ranking and use search or filters when needed.",
+    "هذه الصفحة تعرض مستواك الحالي والأوسمة التي فتحتها أو اقتربت منها.":
+      "This page shows your current level and medals you unlocked or are close to.",
+    "صفحة ولي الأمر": "Parent home",
+    "أهم شيء هنا: اربط طفلك وتابع طلبات الموافقة من الإشعارات.":
+      "Most important: link your child and watch approval requests from notifications.",
+    "صفحة المعلم": "Teacher home",
+    "أهم شيء هنا: راقب الطلاب وراجع طلبات الموافقة على المهام.":
+      "Most important: monitor students and review mission approval requests.",
+    "لوحة المشرف": "Admin dashboard",
+    "أهم شيء هنا: إدارة الطلاب والمعلمين واستيراد البيانات عند الحاجة.":
+      "Most important: manage students and teachers, and import data when needed.",
+    "مرحباً بك!": "Welcome!",
+    "لنكمل مهمتك الأولى اليوم.": "Let's complete your first mission today.",
+    "هنا تظهر مهامك اليومية": "This is where your daily missions appear",
+    "اضغط هنا لعرض مهامك وإنجاز أول مهمة.":
+      "Tap here to view your missions and complete your first one.",
+    "أنجز مهمتك الأولى": "Complete your first mission",
+    "اضغط على هذا الزر عند إتمام المهمة.":
+      "Tap this button once you've completed the mission.",
+    "رائع!": "Great!",
+    "لقد حصلت على مكافأتك. استمر في إنجاز مهامك اليومية لكسب المزيد.":
+      "You've earned your reward. Keep completing your daily missions to earn more.",
+    "اختر نوع المهمة": "Choose a mission category",
+    "اضغط على أحد الأقسام لعرض المهام.": "Tap a category to see its missions.",
+    "اضغط لاختيار مهمتك.": "Tap to select your mission.",
+    "اطلب الموافقة": "Request approval",
+    "عند إنجاز المهمة، أرسلها لولي أمرك أو معلمك للموافقة عليها.":
+      "Once you finish the mission, send it to your parent or teacher for approval.",
+    "تم إرسال طلبك!": "Your request has been sent!",
+    "سيقوم ولي أمرك أو معلمك بمراجعة طلبك قريبًا.":
+      "Your parent or teacher will review your request soon.",
+    "نقاط الخبرة (XP)": "Experience Points (XP)",
+    "كل مهمة تنجزها تمنحك نقاط خبرة ترفع مستواك.":
+      "Every mission you complete earns XP that raises your level.",
+    "شجرتك تنمو!": "Your tree is growing!",
+    "كل مرة تنجز فيها مهامك، تنمو شجرتك أكثر.":
+      "Every time you complete your missions, your tree grows a little more.",
+    "استخدم الماء والسماد لرعاية شجرتك من هنا.":
+      "Use water and fertilizer to take care of your tree from here.",
+    "شاهد ترتيبك بين زملائك هنا.": "See your ranking among your classmates here.",
+    "الأوسمة والمستويات": "Medals & Levels",
+    "كل مستوى تصل إليه يمنحك وسامًا جديدًا.":
+      "Every level you reach earns you a new medal.",
+    "اربط طفلك": "Link your child",
+    "استخدم كود الدعوة لربط حساب طفلك بحسابك.":
+      "Use the invite code to link your child's account to yours.",
+    "ستصلك هنا طلبات موافقة المهام من أبنائك.":
+      "Your children's mission approval requests will appear here.",
+    "اعتماد المهام": "Approve missions",
+    "يمكنك هنا قبول أو رفض طلبات إنجاز المهام.":
+      "Here you can accept or decline mission completion requests.",
+    "متابعة التقدم": "Track progress",
+    "تابع إنجازات أبنائك وتقدمهم من هنا.":
+      "Follow your children's achievements and progress from here.",
+    "تم!": "Done!",
+    "يمكنك دائمًا إعادة عرض هذه الجولة من الإعدادات.":
+      "You can always replay this tour from Settings.",
+    "لوحة التحكم": "Dashboard",
+    "نظرة سريعة على طلابك وفصولك وتحدياتهم.":
+      "A quick overview of your students, classes and challenges.",
+    "تصفح وأدر طلابك من هنا.": "Browse and manage your students from here.",
+    "طلبات المهام": "Mission requests",
+    "ستصلك هنا طلبات موافقة مهام طلابك.":
+      "Your students' mission approval requests will appear here.",
+    المعلمون: "Teachers",
+    "إدارة بيانات المعلمين من هنا.": "Manage teacher data from here.",
+    "إدارة بيانات الطلاب من هنا.": "Manage student data from here.",
+    "استيراد البيانات": "Import data",
+    "استورد بيانات الطلاب أو المعلمين دفعة واحدة من ملف إكسل.":
+      "Bulk-import student or teacher data from an Excel file.",
+    التقارير: "Reports",
+    "نظرة عامة على إحصائيات النظام.": "An overview of the system's statistics.",
+    "جولة الصفحة الرئيسية": "Home tour",
+    "جولة إنجاز المهام": "Completing missions tour",
+    "جولة طلب الموافقة على المهام": "Mission approval request tour",
+    "جولة نقاط الخبرة": "XP tour",
+    "جولة الشجرة": "Tree tour",
+    "جولة المتجر": "Shop tour",
+    "جولة لوحة المتصدرين": "Leaderboard tour",
+    "جولة الأوسمة": "Medals tour",
+    "جولة الصفحة الرئيسية لولي الأمر": "Parent home tour",
+    "جولة الصفحة الرئيسية للمعلم": "Teacher home tour",
+    "جولة لوحة تحكم المشرف": "Admin dashboard tour",
+    "أهلًا بك! 🎉": "Welcome! 🎉",
+    "لنتعلم معًا كيف تنجز أول مهمة لك.": "Let's learn how to complete your first mission.",
+    "هنا تظهر مهامك اليومية. اضغط عليها لتبدأ.": "Your daily missions appear here. Tap to start.",
+    "أرسل إنجازك": "Send your work",
+    "عند إنهاء المهمة اضغط هنا لإرسالها إلى معلمك أو ولي أمرك.":
+      "When you finish a mission, tap here to send it to your teacher or parent.",
+    "تم إرسال طلبك بنجاح! 🎉": "Your request has been sent successfully! 🎉",
+    "أحسنت! ستحصل على مكافأتك بعد الموافقة.": "Well done! You'll get your reward once it's approved.",
+    "اضغط على العنصر المضيء للمتابعة": "Tap the highlighted item to continue",
+    "ابدأ بربط حساب طفلك باستخدام كود الدعوة الخاص به.":
+      "Start by linking your child's account using their invite code.",
+    "طلبات الموافقة": "Approval requests",
+    "من الإشعارات تصلك طلبات إنجاز المهام لتوافق عليها.":
+      "Mission approval requests arrive in your notifications.",
+    "تابع طلابك": "Monitor your students",
+    "من هنا تسجل إنجازات طلابك وتتابع تقدمهم.":
+      "Record your students' achievements and follow their progress here.",
+    "إدارة المستخدمين": "User management",
+    "تنقّل بين الطلاب والمعلمين وأولياء الأمور من هنا.":
+      "Switch between students, teachers, and parents here.",
+    الاستيراد: "Import",
+    "أضف دفعة كاملة من ملف إكسل بضغطة واحدة.": "Add a whole batch from an Excel file in one click.",
+    السابق: "Previous",
+    "اضغط هنا للمتابعة": "Tap here to continue",
+    إنهاء: "Finish",
+    التالي: "Next",
+    "صورتك الشخصية جاهزة!": "Your avatar is ready!",
+    "لنبدأ رحلتك الآن.": "Let's start your journey now.",
+    "إعادة عرض الجولات التعريفية": "Replay onboarding tours",
+    "لا توجد جولات تعريفية متاحة بعد.": "No onboarding tours available yet.",
+    "إعادة عرض الجولة التعريفية": "Replay onboarding tour",
   },
 };
 

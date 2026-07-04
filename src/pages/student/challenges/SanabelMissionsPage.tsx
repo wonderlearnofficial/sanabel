@@ -82,8 +82,9 @@ const SanabelMissionsPage: React.FC = () => {
   // Approval-workflow state (school students only)
   const [hasApprovers, setHasApprovers] = useState<boolean | null>(null);
   const [approverNames, setApproverNames] = useState<
-    { type: "parent" | "teacher"; name: string }[]
+    { id?: number; type: "parent" | "teacher"; name: string }[]
   >([]);
+  const [selectedApprover, setSelectedApprover] = useState<{ id?: number; type: "parent" | "teacher"; name: string } | null>(null);
   const [requestStatusMap, setRequestStatusMap] = useState<
     Record<number, ApprovalStatus>
   >({});
@@ -240,6 +241,7 @@ const SanabelMissionsPage: React.FC = () => {
   const handleMarkComplete = (missionId: number) => {
     setApprovalError(null);
     setSelectedMissionId(missionId);
+    setSelectedApprover(null);
     setShowConfirmPopup(true);
   };
 
@@ -250,6 +252,7 @@ const SanabelMissionsPage: React.FC = () => {
 
   const confirmMarkComplete = async () => {
     if (!selectedMissionId) return;
+    if (!isPersonal && !selectedApprover) return;
 
     setIsLoading(true);
     const authToken = localStorage.getItem("token");
@@ -260,7 +263,12 @@ const SanabelMissionsPage: React.FC = () => {
       try {
         const response = await axios.post(
           `${API_BASE_URL}/mission/requestApproval`,
-          { taskId: selectedMissionId, missionDate: getTodayDateOnly() },
+          {
+            taskId: selectedMissionId,
+            missionDate: getTodayDateOnly(),
+            approverId: selectedApprover?.id,
+            approverType: selectedApprover?.type,
+          },
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
 
@@ -458,6 +466,7 @@ const SanabelMissionsPage: React.FC = () => {
                 className="flex justify-between w-full"
               >
                 <button
+                  data-guide-id="mission-action"
                   onClick={() => handleMarkComplete(mission.id)}
                   className={`flex items-center gap-2 px-3 py-1 rounded-lg transition-all duration-200 text-white ${colorBG} hover:opacity-80 active:scale-95`}
                 >
@@ -500,7 +509,8 @@ const SanabelMissionsPage: React.FC = () => {
                   </span>
                 ) : (
                   <button
-                    onClick={() => handleMarkComplete(mission.id)}
+                    data-guide-id="mission-action"
+                  onClick={() => handleMarkComplete(mission.id)}
                     className={`flex items-center gap-2 px-3 py-1 rounded-lg transition-all duration-200 text-white ${colorBG} hover:opacity-80 active:scale-95`}
                   >
                     <span className="text-sm font-medium">
@@ -564,27 +574,31 @@ const SanabelMissionsPage: React.FC = () => {
                     {t("هل أنت متأكد من أنك أنجزت هذه المهمة؟")}
                   </p>
                 ) : (
-                  <div className="mb-6">
-                    <p className="mb-2 text-gray-600">
-                      {t("سيتم إرسال الطلب إلى:")}
-                    </p>
-                    <div className="flex flex-col items-center gap-1">
-                      {approverNames.map((approver, i) => (
-                        <span
-                          key={i}
-                          className="text-sm font-semibold text-gray-800"
-                        >
-                          {approver.name || t("بدون اسم")}{" "}
-                          <span className="text-xs font-normal text-gray-400">
-                            (
-                            {approver.type === "parent"
-                              ? t("ولي الأمر")
-                              : t("معلم")}
-                            )
-                          </span>
-                        </span>
+                  <div className="mb-6 text-start">
+                    <label className="block mb-2 text-sm font-semibold text-gray-700">
+                      {t("اختر ولي الأمر أو المعلم للموافقة:")}
+                    </label>
+                    <select
+                      className="w-full p-2.5 border-2 border-gray-200 rounded-xl text-black bg-white outline-none focus:border-blueprimary transition-all text-sm"
+                      value={selectedApprover ? `${selectedApprover.type}-${selectedApprover.id}` : ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) {
+                          setSelectedApprover(null);
+                          return;
+                        }
+                        const [type, idStr] = val.split("-");
+                        const found = approverNames.find(a => a.type === type && String(a.id) === idStr);
+                        setSelectedApprover(found ? { id: Number(idStr), type: type as "parent" | "teacher", name: found.name } : null);
+                      }}
+                    >
+                      <option value="">{t("اختر...")}</option>
+                      {approverNames.map((approver: any) => (
+                        <option key={`${approver.type}-${approver.id}`} value={`${approver.type}-${approver.id}`}>
+                          {approver.name} ({approver.type === "parent" ? t("ولي الأمر") : t("معلم")})
+                        </option>
                       ))}
-                    </div>
+                    </select>
                   </div>
                 )}
                 <div className="flex gap-3">
@@ -596,7 +610,7 @@ const SanabelMissionsPage: React.FC = () => {
                   </button>
                   <button
                     onClick={confirmMarkComplete}
-                    disabled={isLoading}
+                    disabled={isLoading || (!isPersonal && !selectedApprover)}
                     className={`flex-1 py-2 px-4 ${colorBG} text-white rounded-lg font-medium hover:opacity-80 transition-all disabled:opacity-50`}
                   >
                     {isLoading ? t("جاري التحديث...") : t("تأكيد")}

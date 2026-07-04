@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { calculateLevel } from "../../utils/LevelCalculator";
 import { medalsData } from "../../data/MedalsData";
+import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
 
 const Skeleton = ({ className }: { className: string }) => (
   <div className={`animate-pulse bg-gray-200 rounded-xl ${className}`} />
@@ -104,6 +105,8 @@ const StudentHome: React.FC = () => {
   const isLoading = !user;
   const safemedal = Math.min(medalImgTracker, medalsData.length - 1);
 
+  useAutoStartGuide("student-home", !isLoading);
+
   return (
     <div
       className="flex flex-col items-center w-full gap-3 p-3 overflow-y-auto"
@@ -152,7 +155,11 @@ const StudentHome: React.FC = () => {
           <>
             <Greeting
               name={`${t("مرحباً")} ${user?.firstName}`}
-              text={"هيا بنا نصنع الخير معًا"}
+              text={
+                (user as any)?.classname && (user as any)?.gradeName
+                  ? `${t((user as any).gradeName)} - ${(user as any).classname}`
+                  : "هيا بنا نصنع الخير معًا"
+              }
             />
             <Notification />
           </>
@@ -258,6 +265,7 @@ const StudentHome: React.FC = () => {
         {/* Missions done today */}
         <motion.div
           variants={itemVariants}
+          data-guide-id="daily-challenges"
           className="w-full bg-[#4AAAD6] flex justify-between items-center p-1 px-2 rounded-xl cursor-pointer transition-all duration-200 hover:bg-[#3a9ac6] active:scale-[0.98]"
           onClick={() => history.push("/student/challenges")}
         >

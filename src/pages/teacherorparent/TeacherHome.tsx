@@ -18,6 +18,7 @@ import {
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
 
 const TeacherHome = () => {
   const history = useHistory();
@@ -29,6 +30,8 @@ const TeacherHome = () => {
     totalClasses: 0,
     totalMissions: 0, // Added missions count
   });
+
+  useAutoStartGuide("teacher-home", true);
 
   // Fetch all data on component mount
   useEffect(() => {
@@ -194,6 +197,7 @@ const TeacherHome = () => {
       bgColor: "bg-gradient-to-br from-green-500 to-green-600",
       hoverColor: "hover:from-green-600 hover:to-green-700",
       icon: <FaUserGraduate className="text-green-600" size={28} />,
+      guideId: "teacher-students",
       onclick: () => history.push("/teacher/studentslist"),
     },
     // {
@@ -346,10 +350,11 @@ const TeacherHome = () => {
           <motion.div
             className={`group flex-center flex-col gap-4 ${"h-40"} ${
               button.bgColor
-            } ${button.hoverColor} 
-            rounded-2xl shadow-lg transform transition-all duration-300 
+            } ${button.hoverColor}
+            rounded-2xl shadow-lg transform transition-all duration-300
             hover:shadow-2xl cursor-pointer relative overflow-hidden`}
             key={index}
+            data-guide-id={(button as any).guideId}
             onClick={button.onclick}
             variants={itemVariants}
             whileHover={{

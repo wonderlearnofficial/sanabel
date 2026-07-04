@@ -2,6 +2,7 @@ import { API_BASE_URL } from "../../config/api";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
+import { playSound } from "../../utils/soundHelper";
 
 import TeacherNavbar from "../../components/navbar/TeacherNavbar";
 import StudentNavbar from "../../components/navbar/StudentNavbar";
@@ -494,23 +495,21 @@ const TodoList = () => {
     const authToken = localStorage.getItem("token");
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/students/add-pros`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({
-            taskId: selectedMissionId,
-            studentIds: [user?.id],
-            time: getCurrentTime(),
-          }),
+      const response = await fetch(`${API_BASE_URL}/students/add-pros`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
         },
-      );
+        body: JSON.stringify({
+          taskId: selectedMissionId,
+          studentIds: [user?.id],
+          time: getCurrentTime(),
+        }),
+      });
 
       if (response.ok) {
+        playSound.success();
         setTodoItems((prev) =>
           prev.map((item) =>
             item.id === selectedMissionId ? { ...item, completed: true } : item,
@@ -523,6 +522,7 @@ const TodoList = () => {
         setShowConfirmPopup(false);
         setShowCongratsPopup(true);
       } else {
+        playSound.error();
         const errorData = await response.json();
         console.error("Failed to mark mission complete:", errorData);
         alert(
@@ -534,6 +534,7 @@ const TodoList = () => {
         );
       }
     } catch (error) {
+      playSound.error();
       console.error("Error marking mission complete:", error);
       alert(t("حدث خطأ أثناء تحديد المهمة كمكتملة."));
     } finally {
@@ -695,9 +696,9 @@ const TodoList = () => {
                   : "bg-white border-gray-200"
               }`}
             >
-              <div className="flex items-start justify-between w-full overflow-y-auto">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between w-full">
+              <div className="flex items-start justify-between w-full h-full overflow-y-auto">
+                <div className="flex-1 ">
+                  <div className="flex items-center justify-between w-full h-full">
                     <button
                       onClick={() => deleteTodo(item.id)}
                       className="flex items-center justify-center w-6 h-6 text-white bg-red-500 rounded-full hover:bg-red-600"
@@ -713,6 +714,7 @@ const TodoList = () => {
                     {item.task.completionStatus !== "Completed" &&
                       (isPersonal || !grade || canAssignTask) && (
                         <div
+                          data-guide-id="mission-action"
                           onClick={() =>
                             handleToggleCompleteClick(item.task.id)
                           }
