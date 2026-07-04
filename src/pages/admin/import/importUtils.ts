@@ -24,19 +24,23 @@ function parseCSVText(text: string): { headers: string[]; rows: string[][] } {
   return { headers, rows };
 }
 
-// Header aliases → official field name. Mirrors the flexibility of the
-// server's getImportField (server/src/helpers/importFieldLookup.ts) so a
-// school's own column names ("First Name", "Student Email", ...) map
-// automatically instead of asking the admin to map every column by hand.
-const HEADER_ALIASES: Record<string, string> = {
-  id: "id",
-  firstname: "firstName", "first name": "firstName", fname: "firstName",
-  lastname: "lastName", "last name": "lastName", lname: "lastName",
-  email: "email", "email address": "email", "student email": "email",
-  grade: "grade", "grade level": "grade",
-  school: "school", "school name": "school", organizationname: "school", organization: "school",
-  class: "class", classname: "class", "class name": "class", section: "class",
-  name: "name",
+// Aliases per official field name. Mirrors the flexibility of the server's
+// getImportField (server/src/helpers/importFieldLookup.ts) so a school's own
+// column names ("First Name", "Student Email", ...) map automatically
+// instead of asking the admin to map every column by hand. Keyed by field so
+// resolution stays tab-aware — e.g. "classname" (a header) resolves to the
+// Classes tab's own "classname" field, not the Students tab's "class" field,
+// since aliases are only consulted against the active config's own fields.
+const FIELD_ALIASES: Record<string, string[]> = {
+  id: ["id"],
+  firstName: ["firstname", "first name", "fname"],
+  lastName: ["lastname", "last name", "lname"],
+  email: ["email", "email address", "student email"],
+  grade: ["grade", "grade level"],
+  school: ["school", "school name", "organizationname", "organization"],
+  class: ["class", "classname", "class name", "section"],
+  classname: ["classname", "class name", "class"],
+  name: ["name"],
 };
 
 function normalizeHeader(h: string): string {
@@ -44,14 +48,28 @@ function normalizeHeader(h: string): string {
 }
 
 // Maps a raw header row to the official field names a TabImportConfig
-// expects. Unrecognized headers are dropped (informational, not blocking —
-// matches the "only ask about unknown columns" spec, simplified to "ignore
-// them" since every current tab's official fields are all inferable).
-function mapHeaders(headers: string[]): (string | null)[] {
-  return headers.map((h) => HEADER_ALIASES[normalizeHeader(h)] ?? null);
+// expects. An exact (case-insensitive) match against the tab's own official
+// field names always wins first; aliases are only consulted for headers that
+// don't already match one of this tab's fields verbatim. Unrecognized
+// headers are dropped (informational, not blocking — matches the "only ask
+// about unknown columns" spec, simplified to "ignore them" since every
+// current tab's official fields are all inferable).
+function mapHeaders(headers: string[], officialHeaders: string[]): (string | null)[] {
+  return headers.map((h) => {
+    const norm = normalizeHeader(h);
+    const exact = officialHeaders.find((f) => f.toLowerCase() === norm);
+    if (exact) return exact;
+    for (const field of officialHeaders) {
+      if ((FIELD_ALIASES[field] || []).includes(norm)) return field;
+    }
+    return null;
+  });
 }
 
-export async function parseImportFile(file: File): Promise<{ headers: string[]; rows: Record<string, string>[] }> {
+export async function parseImportFile(
+  file: File,
+  officialHeaders: string[],
+): Promise<{ headers: string[]; rows: Record<string, string>[] }> {
   const isXlsx = /\.xlsx?$/i.test(file.name);
 
   let rawHeaders: string[];
@@ -71,7 +89,7 @@ export async function parseImportFile(file: File): Promise<{ headers: string[]; 
     rawRows = parsed.rows;
   }
 
-  const mapped = mapHeaders(rawHeaders);
+  const mapped = mapHeaders(rawHeaders, officialHeaders);
   const rows = rawRows
     .filter((r) => r.some((c) => c && c.trim() !== "")) // ignore empty rows
     .map((r) => {
@@ -85,9 +103,10 @@ export async function parseImportFile(file: File): Promise<{ headers: string[]; 
   return { headers: mapped.filter((m): m is string => !!m), rows };
 }
 
+// `headers` here are already-resolved official field names (parseImportFile's
+// return value), so this just checks every required field was recognized.
 export function isOfficialTemplate(headers: string[], config: TabImportConfig): boolean {
-  const normalized = headers.map((h) => HEADER_ALIASES[normalizeHeader(h)] ?? normalizeHeader(h));
-  return config.requiredFields.every((f) => normalized.includes(f));
+  return config.requiredFields.every((f) => headers.includes(f));
 }
 
 // Small Levenshtein distance, no new npm dependency — used to suggest

@@ -29,7 +29,7 @@ export function useImportWizard(config: TabImportConfig, refs: Refs, token: stri
     setStep("parsing");
     setError(null);
     try {
-      const { headers, rows: parsedRows } = await parseImportFile(file);
+      const { headers, rows: parsedRows } = await parseImportFile(file, config.officialHeaders);
       if (parsedRows.length === 0) {
         setError("No data rows found in this file.");
         setStep("idle");
