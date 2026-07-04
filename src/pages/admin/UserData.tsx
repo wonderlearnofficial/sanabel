@@ -784,13 +784,13 @@ const ImportModal: React.FC<ImportModalProps> = ({
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase text-start">
+                        <th className="px-4 py-3 text-xs font-semibold uppercase text-bl text-start">
                           {t("admin.import.csvCol")}
                         </th>
-                        <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase text-start">
+                        <th className="px-4 py-3 text-xs font-semibold uppercase text-bl text-start">
                           {t("admin.import.dbField")}
                         </th>
-                        <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase text-start">
+                        <th className="px-4 py-3 text-xs font-semibold uppercase text-bl text-start">
                           Preview
                         </th>
                       </tr>
@@ -925,6 +925,7 @@ const UserData: React.FC = () => {
   const [createGrade, setCreateGrade] = useState("");
   const [createOrgId, setCreateOrgId] = useState("");
   const [createClassId, setCreateClassId] = useState("");
+  const [createClassIds, setCreateClassIds] = useState<string[]>([]);
   const [createOrganizations, setCreateOrganizations] = useState<
     { id: number; name: string }[]
   >([]);
@@ -945,6 +946,7 @@ const UserData: React.FC = () => {
   const [editGrade, setEditGrade] = useState("");
   const [editOrgId, setEditOrgId] = useState("");
   const [editClassId, setEditClassId] = useState("");
+  const [editClassIds, setEditClassIds] = useState<string[]>([]);
   const [editClassName, setEditClassName] = useState("");
   const [editOrgName, setEditOrgName] = useState("");
   const [editGradeName, setEditGradeName] = useState("");
@@ -1140,6 +1142,9 @@ const UserData: React.FC = () => {
     setEditGrade(row.gradeId ? String(row.gradeId) : row.grade ?? "");
     setEditOrgId(String(row.organizationId ?? row.Organization?.id ?? ""));
     setEditClassId(String(row.classId ?? ""));
+    setEditClassIds(
+      row.Classes ? row.Classes.map((c: any) => String(c.id)) : [],
+    );
     setEditClassName(row.classname ?? "");
     setEditOrgName(row.name ?? "");
     setEditGradeName(row.name ?? "");
@@ -1160,7 +1165,7 @@ const UserData: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!editingRow || activeTab !== "students") {
+    if (!editingRow || (activeTab !== "students" && activeTab !== "teachers")) {
       setEditClassesOptions([]);
       return;
     }
@@ -1266,7 +1271,7 @@ const UserData: React.FC = () => {
             lastName: editLastName,
             email: editEmail,
             gradeId:
-              activeTab === "students"
+              activeTab === "students" || activeTab === "teachers"
                 ? editGrade
                   ? Number(editGrade)
                   : null
@@ -1283,6 +1288,8 @@ const UserData: React.FC = () => {
                   ? Number(editClassId)
                   : null
                 : undefined,
+            classIds:
+              activeTab === "teachers" ? editClassIds.map(Number) : undefined,
           },
           { headers: { Authorization: `Bearer ${token}` } },
         );
@@ -1394,6 +1401,7 @@ const UserData: React.FC = () => {
     setCreateGrade("");
     setCreateOrgId("");
     setCreateClassId("");
+    setCreateClassIds([]);
     setCreatedCredentials(null);
     setShowCreateModal(true);
   };
@@ -1420,7 +1428,12 @@ const UserData: React.FC = () => {
           email: createEmail,
           role: createRole,
           organizationId: createOrgId ? Number(createOrgId) : undefined,
-          classId: createClassId ? Number(createClassId) : undefined,
+          classId:
+            createRole === "Student" && createClassId
+              ? Number(createClassId)
+              : undefined,
+          classIds:
+            createRole === "Teacher" ? createClassIds.map(Number) : undefined,
           gradeId: createGrade ? Number(createGrade) : undefined,
         },
         { headers: { Authorization: `Bearer ${token}` } },
@@ -1571,7 +1584,9 @@ const UserData: React.FC = () => {
           { key: "id", label: "admin.th.id", sortable: true },
           { key: "name", label: "admin.th.name", sortable: true },
           { key: "email", label: "admin.th.email", sortable: true },
+          { key: "grade", label: "admin.th.grade" },
           { key: "org", label: "admin.th.organization" },
+          { key: "class", label: "admin.th.class" },
           act,
         ];
       case "parents":
@@ -1626,9 +1641,7 @@ const UserData: React.FC = () => {
     const userId = isUserLikeTab(activeTab) ? getUserId(activeTab, row) : -1;
     const selId = isUserLikeTab(activeTab) ? userId : row.id;
     const name =
-      activeTab === "grades"
-        ? row.name ?? "—"
-        : getName(activeTab, row) || "—";
+      activeTab === "grades" ? row.name ?? "—" : getName(activeTab, row) || "—";
     const email = getEmail(activeTab, row);
     const deleteId = getDeleteId(activeTab, row);
     const isSel = selectedIds.has(selId);
@@ -1693,11 +1706,35 @@ const UserData: React.FC = () => {
           <span className="text-sm text-slate-500" dir="ltr">
             <Highlight text={email} query={search} />
           </span>,
+          row.Classes && row.Classes.length > 0 ? (
+            <div className="flex flex-col gap-1">
+              {Array.from(
+                new Set(
+                  row.Classes.map((c: any) => c.GradeEntity?.name || c.grade),
+                ),
+              ).map((grade: any, i) => (
+                <GradeBadge key={i} name={grade} t={t} />
+              ))}
+            </div>
+          ) : (
+            <span className="text-gray-300">—</span>
+          ),
           <span className="text-sm text-slate-500">
             {row.Organization?.name ?? row.organization?.name ?? (
               <span className="text-gray-300">—</span>
             )}
           </span>,
+          row.Classes && row.Classes.length > 0 ? (
+            <div className="flex flex-col gap-1">
+              {row.Classes.map((c: any, i: number) => (
+                <span key={i} className="text-sm text-slate-500">
+                  {c.classname}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="text-gray-300">—</span>
+          ),
         ];
         break;
       case "parents":
@@ -2719,7 +2756,7 @@ const UserData: React.FC = () => {
                         className={inputCls}
                       />
                     </div>
-                    {createRole === "Student" && (
+                    {(createRole === "Student" || createRole === "Teacher") && (
                       <div>
                         <label className={labelCls}>
                           {t("admin.modal.grade")}
@@ -2779,6 +2816,32 @@ const UserData: React.FC = () => {
                           <option value="">
                             {t("admin.modal.selectClass")}
                           </option>
+                          {createClasses.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.classname} ({t(`admin.grade.${c.grade}`)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    {createRole === "Teacher" && (
+                      <div>
+                        <label className={labelCls}>
+                          {t("admin.modal.class")}
+                        </label>
+                        <select
+                          multiple
+                          value={createClassIds}
+                          onChange={(e) => {
+                            const values = Array.from(
+                              e.target.selectedOptions,
+                              (option) => option.value,
+                            );
+                            setCreateClassIds(values);
+                          }}
+                          disabled={!createOrgId}
+                          className={`${selectCls} disabled:opacity-50 h-32`}
+                        >
                           {createClasses.map((c) => (
                             <option key={c.id} value={c.id}>
                               {c.classname} ({t(`admin.grade.${c.grade}`)})
@@ -2963,7 +3026,7 @@ const UserData: React.FC = () => {
                         className={inputCls}
                       />
                     </div>
-                    {activeTab === "students" && (
+                    {(activeTab === "students" || activeTab === "teachers") && (
                       <div>
                         <label className={labelCls}>
                           {t("admin.modal.grade")}
@@ -3021,6 +3084,32 @@ const UserData: React.FC = () => {
                           className={`${selectCls} disabled:opacity-50`}
                         >
                           <option value="">{t("admin.modal.noClass")}</option>
+                          {editClassesOptions.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.classname} ({t(`admin.grade.${c.grade}`)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    {activeTab === "teachers" && (
+                      <div>
+                        <label className={labelCls}>
+                          {t("admin.th.class")}
+                        </label>
+                        <select
+                          multiple
+                          value={editClassIds}
+                          onChange={(e) => {
+                            const values = Array.from(
+                              e.target.selectedOptions,
+                              (option) => option.value,
+                            );
+                            setEditClassIds(values);
+                          }}
+                          disabled={!editOrgId}
+                          className={`${selectCls} disabled:opacity-50 h-32`}
+                        >
                           {editClassesOptions.map((c) => (
                             <option key={c.id} value={c.id}>
                               {c.classname} ({t(`admin.grade.${c.grade}`)})
