@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../../config/api";
+import ImportWizard from "./import/ImportWizard";
 import React, {
   useEffect,
   useState,
@@ -650,218 +651,6 @@ const MiniAnalytics: React.FC<MiniAnalyticsProps> = ({
   );
 };
 
-// ─── Import Modal ──────────────────────────────────────────────────────────────
-const DB_FIELDS: Record<string, string[]> = {
-  students: [
-    "firstName",
-    "lastName",
-    "email",
-    "grade",
-    "organizationId",
-    "classId",
-  ],
-  teachers: ["firstName", "lastName", "email", "organizationId"],
-  parents: ["firstName", "lastName", "email"],
-  organizations: ["name"],
-  classes: ["classname", "grade", "organizationId"],
-  grades: ["name"],
-  users: ["firstName", "lastName", "email", "role"],
-  admins: ["firstName", "lastName", "email"],
-};
-interface ImportModalProps {
-  open: boolean;
-  onClose: () => void;
-  activeTab: Tab;
-  t: (k: string) => string;
-}
-const ImportModal: React.FC<ImportModalProps> = ({
-  open,
-  onClose,
-  activeTab,
-  t,
-}) => {
-  const [dragOver, setDragOver] = useState(false);
-  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
-  const [csvRows, setCsvRows] = useState<string[][]>([]);
-  const [mapping, setMapping] = useState<Record<string, string>>({});
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const dbFields = DB_FIELDS[activeTab] ?? [];
-
-  const handleFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const { headers, rows } = parseCSVText(e.target?.result as string);
-      setCsvHeaders(headers);
-      setCsvRows(rows.slice(0, 5));
-      const m: Record<string, string> = {};
-      headers.forEach((h) => {
-        m[h] = dbFields.find((f) => f.toLowerCase() === h.toLowerCase()) ?? "";
-      });
-      setMapping(m);
-    };
-    reader.readAsText(file);
-  };
-
-  if (!open) return null;
-  return (
-    <AnimatePresence>
-      <motion.div
-        className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/50 backdrop-blur-sm"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-      >
-        <motion.div
-          className="w-full max-w-2xl mx-4 overflow-hidden bg-white shadow-2xl rounded-t-3xl sm:rounded-2xl"
-          initial={{ y: "100%" }}
-          animate={{ y: 0 }}
-          exit={{ y: "100%" }}
-          transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center text-indigo-600 w-9 h-9 rounded-xl bg-indigo-50">
-                <FaUpload size={14} />
-              </div>
-              <h2 className="text-lg font-bold text-gray-900">
-                {t("admin.import.title")}
-              </h2>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-400 transition-colors rounded-lg hover:bg-gray-100"
-            >
-              <FaTimes />
-            </button>
-          </div>
-          <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
-            <div
-              onClick={() => fileRef.current?.click()}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(true);
-              }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragOver(false);
-                const f = e.dataTransfer.files[0];
-                if (f) handleFile(f);
-              }}
-              className="p-10 text-center transition-all border-2 border-dashed cursor-pointer rounded-2xl"
-              style={{
-                borderColor: dragOver ? "#6366f1" : "#e2e8f0",
-                background: dragOver ? "#eef2ff" : "#f8fafc",
-              }}
-            >
-              <FaUpload
-                size={28}
-                className="mx-auto mb-3"
-                style={{ color: dragOver ? "#6366f1" : "#94a3b8" }}
-              />
-              <p className="text-sm font-medium text-gray-500">
-                {t("admin.import.dropzone")}
-              </p>
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".csv"
-                className="hidden"
-                onChange={(e) =>
-                  e.target.files?.[0] && handleFile(e.target.files[0])
-                }
-              />
-            </div>
-            {csvHeaders.length > 0 && (
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-gray-700">
-                  {t("admin.import.preview")}
-                </h3>
-                <div className="overflow-hidden border border-gray-100 rounded-xl">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-xs font-semibold uppercase text-bl text-start">
-                          {t("admin.import.csvCol")}
-                        </th>
-                        <th className="px-4 py-3 text-xs font-semibold uppercase text-bl text-start">
-                          {t("admin.import.dbField")}
-                        </th>
-                        <th className="px-4 py-3 text-xs font-semibold uppercase text-bl text-start">
-                          Preview
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {csvHeaders.map((h, i) => (
-                        <tr
-                          key={i}
-                          className="border-t border-gray-100 hover:bg-gray-50"
-                        >
-                          <td className="px-4 py-2.5">
-                            <span className="font-mono text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                              {h}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2.5">
-                            <select
-                              value={mapping[h] ?? ""}
-                              onChange={(e) =>
-                                setMapping((m) => ({
-                                  ...m,
-                                  [h]: e.target.value,
-                                }))
-                              }
-                              className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:border-indigo-400"
-                            >
-                              <option value="">{t("admin.import.skip")}</option>
-                              {dbFields.map((f) => (
-                                <option key={f} value={f}>
-                                  {f}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-4 py-2.5 text-xs text-gray-400 font-mono">
-                            {csvRows[0]?.[i] ?? "—"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <button
-                  onClick={() => {
-                    setUploading(true);
-                    setTimeout(() => {
-                      toast.info(
-                        `Parsed ${csvRows.length} rows — connect to your bulk API endpoint`,
-                      );
-                      setUploading(false);
-                    }, 800);
-                  }}
-                  disabled={uploading}
-                  className="w-full py-3 mt-4 text-sm font-semibold text-white rounded-xl"
-                  style={{
-                    background: "linear-gradient(135deg,#6366f1,#4f46e5)",
-                  }}
-                >
-                  {uploading
-                    ? t("admin.import.uploading")
-                    : t("admin.import.upload")}
-                </button>
-              </div>
-            )}
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 const UserData: React.FC = () => {
   const { t } = useTranslation();
@@ -1182,7 +971,7 @@ const UserData: React.FC = () => {
   }, [editingRow, editOrgId, activeTab, token]);
 
   useEffect(() => {
-    if (!showCreateModal && !editingRow) return;
+    if (!showCreateModal && !editingRow && !showImport) return;
     axios
       .get(`${API_BASE_URL}/admin/organizations`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -3142,10 +2931,18 @@ const UserData: React.FC = () => {
       </AnimatePresence>
 
       {/* ══════════════════ IMPORT ══════════════════ */}
-      <ImportModal
+      <ImportWizard
         open={showImport}
         onClose={() => setShowImport(false)}
+        onImportComplete={() => {
+          fetchData();
+          fetchStats();
+        }}
         activeTab={activeTab}
+        organizations={createOrganizations.map((o) => o.name)}
+        classes={[]}
+        grades={gradesList.map((g) => g.name)}
+        token={token}
         t={t}
       />
 

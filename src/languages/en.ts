@@ -285,6 +285,16 @@ const en = {
     "تسجيل الابناء": "Register Children",
     "دعوة الابناء": "Invite Children",
     "عرض الابناء": "View Children",
+    "ابدأ بدعوة طفلك": "Start by inviting your child",
+    "جاري التحقق من الأبناء المرتبطين...": "Checking linked children...",
+    "للوصول إلى التسجيل والمتابعة والتحديات، اربط حساب طفلك أولاً باستخدام كود الدعوة الخاص به.":
+      "To access tracking, registration, and challenges, first link your child's account using their invitation code.",
+    "كيف يحصل الطفل على الكود؟": "How does your child get the code?",
+    "يدخل الطفل إلى حسابه ثم يفتح الملف الشخصي وينسخ كود الربط الظاهر في معلومات الحساب.":
+      "Your child logs into their account, opens the profile page, and copies the link code shown in account information.",
+    "بعد الربط ستظهر لك أدوات المتابعة والتسجيل هنا.":
+      "After linking, the tracking and registration tools will appear here.",
+    "دعوة طفل الآن": "Invite a Child Now",
 
     "دعوة الطلاب": "Invite Your Children",
     "تسجيل الطلاب": "Register Students",
@@ -292,6 +302,8 @@ const en = {
       "Record individual student achievements and their progress",
 
     "ادخل كود دعوة الطفل": "Enter child invitation code",
+    "أرسل دعوات للطلاب للانضمام إلى فصولك":
+      "Send invitations to your children to join you",
     "أرسل دعوات للأبناء للانضمام إلى فصولك":
       "Send invitations to children to join your classes",
     "عرض الطلاب": "View Students",
@@ -304,6 +316,8 @@ const en = {
     "كيفية العثور على كود الطفل": "How to find your child's code",
     "يمكن للطالب العثور على الكود الخاص به من خلال الدخول إلى حسابه والذهاب إلى صفحة الملف الشخصي سيجد الكود مُعرَّض بوضوح في قسم معلومات الحساب":
       "The kids can find their code by logging into their account and going to the profile page They will find the code clearly displayed in the account information section",
+    "يمكن للطفل العثور على الكود الخاص به من خلال الدخول إلى حسابه والذهاب إلى صفحة الملف الشخصي. سيجد الكود مُعرَّض بوضوح في قسم معلومات الحساب":
+      "Your child can find their code by logging into their account and going to the profile page. The code is shown clearly in account information.",
     "ادخل كود دعوة الطالب": "Enter student invitation code",
     بحث: "Search",
     "تهانينا!": "Congratulations",
@@ -1371,7 +1385,7 @@ const en = {
     "admin.export.toast": "CSV exported successfully",
     "admin.import.button": "Import",
     "admin.import.title": "Import from Spreadsheet",
-    "admin.import.dropzone": "Drop CSV file here, or click to browse",
+    "admin.import.dropzone": "Drop CSV or Excel file here, or click to browse",
     "admin.import.preview": "Column Mapping",
     "admin.import.csvCol": "CSV Column",
     "admin.import.dbField": "Maps To",
@@ -1379,6 +1393,24 @@ const en = {
     "admin.import.uploading": "Uploading...",
     "admin.import.success": "Import completed successfully",
     "admin.import.skip": "-- Skip --",
+    "admin.import.reading": "Reading file...",
+    "admin.import.downloadTemplate": "Download Template",
+    "admin.import.downloadExample": "Download Example",
+    "admin.import.officialDetected": "Official template detected — no mapping needed",
+    "admin.import.ready": "Ready",
+    "admin.import.warnings": "Warnings",
+    "admin.import.blocked": "Blocked",
+    "admin.import.status": "Status",
+    "admin.import.ok": "OK",
+    "admin.import.applySuggestion": "Apply",
+    "admin.import.previewNote": "Showing first 10 rows of",
+    "admin.import.startOver": "Start Over",
+    "admin.import.importN": "Import {n} rows",
+    "admin.import.importing": "Importing...",
+    "admin.import.imported": "Imported",
+    "admin.import.failed": "Failed",
+    "admin.import.downloadErrors": "Download Failed Rows",
+    "admin.import.done": "Done",
 
     // Analytics charts
     "admin.chart.distribution": "Role Distribution",
