@@ -715,6 +715,8 @@ const UserData: React.FC = () => {
   const [createOrgId, setCreateOrgId] = useState("");
   const [createClassId, setCreateClassId] = useState("");
   const [createClassIds, setCreateClassIds] = useState<string[]>([]);
+  const [addCreateClassGradeFilter, setAddCreateClassGradeFilter] = useState("");
+  const [createClassToAdd, setCreateClassToAdd] = useState("");
   const [createOrganizations, setCreateOrganizations] = useState<
     { id: number; name: string }[]
   >([]);
@@ -736,6 +738,8 @@ const UserData: React.FC = () => {
   const [editOrgId, setEditOrgId] = useState("");
   const [editClassId, setEditClassId] = useState("");
   const [editClassIds, setEditClassIds] = useState<string[]>([]);
+  const [addClassGradeFilter, setAddClassGradeFilter] = useState("");
+  const [classToAdd, setClassToAdd] = useState("");
   const [editClassName, setEditClassName] = useState("");
   const [editOrgName, setEditOrgName] = useState("");
   const [editGradeName, setEditGradeName] = useState("");
@@ -934,6 +938,8 @@ const UserData: React.FC = () => {
     setEditClassIds(
       row.Classes ? row.Classes.map((c: any) => String(c.id)) : [],
     );
+    setAddClassGradeFilter("");
+    setClassToAdd("");
     setEditClassName(row.classname ?? "");
     setEditOrgName(row.name ?? "");
     setEditGradeName(row.name ?? "");
@@ -1191,6 +1197,8 @@ const UserData: React.FC = () => {
     setCreateOrgId("");
     setCreateClassId("");
     setCreateClassIds([]);
+    setAddCreateClassGradeFilter("");
+    setCreateClassToAdd("");
     setCreatedCredentials(null);
     setShowCreateModal(true);
   };
@@ -2607,7 +2615,12 @@ const UserData: React.FC = () => {
                           </option>
                           {createClasses.map((c) => (
                             <option key={c.id} value={c.id}>
-                              {c.classname} ({t(`admin.grade.${c.grade}`)})
+                              {c.classname} ({
+                                t(`admin.grade.${c.grade}`) !==
+                                `admin.grade.${c.grade}`
+                                  ? t(`admin.grade.${c.grade}`)
+                                  : c.grade
+                              })
                             </option>
                           ))}
                         </select>
@@ -2618,25 +2631,112 @@ const UserData: React.FC = () => {
                         <label className={labelCls}>
                           {t("admin.modal.class")}
                         </label>
-                        <select
-                          multiple
-                          value={createClassIds}
-                          onChange={(e) => {
-                            const values = Array.from(
-                              e.target.selectedOptions,
-                              (option) => option.value,
+
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {createClassIds.length === 0 && (
+                            <span className="text-xs text-gray-400">
+                              {t("admin.modal.noClassesAssigned")}
+                            </span>
+                          )}
+                          {createClassIds.map((id) => {
+                            const c = createClasses.find(
+                              (c) => String(c.id) === id,
                             );
-                            setCreateClassIds(values);
-                          }}
-                          disabled={!createOrgId}
-                          className={`${selectCls} disabled:opacity-50 h-32`}
-                        >
-                          {createClasses.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.classname} ({t(`admin.grade.${c.grade}`)})
+                            if (!c) return null;
+                            const gradeLabel =
+                              t(`admin.grade.${c.grade}`) !==
+                              `admin.grade.${c.grade}`
+                                ? t(`admin.grade.${c.grade}`)
+                                : c.grade;
+                            return (
+                              <span
+                                key={id}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-indigo-50 text-indigo-700"
+                              >
+                                {c.classname} ({gradeLabel})
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setCreateClassIds((prev) =>
+                                      prev.filter((x) => x !== id),
+                                    )
+                                  }
+                                  className="text-indigo-400 hover:text-indigo-700"
+                                >
+                                  <FaTimes size={10} />
+                                </button>
+                              </span>
+                            );
+                          })}
+                        </div>
+
+                        <div className="flex gap-2">
+                          <select
+                            value={addCreateClassGradeFilter}
+                            onChange={(e) => {
+                              setAddCreateClassGradeFilter(e.target.value);
+                              setCreateClassToAdd("");
+                            }}
+                            disabled={!createOrgId}
+                            className={`${selectCls} disabled:opacity-50`}
+                          >
+                            <option value="">
+                              {t("admin.modal.allGrades")}
                             </option>
-                          ))}
-                        </select>
+                            {Array.from(
+                              new Set(createClasses.map((c) => c.grade)),
+                            ).map((g) => (
+                              <option key={g} value={g}>
+                                {t(`admin.grade.${g}`) !== `admin.grade.${g}`
+                                  ? t(`admin.grade.${g}`)
+                                  : g}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            value={createClassToAdd}
+                            onChange={(e) => setCreateClassToAdd(e.target.value)}
+                            disabled={!createOrgId}
+                            className={`${selectCls} disabled:opacity-50`}
+                          >
+                            <option value="">
+                              {t("admin.modal.selectClass")}
+                            </option>
+                            {createClasses
+                              .filter(
+                                (c) =>
+                                  !addCreateClassGradeFilter ||
+                                  c.grade === addCreateClassGradeFilter,
+                              )
+                              .filter(
+                                (c) => !createClassIds.includes(String(c.id)),
+                              )
+                              .map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.classname}
+                                </option>
+                              ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (
+                                createClassToAdd &&
+                                !createClassIds.includes(createClassToAdd)
+                              ) {
+                                setCreateClassIds((prev) => [
+                                  ...prev,
+                                  createClassToAdd,
+                                ]);
+                                setCreateClassToAdd("");
+                              }
+                            }}
+                            disabled={!createClassToAdd}
+                            className="px-4 py-2 text-sm font-semibold text-white rounded-xl disabled:opacity-40 bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap"
+                          >
+                            {t("admin.modal.addClass")}
+                          </button>
+                        </div>
                       </div>
                     )}
                     <button
@@ -2875,7 +2975,12 @@ const UserData: React.FC = () => {
                           <option value="">{t("admin.modal.noClass")}</option>
                           {editClassesOptions.map((c) => (
                             <option key={c.id} value={c.id}>
-                              {c.classname} ({t(`admin.grade.${c.grade}`)})
+                              {c.classname} ({
+                                t(`admin.grade.${c.grade}`) !==
+                                `admin.grade.${c.grade}`
+                                  ? t(`admin.grade.${c.grade}`)
+                                  : c.grade
+                              })
                             </option>
                           ))}
                         </select>
@@ -2886,25 +2991,112 @@ const UserData: React.FC = () => {
                         <label className={labelCls}>
                           {t("admin.th.class")}
                         </label>
-                        <select
-                          multiple
-                          value={editClassIds}
-                          onChange={(e) => {
-                            const values = Array.from(
-                              e.target.selectedOptions,
-                              (option) => option.value,
+
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {editClassIds.length === 0 && (
+                            <span className="text-xs text-gray-400">
+                              {t("admin.modal.noClassesAssigned")}
+                            </span>
+                          )}
+                          {editClassIds.map((id) => {
+                            const c = editClassesOptions.find(
+                              (c) => String(c.id) === id,
                             );
-                            setEditClassIds(values);
-                          }}
-                          disabled={!editOrgId}
-                          className={`${selectCls} disabled:opacity-50 h-32`}
-                        >
-                          {editClassesOptions.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.classname} ({t(`admin.grade.${c.grade}`)})
+                            if (!c) return null;
+                            const gradeLabel =
+                              t(`admin.grade.${c.grade}`) !==
+                              `admin.grade.${c.grade}`
+                                ? t(`admin.grade.${c.grade}`)
+                                : c.grade;
+                            return (
+                              <span
+                                key={id}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-indigo-50 text-indigo-700"
+                              >
+                                {c.classname} ({gradeLabel})
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setEditClassIds((prev) =>
+                                      prev.filter((x) => x !== id),
+                                    )
+                                  }
+                                  className="text-indigo-400 hover:text-indigo-700"
+                                >
+                                  <FaTimes size={10} />
+                                </button>
+                              </span>
+                            );
+                          })}
+                        </div>
+
+                        <div className="flex gap-2">
+                          <select
+                            value={addClassGradeFilter}
+                            onChange={(e) => {
+                              setAddClassGradeFilter(e.target.value);
+                              setClassToAdd("");
+                            }}
+                            disabled={!editOrgId}
+                            className={`${selectCls} disabled:opacity-50`}
+                          >
+                            <option value="">
+                              {t("admin.modal.allGrades")}
                             </option>
-                          ))}
-                        </select>
+                            {Array.from(
+                              new Set(editClassesOptions.map((c) => c.grade)),
+                            ).map((g) => (
+                              <option key={g} value={g}>
+                                {t(`admin.grade.${g}`) !== `admin.grade.${g}`
+                                  ? t(`admin.grade.${g}`)
+                                  : g}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            value={classToAdd}
+                            onChange={(e) => setClassToAdd(e.target.value)}
+                            disabled={!editOrgId}
+                            className={`${selectCls} disabled:opacity-50`}
+                          >
+                            <option value="">
+                              {t("admin.modal.selectClass")}
+                            </option>
+                            {editClassesOptions
+                              .filter(
+                                (c) =>
+                                  !addClassGradeFilter ||
+                                  c.grade === addClassGradeFilter,
+                              )
+                              .filter(
+                                (c) => !editClassIds.includes(String(c.id)),
+                              )
+                              .map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.classname}
+                                </option>
+                              ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (
+                                classToAdd &&
+                                !editClassIds.includes(classToAdd)
+                              ) {
+                                setEditClassIds((prev) => [
+                                  ...prev,
+                                  classToAdd,
+                                ]);
+                                setClassToAdd("");
+                              }
+                            }}
+                            disabled={!classToAdd}
+                            className="px-4 py-2 text-sm font-semibold text-white rounded-xl disabled:opacity-40 bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap"
+                          >
+                            {t("admin.modal.addClass")}
+                          </button>
+                        </div>
                       </div>
                     )}
                   </>

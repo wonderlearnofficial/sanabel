@@ -346,6 +346,9 @@ const ar = {
     "admin.modal.editGrade": "تعديل المرحلة",
     "admin.modal.class": "الفصل (اختياري)",
     "admin.modal.selectClass": "اختر الفصل",
+    "admin.modal.noClassesAssigned": "لا توجد فصول مُعيّنة بعد",
+    "admin.modal.allGrades": "كل المراحل",
+    "admin.modal.addClass": "إضافة",
     "admin.modal.createBtn": "إنشاء الحساب",
     "admin.modal.creating": "جاري الإنشاء...",
 

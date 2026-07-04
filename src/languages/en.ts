@@ -1284,6 +1284,9 @@ const en = {
     "admin.modal.editGrade": "Edit Grade",
     "admin.modal.class": "Class (optional)",
     "admin.modal.selectClass": "Select Class",
+    "admin.modal.noClassesAssigned": "No classes assigned yet",
+    "admin.modal.allGrades": "All Grades",
+    "admin.modal.addClass": "Add",
     "admin.modal.createBtn": "Create Account",
     "admin.modal.creating": "Creating...",
 
