@@ -33,7 +33,9 @@ interface GuideContextValue {
 const GuideContext = createContext<GuideContextValue | undefined>(undefined);
 
 const storageKey = (email: string) => `seenGuides-${email}`;
-const SESSION_AUTO_KEY = "guideAutoShownThisSession";
+// Per-user so switching accounts in the same tab (dev login, shared device)
+// doesn't let one user's guide consume another user's session slot.
+const sessionAutoKey = (email: string) => `guideAutoShownThisSession-${email}`;
 
 export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -115,13 +117,14 @@ export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({
   const requestGuide = useCallback(
     (guideId: string) => {
       if (activeGuideIdRef.current || seenGuides.has(guideId)) return;
-      if (sessionStorage.getItem(SESSION_AUTO_KEY)) return;
+      if (!user?.email) return;
+      if (sessionStorage.getItem(sessionAutoKey(user.email))) return;
       const guide = ALL_GUIDES.find((g) => g.id === guideId);
       if (!guide || guide.steps.length === 0) return;
-      sessionStorage.setItem(SESSION_AUTO_KEY, guideId);
+      sessionStorage.setItem(sessionAutoKey(user.email), guideId);
       startGuide(guideId, true);
     },
-    [seenGuides, startGuide]
+    [seenGuides, startGuide, user?.email]
   );
 
   // Manual replay (Settings / page help): ignores guards and never mutates
