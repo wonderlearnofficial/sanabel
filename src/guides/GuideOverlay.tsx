@@ -122,12 +122,14 @@ const GuideOverlay: React.FC = () => {
         : { bottom: vh - rect.top + PAD + 8 }),
     };
   } else {
+    // Centered numerically — framer-motion's scale animation overwrites any
+    // transform-based centering, so never center with translate here.
+    const width = Math.min(340, vw - 24);
     cardStyle = {
       position: "fixed",
-      width: Math.min(340, vw - 24),
-      left: "50%",
-      top: "40%",
-      transform: "translate(-50%, -50%)",
+      width,
+      left: (vw - width) / 2,
+      top: Math.max(24, vh * 0.35),
     };
   }
 
