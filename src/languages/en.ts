@@ -35,7 +35,7 @@ const en = {
     رمز: "Code",
     "إعادة تعيين كلمة السر": "Reset Password",
     "تأمين حسابك بكلمة مرور جديدة": "Secure your account with a new password",
-    "ادخل كلمة السر": "Enter Password",
+    "أدخل كلمة السر": "Enter Password",
     "كلمة السر": "Password",
     حفظ: "Save",
     "ليس لديك حساب؟": "Don't have an account?",
@@ -53,18 +53,18 @@ const en = {
     "أدخله أدناه:": "Enter it below:",
     "البريد الإلكتروني": "Email",
     "تأكيد الرمز": "Confirm Code",
-    "ارسل الرمز": "Send Code",
+    "أرسل الرمز": "Send Code",
     "لم تتلق رمز": "Didn't receive code",
     "بعد؟": "yet?",
     "إعادة الإرسال": "Resend",
 
     "اختر نوع التسجيل": "Choose Registration Type",
     طالب: "Student",
-    "ولي امر او  معلم": "Parent or Teacher",
+    "ولي أمر او  معلم": "Parent or Teacher",
     "مرحباً بك في": "Welcome to",
     "👋سنابل الإحسان": "👋Sanabel Al Ehsan",
 
-    "سنابل الإحسان هو تطبيق تفاعلي يعزز القيم النبيلة للأطفال":
+    "سنابل الإحسان هو تطبيق تفاعلي يعزز القيم النبيلة عند الأطفال":
       "Sanabel Al-Ehsan is an interactive app that nurtures noble values in children",
 
     "ازرع سنبلة تُثمر": "Plant a grain",
@@ -103,15 +103,15 @@ const en = {
     الرجوع: "Back",
     Teacher: "Teacher",
     Parent: "Parent",
-    "اسمك الاخير": "Your Last Name",
+    "اسمك الأخير": "Your Last Name",
     اسمك: "Your Name",
     "اسمك الأول": "Your First Name",
     enterFirstNameAndParentName: "Enter your first name and parent's name",
     noNumbersOrSymbols: "No numbers or symbols",
     "ادخل اسمك واسم والدك": "Enter your name and your father's name",
-    "اكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء":
+    "أكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء":
       "Complete your account and enjoy an interactive experience that builds giving and belonging",
-    "اختار النوع (بنت - ولد)": "Choose type (Girl - Boy)",
+    "اختر النوع (بنت - ولد)": "Choose type (Girl - Boy)",
     ولد: "Boy",
     بنت: "Girl",
     numbers_only: "numbers only",
@@ -136,7 +136,7 @@ const en = {
       "Progress gradually in goals and avoid overwhelming yourself at the beginning of the challenge",
 
     "توصيات عامة": "General Recommendations",
-    أبدا: "Start",
+    ابدأ: "Start",
     "سنابل الإحسان": "Sanabel Al Ehsan",
     "اختر سنبلة من سنابل الاحسان": "Choose a Sanabel",
 
@@ -180,7 +180,7 @@ const en = {
     "لون الشعر": "Hair Color",
     "لون البشرة": "Skin Color",
     "اختر شخصيتك": "Choose your character",
-    "صمم الشخصية المثالية للمغامرة":
+    "صمم الشخصية المثالية للمغأمرة":
       "Design the perfect character for adventure",
     "العلاقة مع الله": "Relationship with God",
     "العلاقة مع النفس": "Relationship with Self",
@@ -196,8 +196,8 @@ const en = {
     المرحلة: "Stage",
     "No trophies found Complete challenges to earn trophies!":
       "No trophies found Complete challenges to earn trophies!",
-    "تغيير الي العربية": "Change to Arabic",
-    "تغيير الي الانجليزية": "Change to English",
+    "تغيير إلى العربية": "Change to Arabic",
+    "تغيير إلى الانجليزية": "Change to English",
     "تغيير كلمة المرور": "Change Password",
     "سياسة الخصوصية": "Privacy Policy",
     "مركز المساعدة": "Help Center",
@@ -893,7 +893,6 @@ const en = {
 
     "كبر شجرتك": "Grow Your Tree",
     "هذه شجرتك الآن، أحسنت": "This is your tree now, well done",
-    ابدأ: "Start",
     "ازرع شجرتك": "Plant Your Tree",
 
     مبتدئ: "Beginner",
@@ -1100,7 +1099,7 @@ const en = {
 
     "خطأ: المهمة لا تحتوي على معرف صحيح":
       "Error: Task does not have a valid ID",
-    "الرجاء اختيار مهمة أولاً.": "Please select a task first.",
+    "الرجاء إختيار مهمة أولاً.": "Please select a task first.",
 
     "فشل في تحديد المهمة كمكتملة:": "Failed to mark task as completed:",
     "حدث خطأ أثناء تحديد المهمة كمكتملة.":
@@ -1152,7 +1151,7 @@ const en = {
     "إضافة مدرسة": "Add School",
     "تعديل المدرسة": "Edit School",
     "اسم المدرسة": "School Name",
-    "رابط الصورة (اختياري)": "Image URL (optional)",
+    "رابط الصورة (إختياري)": "Image URL (optional)",
     "تم إنشاء المدرسة بنجاح": "School created successfully",
     "تم تحديث المدرسة بنجاح": "School updated successfully",
     "اسم المدرسة مطلوب": "School name is required",
@@ -1161,9 +1160,11 @@ const en = {
     "حدث خطأ أثناء الحفظ": "An error occurred while saving",
     "تعذر تحميل بيانات المدرسة": "Failed to load school data",
     "جاري الحفظ...": "Saving...",
-    "تعذر حفظ الصورة الشخصية، حاول مرة أخرى": "Couldn't save your avatar, please try again",
+    "تعذر حفظ الصورة الشخصية، حاول مرة أخرى":
+      "Couldn't save your avatar, please try again",
     "تخطي الجولة التعريفية؟": "Skip the tutorial?",
-    "لن تتمكن من رؤية هذه الخطوات مرة أخرى": "You won't be able to see these steps again",
+    "لن تتمكن من رؤية هذه الخطوات مرة أخرى":
+      "You won't be able to see these steps again",
     "كل المدارس": "All Schools",
     "كل الفصول": "All Classes",
     "كل المراحل": "All Stages",
@@ -1190,7 +1191,8 @@ const en = {
     // Generic error-toast fallbacks (used when the server gave no message)
     otpSendFailed: "Couldn't send the code. Please try again.",
     registrationFailed: "Registration failed. Please try again.",
-    networkError: "Couldn't reach the server. Check your connection and try again.",
+    networkError:
+      "Couldn't reach the server. Check your connection and try again.",
 
     // Known server error messages (surfaced as-is in English mode)
     "Incorrect email or password": "Incorrect email or password",
@@ -1294,7 +1296,8 @@ const en = {
     "admin.created.title": "Account Created Successfully",
     "admin.created.email": "Email",
     "admin.created.tempPassword": "Temporary Password",
-    "admin.created.shareNote": "Share these credentials with the user for first-time login",
+    "admin.created.shareNote":
+      "Share these credentials with the user for first-time login",
     "admin.created.done": "Done",
     "admin.created.copied": "Copied!",
 
@@ -1347,14 +1350,13 @@ const en = {
     "admin.toast.resetFailed": "Could not reset password",
     "admin.toast.firstNameEmailRequired": "First name and email are required",
     "admin.toast.selectOrg": "Please select a school",
-    "admin.toast.classNameGradeOrgRequired": "Class name, grade, and school are required",
+    "admin.toast.classNameGradeOrgRequired":
+      "Class name, grade, and school are required",
     "admin.toast.orgNameRequired": "School name is required",
     "admin.toast.deleteHasRelated": "Cannot delete — related data exists:",
     "admin.toast.students": "students",
     "admin.toast.teachers": "teachers",
     "admin.toast.classes": "classes",
-
-
 
     // Grade values
     "admin.grade.primary": "Primary",
@@ -1399,7 +1401,8 @@ const en = {
     "admin.import.reading": "Reading file...",
     "admin.import.downloadTemplate": "Download Template",
     "admin.import.downloadExample": "Download Example",
-    "admin.import.officialDetected": "Official template detected — no mapping needed",
+    "admin.import.officialDetected":
+      "Official template detected — no mapping needed",
     "admin.import.ready": "Ready",
     "admin.import.warnings": "Warnings",
     "admin.import.blocked": "Blocked",
@@ -1436,7 +1439,7 @@ const en = {
     "مهامك اليومية": "Your daily missions",
     "اختر مهمة، أنجزها، ثم اضغط تم الإنجاز لتحصل على المكافأة.":
       "Choose a mission, do it, then tap Completed to get the reward.",
-    "ابدأ باختيار قسم واحد. بعد إنجاز المهمة أرسل طلب الموافقة.":
+    "ابدأ بإختيار قسم واحد. بعد إنجاز المهمة أرسل طلب الموافقة.":
       "Start by choosing one category. After finishing the mission, send the approval request.",
     "المستوى ونقاط الخبرة": "Level and XP",
     "تكسب XP من المهام. عندما يزيد مستواك تفتح أوسمة ومكافآت جديدة.":
@@ -1472,7 +1475,7 @@ const en = {
       "You've earned your reward. Keep completing your daily missions to earn more.",
     "اختر نوع المهمة": "Choose a mission category",
     "اضغط على أحد الأقسام لعرض المهام.": "Tap a category to see its missions.",
-    "اضغط لاختيار مهمتك.": "Tap to select your mission.",
+    "اضغط لإختيار مهمتك.": "Tap to select your mission.",
     "اطلب الموافقة": "Request approval",
     "عند إنجاز المهمة، أرسلها لولي أمرك أو معلمك للموافقة عليها.":
       "Once you finish the mission, send it to your parent or teacher for approval.",
@@ -1487,7 +1490,8 @@ const en = {
       "Every time you complete your missions, your tree grows a little more.",
     "استخدم الماء والسماد لرعاية شجرتك من هنا.":
       "Use water and fertilizer to take care of your tree from here.",
-    "شاهد ترتيبك بين زملائك هنا.": "See your ranking among your classmates here.",
+    "شاهد ترتيبك بين زملائك هنا.":
+      "See your ranking among your classmates here.",
     "الأوسمة والمستويات": "Medals & Levels",
     "كل مستوى تصل إليه يمنحك وسامًا جديدًا.":
       "Every level you reach earns you a new medal.",
@@ -1532,13 +1536,16 @@ const en = {
     "جولة الصفحة الرئيسية للمعلم": "Teacher home tour",
     "جولة لوحة تحكم المشرف": "Admin dashboard tour",
     "أهلًا بك! 🎉": "Welcome! 🎉",
-    "لنتعلم معًا كيف تنجز أول مهمة لك.": "Let's learn how to complete your first mission.",
-    "هنا تظهر مهامك اليومية. اضغط عليها لتبدأ.": "Your daily missions appear here. Tap to start.",
+    "لنتعلم معًا كيف تنجز أول مهمة لك.":
+      "Let's learn how to complete your first mission.",
+    "هنا تظهر مهامك اليومية. اضغط عليها لتبدأ.":
+      "Your daily missions appear here. Tap to start.",
     "أرسل إنجازك": "Send your work",
     "عند إنهاء المهمة اضغط هنا لإرسالها إلى معلمك أو ولي أمرك.":
       "When you finish a mission, tap here to send it to your teacher or parent.",
     "تم إرسال طلبك بنجاح! 🎉": "Your request has been sent successfully! 🎉",
-    "أحسنت! ستحصل على مكافأتك بعد الموافقة.": "Well done! You'll get your reward once it's approved.",
+    "أحسنت! ستحصل على مكافأتك بعد الموافقة.":
+      "Well done! You'll get your reward once it's approved.",
     "اضغط على العنصر المضيء للمتابعة": "Tap the highlighted item to continue",
     "ابدأ بربط حساب طفلك باستخدام كود الدعوة الخاص به.":
       "Start by linking your child's account using their invite code.",
@@ -1552,7 +1559,26 @@ const en = {
     "تنقّل بين الطلاب والمعلمين وأولياء الأمور من هنا.":
       "Switch between students, teachers, and parents here.",
     الاستيراد: "Import",
-    "أضف دفعة كاملة من ملف إكسل بضغطة واحدة.": "Add a whole batch from an Excel file in one click.",
+    "أضف دفعة كاملة من ملف إكسل بضغطة واحدة.":
+      "Add a whole batch from an Excel file in one click.",
+    "جولة إحصائيات المهام": "Mission stats tour",
+    إحصائياتك: "Your stats",
+    "تابع هنا عدد المهام التي أنجزتها يوميًا وأسبوعيًا.":
+      "Track how many missions you complete daily and weekly here.",
+    "جولة الكؤوس": "Trophies tour",
+    "أكمل التحديات لتجمع الكؤوس وتفتح إنجازات جديدة.":
+      "Complete challenges to collect trophies and unlock new achievements.",
+    "جولة الملف الشخصي": "Profile tour",
+    "ملفك الشخصي": "Your profile",
+    "من هنا تشارك كود الربط مع ولي أمرك وتغيّر صورتك وإعداداتك.":
+      "Share your link code with your parent and change your avatar and settings here.",
+    "جولة الإشعارات": "Notifications tour",
+    "تصلك هنا أخبار الكؤوس والإنجازات الجديدة.":
+      "News about new trophies and achievements arrives here.",
+    "جولة تسجيل الإنجازات": "Recording achievements tour",
+    "تسجيل الإنجازات": "Record achievements",
+    "اختر طالبًا ثم سجّل المهمة التي أنجزها.":
+      "Pick a student, then record the mission they completed.",
     السابق: "Previous",
     "اضغط هنا للمتابعة": "Tap here to continue",
     إنهاء: "Finish",

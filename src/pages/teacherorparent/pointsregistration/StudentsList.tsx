@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../../../config/api";
+import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../../context/ThemeContext";
@@ -38,6 +39,7 @@ interface StudentData {
   userId: number;
   user: User;
   Class?: any;
+  class?: any;
 }
 
 interface TaskCategory {
@@ -362,6 +364,7 @@ const StudentList = () => {
   const [existingStudentIds, setExistingStudentIds] = useState<number[]>([]);
 
   const role = localStorage.getItem("role");
+  useAutoStartGuide("teacher-register", true);
   const sanabelTypeImg = [
     sanabelType1Img,
     sanabelType2Img,
@@ -749,13 +752,13 @@ const StudentList = () => {
                   <div className="flex justify-end text-blueprimary">
                     <h1 className="text-[#B3B3B3] capitalize">
                       {" "}
-                      {student.Class?.classname}
+                      {student.Class?.classname || student.class?.classname}
                     </h1>
 
-                    {student.Class && <h1>-</h1>}
+                    {(student.Class || student.class) && <h1>-</h1>}
                     <h1 className="text-[#B3B3B3] capitalize">
                       {" "}
-                      {student.Class?.grade && t(student.Class.grade)}
+                      {student.Class?.grade ? t(student.Class.grade) : student.class?.grade ? t(student.class.grade) : null}
                     </h1>
                   </div>
                 </div>

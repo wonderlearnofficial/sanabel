@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../../../config/api";
+import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
 import StudentNavbar from "../../../components/navbar/StudentNavbar";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -37,6 +38,8 @@ const containerVariants = {
 };
 
 const Progress: React.FC = () => {
+
+  useAutoStartGuide("student-trophies", true);
   const { t } = useTranslation();
   const [trophyType, setTrophyType] = useState(0); // Default to Other trophies
   const [trophies, setTrophies] = useState<any[]>([]);

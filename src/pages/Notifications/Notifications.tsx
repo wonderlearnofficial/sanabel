@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
 import GoBackButton from "../../components/GoBackButton";
 import nonotification from "../../assets/nonotification.png";
 import defaultAvatar from "../../assets/avatars/Boys/boy1.png";
@@ -23,7 +24,12 @@ const sanabelTypeImgs = [
   sanabelType3Img,
   sanabelType4Img,
 ];
-const sanabelTypeColors = ["blueprimary", "redprimary", "yellowprimary", "greenprimary"];
+const sanabelTypeColors = [
+  "blueprimary",
+  "redprimary",
+  "yellowprimary",
+  "greenprimary",
+];
 
 // Parent/Teacher: mission approval requests, reusing the same bell/route as
 // student trophy notifications rather than building a separate page.
@@ -38,7 +44,7 @@ const ApprovalRequestsView: React.FC = () => {
   } = useNotifications();
   const [actioningId, setActioningId] = useState<number | null>(null);
   const [errorByRequest, setErrorByRequest] = useState<Record<number, string>>(
-    {}
+    {},
   );
 
   useEffect(() => {
@@ -56,7 +62,7 @@ const ApprovalRequestsView: React.FC = () => {
 
   const handleDecision = async (
     requestId: number,
-    decision: "approve" | "deny"
+    decision: "approve" | "deny",
   ) => {
     setActioningId(requestId);
     setErrorByRequest((prev) => ({ ...prev, [requestId]: "" }));
@@ -112,9 +118,9 @@ const ApprovalRequestsView: React.FC = () => {
           <div className="space-y-3">
             <AnimatePresence>
               {pendingApprovalRequests.map((request: any) => {
-                const studentName = `${request.Student?.User?.firstName || ""} ${
-                  request.Student?.User?.lastName || ""
-                }`.trim();
+                const studentName = `${
+                  request.Student?.User?.firstName || ""
+                } ${request.Student?.User?.lastName || ""}`.trim();
                 const studentClassName = request.Student?.Class?.classname;
                 const studentGrade =
                   request.Student?.Class?.grade || request.Student?.grade;
@@ -122,7 +128,8 @@ const ApprovalRequestsView: React.FC = () => {
                 const error = errorByRequest[request.id];
 
                 const catIndex =
-                  ((request.Mission?.categoryId || 1) - 1) % sanabelTypeColors.length;
+                  ((request.Mission?.categoryId || 1) - 1) %
+                  sanabelTypeColors.length;
                 const colorName = sanabelTypeColors[catIndex];
                 const typeImg = sanabelTypeImgs[catIndex];
 
@@ -144,7 +151,9 @@ const ApprovalRequestsView: React.FC = () => {
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div className="flex-shrink-0 w-10 h-10">
-                          <GetAvatar userAvatarData={request.Student?.User?.profileImg} />
+                          <GetAvatar
+                            userAvatarData={request.Student?.User?.profileImg}
+                          />
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-bold text-gray-800">
@@ -169,12 +178,14 @@ const ApprovalRequestsView: React.FC = () => {
                       <img
                         src={typeImg}
                         alt=""
-                        className="flex-shrink-0 w-12 h-12 object-contain"
+                        className="flex-shrink-0 object-contain w-12 h-12"
                         loading="lazy"
                       />
                       <div className="flex-1 min-w-0">
                         {request.Mission?.type && (
-                          <h2 className={`text-xs font-bold text-${colorName} mb-0.5`}>
+                          <h2
+                            className={`text-xs font-bold text-${colorName} mb-0.5`}
+                          >
                             {t(request.Mission.type)}
                           </h2>
                         )}
@@ -188,7 +199,11 @@ const ApprovalRequestsView: React.FC = () => {
                       <div className="flex items-center gap-3 mb-3">
                         {resources.map((reward, i) => (
                           <div key={i} className="flex items-center gap-1">
-                            <img src={reward.icon} alt="" className="w-5 h-5" />
+                            <img
+                              src={reward.icon}
+                              alt=""
+                              className="w-auto h-5"
+                            />
                             <span className="text-xs font-bold text-gray-600">
                               {reward.value}
                             </span>
@@ -256,16 +271,16 @@ const TIME_FILTERS: { value: FilterOptions["timeRange"]; label: string }[] = [
 
 const SkeletonCard = () => (
   <div className="flex items-center gap-4 p-4 bg-white border border-gray-100 rounded-2xl animate-pulse">
-    <div className="w-16 h-16 bg-gray-200 rounded-2xl flex-shrink-0" />
-    <div className="flex-1 flex flex-col gap-2">
-      <div className="h-3 bg-gray-200 rounded w-3/4" />
-      <div className="h-3 bg-gray-200 rounded w-1/2" />
+    <div className="flex-shrink-0 w-16 h-16 bg-gray-200 rounded-2xl" />
+    <div className="flex flex-col flex-1 gap-2">
+      <div className="w-3/4 h-3 bg-gray-200 rounded" />
+      <div className="w-1/2 h-3 bg-gray-200 rounded" />
       <div className="flex gap-2 mt-1">
-        <div className="h-6 w-12 bg-gray-200 rounded-full" />
-        <div className="h-6 w-12 bg-gray-200 rounded-full" />
-        <div className="h-6 w-12 bg-gray-200 rounded-full" />
+        <div className="w-12 h-6 bg-gray-200 rounded-full" />
+        <div className="w-12 h-6 bg-gray-200 rounded-full" />
+        <div className="w-12 h-6 bg-gray-200 rounded-full" />
       </div>
-      <div className="h-2 bg-gray-200 rounded w-1/4 mt-1" />
+      <div className="w-1/4 h-2 mt-1 bg-gray-200 rounded" />
     </div>
   </div>
 );
@@ -273,6 +288,7 @@ const SkeletonCard = () => (
 const Notifications: React.FC = () => {
   const currentLanguage = localStorage.getItem("language");
   const role = localStorage.getItem("role");
+  useAutoStartGuide("student-notifications", role === "Student");
   const { t } = useTranslation();
   const [filteredTrophies, setFilteredTrophies] = useState<any[]>([]);
   const [filters, setFilters] = useState<FilterOptions>({
@@ -289,7 +305,13 @@ const Notifications: React.FC = () => {
     refreshNotifications,
   } = useNotifications();
 
-  const treeStagesImg = [treestage1, treestage2, treestage3, treestage4, treestage5];
+  const treeStagesImg = [
+    treestage1,
+    treestage2,
+    treestage3,
+    treestage4,
+    treestage5,
+  ];
 
   const getTrophyImage = (trophy: any) => {
     if (trophy.challenge.title === "Tree Stage") {
@@ -314,18 +336,23 @@ const Notifications: React.FC = () => {
     if (diffHours < 24) return t("منذ {{h}} ساعة", { h: diffHours });
     if (diffDays === 1) return t("أمس");
     if (diffDays <= 7) return t("منذ {{days}} أيام", { days: diffDays });
-    return date.toLocaleDateString(currentLanguage === "en" ? "en-US" : "ar-EG", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    return date.toLocaleDateString(
+      currentLanguage === "en" ? "en-US" : "ar-EG",
+      {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      },
+    );
   };
 
   const getTrophyLevelText = (trophy: any) => {
     if (trophy.challenge.title === "Tree Stage") {
       return `${t("مرحلة الشجرة")} ${trophy.challenge.point}`;
     } else if (trophy.challenge.point > 1) {
-      return `${t(trophy.challenge.title)} — ${t("المستوى")} ${trophy.challenge.point}`;
+      return `${t(trophy.challenge.title)} — ${t("المستوى")} ${
+        trophy.challenge.point
+      }`;
     }
     return t(trophy.challenge.title);
   };
@@ -367,15 +394,29 @@ const Notifications: React.FC = () => {
 
   const getTrophyRewards = (trophy: any) =>
     [
-      { value: trophy.challenge.snabelBlue || 0, icon: blueSanabel, label: "سنبلة زرقاء" },
-      { value: trophy.challenge.snabelRed || 0, icon: redSanabel, label: "سنبلة حمراء" },
-      { value: trophy.challenge.snabelYellow || 0, icon: yellowSanabel, label: "سنبلة صفراء" },
+      {
+        value: trophy.challenge.snabelBlue || 0,
+        icon: blueSanabel,
+        label: "سنبلة زرقاء",
+      },
+      {
+        value: trophy.challenge.snabelRed || 0,
+        icon: redSanabel,
+        label: "سنبلة حمراء",
+      },
+      {
+        value: trophy.challenge.snabelYellow || 0,
+        icon: yellowSanabel,
+        label: "سنبلة صفراء",
+      },
       { value: trophy.challenge.xp || 0, icon: xpIcon, label: "XP" },
       { value: trophy.challenge.water || 0, icon: water, label: "ماء" },
       { value: trophy.challenge.seeder || 0, icon: fertilizer, label: "سماد" },
     ].filter((r) => r.value > 0);
 
-  const hasUnread = allTrophies.some((t) => !readChallengeIds.includes(t.challengeId));
+  const hasUnread = allTrophies.some(
+    (t) => !readChallengeIds.includes(t.challengeId),
+  );
 
   if (role === "Parent" || role === "Teacher") {
     return <ApprovalRequestsView />;
@@ -384,30 +425,46 @@ const Notifications: React.FC = () => {
   return (
     <div className="flex flex-col w-full h-full bg-gray-50" dir="rtl">
       {/* Header */}
-      <div className="bg-white shadow-sm px-4 pt-4 pb-0">
+      <div className="px-4 pt-4 pb-0 bg-white shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <GoBackButton />
           <div className="flex flex-col items-center">
-            <h1 className="text-xl font-bold text-gray-900">{t("الإشعارات")}</h1>
+            <h1 className="text-xl font-bold text-gray-900">
+              {t("الإشعارات")}
+            </h1>
             {!isLoading && allTrophies.length > 0 && (
-              <span className="text-xs text-gray-400 font-medium">
+              <span className="text-xs font-medium text-gray-400">
                 {allTrophies.length} {t("إنجاز")}
               </span>
             )}
           </div>
-          
+
           <div className="flex items-center gap-2">
             {/* Mark all as read */}
             {hasUnread && (
               <button
-                onClick={() => markAllAsRead(allTrophies.map((t) => t.challengeId))}
+                onClick={() =>
+                  markAllAsRead(allTrophies.map((t) => t.challengeId))
+                }
                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blueprimary hover:bg-blue-100 transition-colors"
                 title={t("تحديد الكل كمقروء")}
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
-                <span className="hidden sm:inline">{t("تحديد الكل كمقروء")}</span>
+                <span className="hidden sm:inline">
+                  {t("تحديد الكل كمقروء")}
+                </span>
               </button>
             )}
 
@@ -423,15 +480,35 @@ const Notifications: React.FC = () => {
             >
               {filters.sortBy === "newest" ? (
                 <>
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  <svg
+                    className="w-3.5 h-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                   {t("الأحدث")}
                 </>
               ) : (
                 <>
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                  <svg
+                    className="w-3.5 h-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 15l7-7 7 7"
+                    />
                   </svg>
                   {t("الأقدم")}
                 </>
@@ -441,11 +518,13 @@ const Notifications: React.FC = () => {
         </div>
 
         {/* Time filter tabs — always visible */}
-        <div className="flex gap-2 overflow-x-auto pb-3 no-scrollbar">
+        <div className="flex gap-2 pb-3 overflow-x-auto no-scrollbar">
           {TIME_FILTERS.map((opt) => (
             <button
               key={opt.value}
-              onClick={() => setFilters((f) => ({ ...f, timeRange: opt.value }))}
+              onClick={() =>
+                setFilters((f) => ({ ...f, timeRange: opt.value }))
+              }
               className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
                 filters.timeRange === opt.value
                   ? "bg-blueprimary text-white shadow-sm"
@@ -462,17 +541,21 @@ const Notifications: React.FC = () => {
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="p-4 space-y-3">
-            {[...Array(5)].map((_, i) => <SkeletonCard key={i} />)}
+            {[...Array(5)].map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
           </div>
         ) : filteredTrophies.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full px-6 gap-3">
+          <div className="flex flex-col items-center justify-center h-full gap-3 px-6">
             <img
               src={nonotification}
               alt="no notifications"
               className="w-36 h-36 opacity-60"
             />
             <h2 className="text-lg font-bold text-gray-700">
-              {filters.timeRange === "all" ? t("لا يوجد إشعارات بعد") : t("لا يوجد إشعارات في هذه الفترة")}
+              {filters.timeRange === "all"
+                ? t("لا يوجد إشعارات بعد")
+                : t("لا يوجد إشعارات في هذه الفترة")}
             </h2>
             <p className="text-sm text-center text-gray-400 max-w-[240px]">
               {filters.timeRange === "all"
@@ -482,7 +565,7 @@ const Notifications: React.FC = () => {
             {filters.timeRange !== "all" && (
               <button
                 onClick={() => setFilters((f) => ({ ...f, timeRange: "all" }))}
-                className="mt-1 px-5 py-2 text-sm font-medium text-white bg-blueprimary rounded-full"
+                className="px-5 py-2 mt-1 text-sm font-medium text-white rounded-full bg-blueprimary"
               >
                 {t("عرض الكل")}
               </button>
@@ -499,7 +582,11 @@ const Notifications: React.FC = () => {
                     key={`trophy-${trophy.challengeId}-${trophy.updatedAt}`}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.04, duration: 0.3, ease: "easeOut" }}
+                    transition={{
+                      delay: index * 0.04,
+                      duration: 0.3,
+                      ease: "easeOut",
+                    }}
                     onClick={() => isUnread && markAsRead(trophy.challengeId)}
                     className={`flex items-center gap-4 p-3 border rounded-2xl shadow-sm hover:shadow-md transition-shadow relative ${
                       isUnread
@@ -508,11 +595,11 @@ const Notifications: React.FC = () => {
                     }`}
                   >
                     {/* Trophy image with golden background */}
-                    <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-50 to-amber-100 flex items-center justify-center shadow-inner">
+                    <div className="flex items-center justify-center flex-shrink-0 w-16 h-16 shadow-inner rounded-2xl bg-gradient-to-br from-yellow-50 to-amber-100">
                       <img
                         src={getTrophyImage(trophy)}
                         alt={trophy.challenge.title}
-                        className="w-12 h-12 object-contain"
+                        className="object-contain w-12 h-12"
                       />
                     </div>
 
@@ -527,7 +614,7 @@ const Notifications: React.FC = () => {
                       </div>
 
                       {/* Trophy name */}
-                      <p className="text-sm font-semibold text-blueprimary mb-2">
+                      <p className="mb-2 text-sm font-semibold text-blueprimary">
                         {getTrophyLevelText(trophy)}
                       </p>
 
@@ -539,8 +626,14 @@ const Notifications: React.FC = () => {
                               key={ri}
                               className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-100 rounded-full"
                             >
-                              <img src={reward.icon} alt={reward.label} className="w-3.5 h-3.5 object-contain" />
-                              <span className="text-xs font-bold text-amber-700">+{reward.value}</span>
+                              <img
+                                src={reward.icon}
+                                alt={reward.label}
+                                className="w-3.5 h-3.5 object-contain"
+                              />
+                              <span className="text-xs font-bold text-amber-700">
+                                +{reward.value}
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -549,7 +642,11 @@ const Notifications: React.FC = () => {
                       {/* Date & Mark as read */}
                       <div className="flex items-center justify-between mt-1">
                         <div className="flex items-center gap-1.5">
-                          <div className={`w-1.5 h-1.5 rounded-full ${isUnread ? "bg-blueprimary" : "bg-gray-300"}`} />
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isUnread ? "bg-blueprimary" : "bg-gray-300"
+                            }`}
+                          />
                           <span className="text-xs text-gray-400">
                             {formatDate(trophy.updatedAt)}
                           </span>
@@ -560,7 +657,7 @@ const Notifications: React.FC = () => {
                               e.stopPropagation();
                               markAsRead(trophy.challengeId);
                             }}
-                            className="text-xs text-blueprimary hover:text-blue-700 font-bold transition-colors cursor-pointer"
+                            className="text-xs font-bold transition-colors cursor-pointer text-blueprimary hover:text-blue-700"
                           >
                             {t("تحديد كمقروء")}
                           </button>

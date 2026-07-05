@@ -68,7 +68,7 @@ export const studentMissionSchoolGuide: GuideConfig = {
       id: "missions",
       titleKey: "التحديات",
       descriptionKey:
-        "ابدأ باختيار قسم واحد. بعد إنجاز المهمة أرسل طلب الموافقة.",
+        "ابدأ بإختيار قسم واحد. بعد إنجاز المهمة أرسل طلب الموافقة.",
     },
   ],
 };
@@ -122,7 +122,8 @@ export const studentLeaderboardGuide: GuideConfig = {
     {
       id: "leaderboard",
       titleKey: "لوحة المتصدرين",
-      descriptionKey: "هنا ترى ترتيبك بين زملائك وتستخدم البحث أو الفلاتر عند الحاجة.",
+      descriptionKey:
+        "هنا ترى ترتيبك بين زملائك وتستخدم البحث أو الفلاتر عند الحاجة.",
     },
   ],
 };
@@ -137,6 +138,72 @@ export const studentMedalGuide: GuideConfig = {
       titleKey: "الأوسمة والمستويات",
       descriptionKey:
         "هذه الصفحة تعرض مستواك الحالي والأوسمة التي فتحتها أو اقتربت منها.",
+    },
+  ],
+};
+
+export const studentStatsGuide: GuideConfig = {
+  id: "student-stats",
+  role: "Student",
+  titleKey: "جولة إحصائيات المهام",
+  steps: [
+    {
+      id: "stats",
+      titleKey: "إحصائياتك",
+      descriptionKey: "تابع هنا عدد المهام التي أنجزتها يوميًا وأسبوعيًا.",
+    },
+  ],
+};
+
+export const studentTrophiesGuide: GuideConfig = {
+  id: "student-trophies",
+  role: "Student",
+  titleKey: "جولة الكؤوس",
+  steps: [
+    {
+      id: "trophies",
+      titleKey: "الكؤوس",
+      descriptionKey: "أكمل التحديات لتجمع الكؤوس وتفتح إنجازات جديدة.",
+    },
+  ],
+};
+
+export const studentProfileGuide: GuideConfig = {
+  id: "student-profile",
+  role: "Student",
+  titleKey: "جولة الملف الشخصي",
+  steps: [
+    {
+      id: "profile",
+      titleKey: "ملفك الشخصي",
+      descriptionKey:
+        "من هنا تشارك كود الربط مع ولي أمرك وتغيّر صورتك وإعداداتك.",
+    },
+  ],
+};
+
+export const studentNotificationsGuide: GuideConfig = {
+  id: "student-notifications",
+  role: "Student",
+  titleKey: "جولة الإشعارات",
+  steps: [
+    {
+      id: "notifications",
+      titleKey: "الإشعارات",
+      descriptionKey: "تصلك هنا أخبار الكؤوس والإنجازات الجديدة.",
+    },
+  ],
+};
+
+export const teacherRegisterGuide: GuideConfig = {
+  id: "teacher-register",
+  role: "Teacher",
+  titleKey: "جولة تسجيل الإنجازات",
+  steps: [
+    {
+      id: "register",
+      titleKey: "تسجيل الإنجازات",
+      descriptionKey: "اختر طالبًا ثم سجّل المهمة التي أنجزها.",
     },
   ],
 };
@@ -210,6 +277,11 @@ export const ALL_GUIDES: GuideConfig[] = [
   studentShopGuide,
   studentLeaderboardGuide,
   studentMedalGuide,
+  studentStatsGuide,
+  studentTrophiesGuide,
+  studentProfileGuide,
+  studentNotificationsGuide,
+  teacherRegisterGuide,
   parentHomeGuide,
   teacherHomeGuide,
   adminHomeGuide,

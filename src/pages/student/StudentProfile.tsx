@@ -1,4 +1,5 @@
 import StudentNavbar from "../../components/navbar/StudentNavbar";
+import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
 import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
@@ -23,6 +24,8 @@ import { avatars } from "../../data/Avatars";
 import GetAvatar from "./tutorial/GetAvatar";
 
 const Profile: React.FC = () => {
+
+  useAutoStartGuide("student-profile", true);
   const history = useHistory();
   const { t } = useTranslation();
 
@@ -46,7 +49,7 @@ const Profile: React.FC = () => {
   const parentCode = user?.connectCode;
   return (
     <div className="flex flex-col items-center justify-between w-full overflow-y-auto h-5/6">
-      <div className="flex flex-row-reverse items-center justify-between  overflow-y-auto bg-yellowprimary py-7 w-full  p-4 rounded-b-[50px] ">
+      <div className="flex flex-row-reverse items-center justify-between bg-yellowprimary py-7 w-full  p-4 rounded-b-[50px] ">
         {/* Settings Button */}
         <div className="flex gap-2">
           <div
@@ -74,7 +77,15 @@ const Profile: React.FC = () => {
           {user?.firstName} {user?.lastName}
         </h1>
         {/* <h1 className="text-[#B3B3B3]"> {t("طالب")}</h1> */}
-        <h1 className="text-[#B3B3B3]"> {user?.grade}</h1>
+        {(user as any)?.classname && (user as any)?.gradeName ? (
+          <h1 className="text-[#B3B3B3]">
+            {t((user as any).gradeName)} - {(user as any).classname}
+          </h1>
+        ) : (
+          <h1 className="text-[#B3B3B3]">
+            {user?.grade ? t(String(user.grade)) : ""}
+          </h1>
+        )}
 
         <div className="w-full gap-1 flex-center">
           <MdContentCopy

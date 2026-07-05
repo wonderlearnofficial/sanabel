@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../../config/api";
+import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -38,6 +39,7 @@ const Toaster = () => (
 const Shop: React.FC = () => {
   const { t } = useTranslation();
   const { user, refreshUserData } = useUserContext();
+  useAutoStartGuide("student-shop", true);
 
   const shop = [
     { icon: blueSanabel },
@@ -253,7 +255,9 @@ const Shop: React.FC = () => {
   };
 
   return (
-    <div className="flex-col w-full  flex-center shadow-md p-2 border-[1px] border-[#33333325] rounded-xl">
+    <div
+      className="flex-col w-full  flex-center shadow-md p-2 border-[1px] border-[#33333325] rounded-xl"
+    >
       <div className="absolute">
         <Toaster />
       </div>

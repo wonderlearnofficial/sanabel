@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../../../config/api";
+import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
 import StudentNavbar from "../../../components/navbar/StudentNavbar";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -65,6 +66,8 @@ const gridItemVariants = {
 };
 
 const ProgressMissions: React.FC = () => {
+
+  useAutoStartGuide("student-stats", true);
   const { t } = useTranslation();
 
   const [completedTasks, setCompletedTasks]: any = useState(0);
