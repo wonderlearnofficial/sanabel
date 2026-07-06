@@ -182,7 +182,7 @@ const SanabelType: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.5 }}
           >
-            {t("أبدا")}
+            {t("ابدأ")}
           </motion.div>
         </motion.div>
       )}

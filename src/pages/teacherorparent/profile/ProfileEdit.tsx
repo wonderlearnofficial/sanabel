@@ -73,7 +73,7 @@ const Step1: React.FC = () => {
   // State for storing data from each step
   const [email, setEmail] = useState("alielmayyah@gmail.com");
   const [character, setCharacter] = useState(
-    "/src/assets/signup/Avatar/Boys/boy2.png"
+    "/src/assets/signup/Avatar/Boys/boy2.png",
   );
   const [name, setName] = useState({
     firstName: "Ali",
@@ -120,7 +120,7 @@ const Step1: React.FC = () => {
     try {
       const response = await axios.post(
         `${API_BASE_URL}/users/registration`,
-        formData
+        formData,
       );
       if (response.status === 200) {
         history.push("/home");
@@ -164,7 +164,7 @@ const Step1: React.FC = () => {
                 }`}
                 onClick={() => setTempCharacter(avatar)}
               />
-            )
+            ),
           )}
         </div>
       </div>
@@ -206,7 +206,7 @@ const Step1: React.FC = () => {
 
       {/* Class */}
       <div className="flex flex-col w-full gap-1">
-        <h1 className="self-end text-[#121212] ">{t("اختار صفك")}</h1>
+        <h1 className="self-end text-[#121212] ">{t("اختر صفك")}</h1>
         <select
           id="grades"
           className={`w-full ${
@@ -214,7 +214,7 @@ const Step1: React.FC = () => {
           } bg-white border py-4 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 CustomFont`}
           dir={`${i18n.language === "ar" ? "rtl" : "ltr"}`}
         >
-          <option selected>{t("اختار صفك")}</option>
+          <option selected>{t("اختر صفك")}</option>
           {Array.from({ length: 12 }, (_, i) => (
             <option
               key={i + 1}

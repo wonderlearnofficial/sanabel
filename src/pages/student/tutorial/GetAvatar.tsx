@@ -184,7 +184,7 @@ const GetAvatar = ({ userAvatarData = {} }) => {
 
   return (
     <div
-      className="w-full h-full overflow-y-auto rounded-full"
+      className="flex items-center justify-center w-full h-full p-1 overflow-hidden rounded-full"
       style={{
         background:
           avatarData.bgPattern === "gradient"

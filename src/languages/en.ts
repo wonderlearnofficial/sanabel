@@ -4,7 +4,7 @@ const en = {
     التحديات: "Challenges",
     المتصدرين: "Leaderboard",
     استعراض: "Browse",
-    الاعدادات: "Settings",
+    الإعدادات: "Settings",
     التقدم: "Progress",
     البروفايل: "Profile",
     سماد: "Fertilizer",
@@ -29,7 +29,6 @@ const en = {
       "The fruits of your kindness grow to light the path of goodness",
     رائع: "Awesome",
     مرحبا: "Hello",
-    المستوي: "Level",
     "8 أحرف كحد أدنى": "8 characters minimum",
     رقم: "Number",
     رمز: "Code",
@@ -40,16 +39,16 @@ const en = {
     حفظ: "Save",
     "ليس لديك حساب؟": "Don't have an account?",
     "إنشاء حساب": "Create Account",
-    "تم تغير كلمة السر بنجاح": "Password changed successfully",
-    "قم بتسجيل الدخول و ابدأ في جمع الحسنات":
+    "تم تغيير كلمة السر بنجاح": "Password changed successfully",
+    "قم بتسجيل الدخول وابدأ في جمع الحسنات":
       "Log in and start collecting good deeds",
     "تسجيل الدخول": "Login",
     "التحقق من البريد الإلكتروني": "Email Verification",
     "هل نسيت كلمة السر؟": "Forgot Password?",
-    "أدخل بريدك الالكتروني لإعادة تعيين كلمة السر":
+    "أدخل بريدك الإلكتروني لإعادة تعيين كلمة السر":
       "Enter your email to reset password",
     "لقد أرسلنا للتو الرمز المكون من 5 أرقام إلى":
-      "We just sent a 5-digit code to",
+      "We just sent a 4-digit code to",
     "أدخله أدناه:": "Enter it below:",
     "البريد الإلكتروني": "Email",
     "تأكيد الرمز": "Confirm Code",
@@ -60,7 +59,7 @@ const en = {
 
     "اختر نوع التسجيل": "Choose Registration Type",
     طالب: "Student",
-    "ولي أمر او  معلم": "Parent or Teacher",
+    "ولي أمر أو معلم": "Parent or Teacher",
     "مرحباً بك في": "Welcome to",
     "👋سنابل الإحسان": "👋Sanabel Al Ehsan",
 
@@ -70,7 +69,7 @@ const en = {
     "ازرع سنبلة تُثمر": "Plant a grain",
     "خيراً وأجراً": "Reap goodness and reward",
 
-    "إغتنم الفرص لفعل الخير، فالحسنات تتضاعف مع كل عمل صالح":
+    "اغتنم الفرص لفعل الخير، فالحسنات تتضاعف مع كل عمل صالح":
       "Seize the opportunity to do good—your righteous deeds multiply with every sincere act",
 
     "تسابقوا إلى": "Compete in doing good",
@@ -92,8 +91,8 @@ const en = {
     enter4DigitOTP: "Enter 4-digit OTP",
     otpVerifySuccess: "OTP verified successfully",
     "Error verifying OTP:": "Error verifying OTP:",
-    "انشاء حساب جديد": "Create New Account",
-    "انشاء حساب واستمتع بتجربة تفاعلية تبني العطاء والانتماء":
+    "إنشاء حساب جديد": "Create New Account",
+    "إنشاء حساب واستمتع بتجربة تفاعلية تبني العطاء والانتماء":
       "Create an account and enjoy an interactive experience that builds giving and belonging",
     "لقد أرسلنا للتو الرمز المكون من 4 أرقام إلى":
       "We just sent a 4-digit code to",
@@ -108,7 +107,7 @@ const en = {
     "اسمك الأول": "Your First Name",
     enterFirstNameAndParentName: "Enter your first name and parent's name",
     noNumbersOrSymbols: "No numbers or symbols",
-    "ادخل اسمك واسم والدك": "Enter your name and your father's name",
+    "أدخل اسمك واسم والدك": "Enter your name and your father's name",
     "أكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء":
       "Complete your account and enjoy an interactive experience that builds giving and belonging",
     "اختر النوع (بنت - ولد)": "Choose type (Girl - Boy)",
@@ -116,7 +115,7 @@ const en = {
     بنت: "Girl",
     numbers_only: "numbers only",
     invalid_date: "invalid date",
-    "ادخل تاريخ عيد ميلادك 🎂": "Enter your birthday date 🎂",
+    "أدخل تاريخ عيد ميلادك 🎂": "Enter your birthday date 🎂",
     السنة: "Year",
     الشهر: "Month",
 
@@ -190,28 +189,28 @@ const en = {
     "كلمة السر القديمة غير صحيحة": "Old password is incorrect",
     "كلمة السر الجديدة لا تلبي المتطلبات":
       "New password doesn't meet requirements",
-    "تم تغيير كلمة السر بنجاح": "Password changed successfully",
     "كلمة السر القديمة": "Old Password",
     "هل لديك حساب؟": "Do you have an account?",
     المرحلة: "Stage",
     "No trophies found Complete challenges to earn trophies!":
       "No trophies found Complete challenges to earn trophies!",
     "تغيير إلى العربية": "Change to Arabic",
-    "تغيير إلى الانجليزية": "Change to English",
+    "تغيير إلى الإنجليزية": "Change to English",
     "تغيير كلمة المرور": "Change Password",
     "سياسة الخصوصية": "Privacy Policy",
     "مركز المساعدة": "Help Center",
+    "دليل الصفحات": "Page Guides",
     "تفعيل الوضع الداكن": "Enable Dark Mode",
     "تسجيل الخروج": "Logout",
     "المستوى التالي": "Next Level",
-    "المستوي التالي": "Next Level",
     المستوى: "Level",
+    "مستوى الشارة": "Badge Level",
     "تم إنجاز ": "Completed ",
     نقطة: "Points",
     "تم إنجاز": "",
     الميداليات: "Medals",
     "إجمالي السنابل": "Total Sanabel",
-    "جوائز أخري": "Other Rewards",
+    "جوائز أخرى": "Other Rewards",
     جائزة: "Trophy",
     "هيا بنا نصنع الخير معًا": "Let's create goodness together",
     "نقطة خبرة للوصول إلى المستوى التالي":
@@ -301,7 +300,7 @@ const en = {
     "سجل إنجازات الطلاب الفردية وتقدمهم":
       "Record individual student achievements and their progress",
 
-    "ادخل كود دعوة الطفل": "Enter child invitation code",
+    "أدخل كود دعوة الطفل": "Enter child invitation code",
     "أرسل دعوات للطلاب للانضمام إلى فصولك":
       "Send invitations to your children to join you",
     "أرسل دعوات للأبناء للانضمام إلى فصولك":
@@ -311,14 +310,13 @@ const en = {
     "عرض التحديات": "View Challenges",
     "استكشف التحديات والأنشطة المتاحة":
       "Explore available challenges and activities",
-    الإعدادات: "Settings",
     "إدارة إعدادات حسابك": "Manage your account settings",
     "كيفية العثور على كود الطفل": "How to find your child's code",
-    "يمكن للطالب العثور على الكود الخاص به من خلال الدخول إلى حسابه والذهاب إلى صفحة الملف الشخصي سيجد الكود مُعرَّض بوضوح في قسم معلومات الحساب":
+    "يمكن للطالب العثور على الكود الخاص به من خلال الدخول إلى حسابه والذهاب إلى صفحة الملف الشخصي سيجد الكود معروضاً بوضوح في قسم معلومات الحساب":
       "The kids can find their code by logging into their account and going to the profile page They will find the code clearly displayed in the account information section",
-    "يمكن للطفل العثور على الكود الخاص به من خلال الدخول إلى حسابه والذهاب إلى صفحة الملف الشخصي. سيجد الكود مُعرَّض بوضوح في قسم معلومات الحساب":
+    "يمكن للطفل العثور على الكود الخاص به من خلال الدخول إلى حسابه والذهاب إلى صفحة الملف الشخصي. سيجد الكود معروضاً بوضوح في قسم معلومات الحساب":
       "Your child can find their code by logging into their account and going to the profile page. The code is shown clearly in account information.",
-    "ادخل كود دعوة الطالب": "Enter student invitation code",
+    "أدخل كود دعوة الطالب": "Enter student invitation code",
     بحث: "Search",
     "تهانينا!": "Congratulations",
     "لقد تمت دعوة الطالب بنجاح": "Student has been successfully invited",
@@ -860,7 +858,6 @@ const en = {
     "صل ركعتين قيام ليل": "Pray two Rak'ahs of night prayer (Qiyam al-Layl)",
 
     "جوائز السنابل": "Sanabel Rewards",
-    "جوائز أخرى": "Other Rewards",
     "هذه الجوائز المميزة تكسبها عند إكمال مهام سنابل":
       "These special rewards are earned by completing Sanabel tasks",
     "هذه الجوائز تكسبها من خلال إنجازات متنوعة أخرى":
@@ -965,7 +962,7 @@ const en = {
     "منذ {{days}} أيام": "{{days}} days ago",
     الرمز: "Code",
     "مجموع الجوائز": "Total Trophies",
-    "يمكن للطفل العثور على الكود الخاص به من خلال الدخول إلى حسابه والذهب إلى صفحة الملف الشخصي. سيجد الكود مُعرَّض بوضوح في قسم معلومات الحساب":
+    "يمكن للطفل العثور على الكود الخاص به من خلال الدخول إلى حسابه والذهب إلى صفحة الملف الشخصي. سيجد الكود معروضاً بوضوح في قسم معلومات الحساب":
       "The kids can find their code by logging into their account and going to the profile page. The code will be clearly displayed in the account information section.",
 
     رجوع: "Back",
@@ -1099,7 +1096,7 @@ const en = {
 
     "خطأ: المهمة لا تحتوي على معرف صحيح":
       "Error: Task does not have a valid ID",
-    "الرجاء إختيار مهمة أولاً.": "Please select a task first.",
+    "الرجاء اختيار مهمة أولاً.": "Please select a task first.",
 
     "فشل في تحديد المهمة كمكتملة:": "Failed to mark task as completed:",
     "حدث خطأ أثناء تحديد المهمة كمكتملة.":
@@ -1151,7 +1148,7 @@ const en = {
     "إضافة مدرسة": "Add School",
     "تعديل المدرسة": "Edit School",
     "اسم المدرسة": "School Name",
-    "رابط الصورة (إختياري)": "Image URL (optional)",
+    "رابط الصورة (اختياري)": "Image URL (optional)",
     "تم إنشاء المدرسة بنجاح": "School created successfully",
     "تم تحديث المدرسة بنجاح": "School updated successfully",
     "اسم المدرسة مطلوب": "School name is required",
@@ -1439,10 +1436,10 @@ const en = {
     "مهامك اليومية": "Your daily missions",
     "اختر مهمة، أنجزها، ثم اضغط تم الإنجاز لتحصل على المكافأة.":
       "Choose a mission, do it, then tap Completed to get the reward.",
-    "ابدأ بإختيار قسم واحد. بعد إنجاز المهمة أرسل طلب الموافقة.":
+    "ابدأ باختيار قسم واحد. بعد إنجاز المهمة أرسل طلب الموافقة.":
       "Start by choosing one category. After finishing the mission, send the approval request.",
     "المستوى ونقاط الخبرة": "Level and XP",
-    "تكسب XP من المهام. عندما يزيد مستواك تفتح أوسمة ومكافآت جديدة.":
+    "تكسب XP من المهام. عندما يرتفع مستواك تفتح أوسمة ومكافآت جديدة.":
       "You earn XP from missions. Higher levels unlock new medals and rewards.",
     "التقدم والشجرة": "Progress and tree",
     "هنا ترى نمو الشجرة ومواردك. استخدم المتجر فقط عندما تريد رعاية الشجرة.":
@@ -1475,7 +1472,7 @@ const en = {
       "You've earned your reward. Keep completing your daily missions to earn more.",
     "اختر نوع المهمة": "Choose a mission category",
     "اضغط على أحد الأقسام لعرض المهام.": "Tap a category to see its missions.",
-    "اضغط لإختيار مهمتك.": "Tap to select your mission.",
+    "اضغط لاختيار مهمتك.": "Tap to select your mission.",
     "اطلب الموافقة": "Request approval",
     "عند إنجاز المهمة، أرسلها لولي أمرك أو معلمك للموافقة عليها.":
       "Once you finish the mission, send it to your parent or teacher for approval.",
@@ -1546,6 +1543,12 @@ const en = {
     "تم إرسال طلبك بنجاح! 🎉": "Your request has been sent successfully! 🎉",
     "أحسنت! ستحصل على مكافأتك بعد الموافقة.":
       "Well done! You'll get your reward once it's approved.",
+    "أكمل مهمتك ✅": "Complete your task ✅",
+    "عند إنهاء المهمة اضغط هنا لتحصل على مكافأتك فورًا.":
+      "When you finish the task, tap here to get your reward instantly.",
+    "أحسنت! حصلت على مكافأتك 🎉": "Well done! You earned your reward 🎉",
+    "رائع! لقد حصلت على مكافأتك مباشرة. واصل إنجاز مهامك اليومية.":
+      "Great! You got your reward right away. Keep completing your daily tasks.",
     "اضغط على العنصر المضيء للمتابعة": "Tap the highlighted item to continue",
     "ابدأ بربط حساب طفلك باستخدام كود الدعوة الخاص به.":
       "Start by linking your child's account using their invite code.",

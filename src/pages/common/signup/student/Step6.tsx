@@ -102,11 +102,11 @@ const Step6: React.FC<Step6Props> = ({
 
         <div className="flex flex-col self-end gap-2">
           <h1 className="text-2xl font-bold text-black text-end " dir="ltr">
-            {t("اضع صورة شخصية لك")}
+            {t("ضع صورة شخصية لك")}
           </h1>
 
           <p className="text-[#B3B3B3] text-sm text-end">
-            {t("اكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء")}
+            {t("أكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء")}
           </p>
         </div>
       </div>
@@ -123,7 +123,7 @@ const Step6: React.FC<Step6Props> = ({
               }`}
               onClick={() => setCharacter(avatar)}
             />
-          )
+          ),
         )}
       </div>
 
@@ -131,7 +131,7 @@ const Step6: React.FC<Step6Props> = ({
         <div onClick={handleGenderStep}>
           <PrimaryButton
             style="fill"
-            text={t("أبدا رحلة جمع الحسنات")}
+            text={t("ابدأ رحلة جمع الحسنات")}
             arrow="left"
           />
         </div>

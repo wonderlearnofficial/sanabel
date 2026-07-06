@@ -4,6 +4,11 @@ export interface GuideStepConfig {
   id: string;
   titleKey: string;
   descriptionKey?: string;
+  // Optional overrides used for "personal" students (no class): they complete
+  // missions directly for an instant reward, with no parent/teacher approval.
+  // When set and the current student is personal, these replace the defaults.
+  personalTitleKey?: string;
+  personalDescriptionKey?: string;
   // data-guide-id of a real element on the page. When present the overlay
   // dims everything except that element (spotlight) and anchors the tooltip
   // to it. If the element hasn't mounted yet (cross-page steps), the guide

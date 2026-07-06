@@ -18,7 +18,7 @@ const Profile: React.FC = () => {
     { title: "قائمة المتصدرين", content: "s" },
     { title: "تحديات", content: "s" },
     { title: "مجموع الحسنات", content: "s" },
-    { title: "مستوي الشارة", content: "s" },
+    { title: "مستوى الشارة", content: "s" },
   ];
 
   return (
@@ -38,7 +38,7 @@ const Profile: React.FC = () => {
         <img src={nonotification} alt="notifcation-bell" className="w-4/5" />
         <h1 className="-mt-6 text-2xl text-black">{t("لا يوجد إشعارات!")}</h1>
         <h1 className="text-[#999] text-xl">
-          {t("لم تتلقي اي إشعار حتي الأن")}
+          {t("لم تتلقَ أي إشعار حتى الآن")}
         </h1>
       </div>
 

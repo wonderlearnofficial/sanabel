@@ -60,7 +60,7 @@ const Profile: React.FC = () => {
           {user?.firstName} {user?.lastName}
         </h1>
         <h1 className="text-[#B3B3B3]"> {t("طالب")}</h1>
-        <h1 className="text-[#B3B3B3]"> المرحلة الاعدادية - فصل 4/8</h1>
+        <h1 className="text-[#B3B3B3]"> المرحلة الإعدادية - فصل 4/8</h1>
       </div>
 
       {/* Navbar */}

@@ -11,6 +11,8 @@ import fertilizerImg from "../../assets/resources/سماد.png";
 // Tree
 import { treeStages } from "../../data/Tree";
 import { motion } from "framer-motion";
+import { AudioManager } from "../../utils/AudioManager";
+import { useEffect, useRef } from "react";
 
 const SanabelTree = () => {
   const history = useHistory();
@@ -27,6 +29,15 @@ const SanabelTree = () => {
   const treeStage = Number(user?.treeStage);
 
   const treeProgress = Number(user?.treeProgress);
+
+  const prevTreeProgressRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (prevTreeProgressRef.current !== null && treeProgress > prevTreeProgressRef.current) {
+      AudioManager.play("nature_magic");
+    }
+    prevTreeProgressRef.current = treeProgress;
+  }, [treeProgress]);
 
   // Check if tree is at final stage
   const isFinalStage = treeProgress >= 51;

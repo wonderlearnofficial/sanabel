@@ -94,7 +94,7 @@ const ChangePassword: React.FC = () => {
         {
           email: email,
           newPassword: password,
-        }
+        },
       );
 
       if (response.status === 200) {
@@ -129,7 +129,7 @@ const ChangePassword: React.FC = () => {
         <div className="flex flex-col gap-5">
           <GenericInput
             type="password"
-            placeholder={t("ادخل كلمة السر")}
+            placeholder={t("أدخل كلمة السر")}
             title={t("كلمة السر")}
             value={password}
             onChange={handlePasswordChange}
@@ -147,7 +147,7 @@ const ChangePassword: React.FC = () => {
             <div className="gap-3 flex-center ">
               <h1
                 className={classNames(
-                  circle.condition ? "text-green-500" : "text-[#8E99A4]"
+                  circle.condition ? "text-green-500" : "text-[#8E99A4]",
                 )}
               >
                 {circle.text}
@@ -157,7 +157,7 @@ const ChangePassword: React.FC = () => {
                   "rounded-full w-7 h-7 flex-center",
                   circle.condition
                     ? "bg-green-500"
-                    : "border-2 border-[#c7cbd3]"
+                    : "border-2 border-[#c7cbd3]",
                 )}
               >
                 {circle.condition && <FaCheck className="text-sm text-white" />}
@@ -199,10 +199,10 @@ const ChangePassword: React.FC = () => {
             <RiLockPasswordLine className="text-9xl text-blueprimary" />
             <div className="flex flex-col gap-2 text-center">
               <h1 className="text-2xl font-bold text-center text-black ">
-                {t("تم تغير كلمة السر بنجاح")}
+                {t("تم تغيير كلمة السر بنجاح")}
               </h1>
               <p className="text-[#B3B3B3] text-sm  text-center ">
-                {t("قم بتسجيل الدخول و ابدأ في جمع الحسنات")}
+                {t("قم بتسجيل الدخول وابدأ في جمع الحسنات")}
               </p>
             </div>
             <IonRouterLink routerLink="/login" className="w-full text-md">

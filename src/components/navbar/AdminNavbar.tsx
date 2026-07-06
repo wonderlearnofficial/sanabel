@@ -21,7 +21,7 @@ const navList = [
     to: "/admin/students",
   },
   {
-    title: "الاعدادات",
+    title: "الإعدادات",
     icon: <IoIosSettings size={30} />,
     to: "/admin/profile",
   },

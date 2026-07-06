@@ -139,10 +139,10 @@ const Step1: React.FC<Step1Props> = ({
 
         <div className="flex flex-col self-end gap-2">
           <h1 className="text-2xl font-bold text-black ">
-            {t("انشاء حساب جديد") || "Create New Account"}
+            {t("إنشاء حساب جديد") || "Create New Account"}
           </h1>
           <p className="text-[#B3B3B3] text-sm ">
-            {t("انشاء حساب واستمتع بتجربة تفاعلية تبني العطاء والانتماء") ||
+            {t("إنشاء حساب واستمتع بتجربة تفاعلية تبني العطاء والانتماء") ||
               "Create an account and enjoy an interactive experience that builds giving and belonging"}
           </p>
         </div>
@@ -202,8 +202,8 @@ const Step1: React.FC<Step1Props> = ({
             />
             <GenericInput
               type="text"
-              placeholder={t("اسمك الاخير") || "Last Name"}
-              title={t("اسمك الاخير") || "Last Name"}
+              placeholder={t("اسمك الأخير") || "Last Name"}
+              title={t("اسمك الأخير") || "Last Name"}
               onChange={(e) => handleNameChange("lastName", e.target.value)}
               value={name.lastName}
             />

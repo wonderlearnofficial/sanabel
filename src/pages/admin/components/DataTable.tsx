@@ -244,6 +244,7 @@ export const DataTable: React.FC<DataTableProps> = ({
           chk,
           { key: "id", label: "admin.th.id", sortable: true },
           { key: "name", label: "admin.th.gradeName", sortable: true },
+          { key: "org", label: "admin.th.organization" },
           act,
         ];
       default:
@@ -394,10 +395,17 @@ export const DataTable: React.FC<DataTableProps> = ({
           </span>,
         ];
       case "organizations":
+        return [
+          <span className="font-mono text-xs text-slate-400">#{row.id}</span>,
+          <span className="font-semibold text-slate-700">{row.name}</span>,
+        ];
       case "grades":
         return [
           <span className="font-mono text-xs text-slate-400">#{row.id}</span>,
           <span className="font-semibold text-slate-700">{row.name}</span>,
+          <span className="text-slate-500 font-medium">
+            {row.Organization?.name ?? <span className="text-slate-300">—</span>}
+          </span>,
         ];
       default:
         return [

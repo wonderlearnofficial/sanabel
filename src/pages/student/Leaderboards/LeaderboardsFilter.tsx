@@ -2,7 +2,9 @@ import { API_BASE_URL } from "../../../config/api";
 import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
-import FilterIcon from "../../../icons/Leaderboards/FilterIcon";
+import { motion } from "framer-motion";
+import { IoMdClose } from "react-icons/io";
+import { FiChevronDown } from "react-icons/fi";
 
 interface FilterProps {
   onFilterChange: (filters: FilterState) => void;
@@ -13,7 +15,7 @@ interface FilterProps {
 interface FilterState {
   grade: string;
   classId: string;
-  className?: string; // Add this optional field
+  className?: string;
   gender: string;
 }
 
@@ -43,20 +45,18 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(false);
 
-  const genderOptions = [
-    { value: "", label: "جميع الطلاب" },
-    { value: "male", label: "ذكور" },
-    { value: "female", label: "إناث" },
-  ];
-
-  // Memoize the fetch functions to prevent recreation on every render
   const fetchGrades = useCallback(async () => {
     try {
       const authToken = localStorage.getItem("token");
       const userRole = localStorage.getItem("role");
       if (!authToken) return;
 
-      const response = await axios.get<{ grades: string[] }>(
+      interface GradeApiResponse {
+        id: number | null;
+        name: string;
+      }
+
+      const response = await axios.get<{ grades: GradeApiResponse[] }>(
         userRole === "Teacher"
           ? `${API_BASE_URL}/teachers/class-grades`
           : userRole === "Student"
@@ -72,11 +72,10 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
       if (response.status === 200 && response.data.grades) {
         setGrades(
           response.data.grades.map((g) => ({
-            name: g,
-            label: t(g),
+            name: g.name,
+            label: t(g.name),
           })),
         );
-        console.log("Fetched grades:", response.data);
       }
     } catch (error) {
       console.error("Error fetching grades:", error);
@@ -96,7 +95,6 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
           : userRole === "Student"
           ? `${API_BASE_URL}/students/classes-by-grade?grade=${grade}`
           : `${API_BASE_URL}/parents/classes-by-grade?grade=${grade}`,
-
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -107,11 +105,6 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
 
       if (response.status === 200 && response.data.classes) {
         setClasses(response.data.classes);
-        console.log(
-          "Fetched classes for grade:",
-          grade,
-          response.data.classes,
-        );
       }
     } catch (error) {
       console.error("Error fetching classes:", error);
@@ -120,29 +113,24 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
     }
   }, []);
 
-  // Fetch grades on component mount
   useEffect(() => {
     fetchGrades();
-  }, []);
+  }, [fetchGrades]);
 
-  // Fetch classes when grade changes - use the specific value, not the whole object
   useEffect(() => {
     if (filters.grade) {
       fetchClassesByGrade(filters.grade);
     } else {
       setClasses([]);
     }
-  }, [filters.grade, fetchClassesByGrade]); // Only depend on the grade value
+  }, [filters.grade, fetchClassesByGrade]);
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters((prevFilters) => {
       const newFilters = { ...prevFilters, [key]: value };
-
-      // Reset class when grade changes
       if (key === "grade") {
         newFilters.classId = "";
       }
-
       return newFilters;
     });
   };
@@ -173,106 +161,110 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
-      <div className="bg-white rounded-2xl p-6 m-4 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-black">{t("تصفية النتائج")}</h2>
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="relative bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl overflow-hidden border border-gray-100 flex flex-col gap-5"
+        initial={{ scale: 0.9, y: 20, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.9, y: 20, opacity: 0 }}
+        transition={{ type: "spring", duration: 0.5 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between pb-2 border-b border-gray-100">
           <button
             onClick={onClose}
-            className="text-2xl text-gray-500 hover:text-gray-700"
+            className="p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
           >
-            ×
+            <IoMdClose size={24} />
           </button>
+          <h2 className="text-xl font-bold text-gray-800 text-right">{t("تصفية النتائج")}</h2>
         </div>
 
-        {/* Grade Filter */}
-        <div className="mb-4 overflow-y-auto">
-          <label className="block mb-2 text-sm font-medium text-right text-gray-700">
-            {t("المرحلة الدراسية")}
-          </label>
-          <select
-            value={filters.grade}
-            onChange={(e) => handleFilterChange("grade", e.target.value)}
-            className="w-full p-3 text-right capitalize border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">{t("جميع المراحل")}</option>
-            {grades.map((grade) => (
-              <option
-                key={grade.name}
-                value={grade.name}
-                className="capitalize"
+        {/* Form Body */}
+        <div className="flex flex-col gap-4">
+          {/* Grade Selector */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-600 text-right">
+              {t("المرحلة الدراسية")}
+            </label>
+            <div className="relative">
+              <select
+                value={filters.grade}
+                onChange={(e) => handleFilterChange("grade", e.target.value)}
+                className="w-full p-3.5 pr-10 text-right capitalize border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blueprimary focus:border-blueprimary appearance-none bg-white text-gray-800 shadow-sm transition-all outline-none"
               >
-                {grade.label}
-              </option>
-            ))}
-          </select>
-        </div>
+                <option value="">{t("جميع المراحل")}</option>
+                {grades.map((grade) => (
+                  <option key={grade.name} value={grade.name}>
+                    {grade.label}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 pointer-events-none">
+                <FiChevronDown size={20} />
+              </div>
+            </div>
+          </div>
 
-        {/* Class Filter */}
-        <div className="mb-4 overflow-y-auto">
-          <label className="block mb-2 text-sm font-medium text-right text-gray-700">
-            {t("الفصل الدراسي")}
-          </label>
-          <select
-            value={filters.classId}
-            onChange={(e) => handleFilterChange("classId", e.target.value)}
-            disabled={!filters.grade || loadingClasses}
-            className="w-full p-3 text-right capitalize border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          >
-            <option value="">{t("جميع الفصول")}</option>
-            {classes.map((classItem) => (
-              <option
-                key={classItem.id}
-                value={classItem.id.toString()}
-                className="capitalize"
+          {/* Class Selector */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-600 text-right">
+              {t("الفصل الدراسي")}
+            </label>
+            <div className="relative">
+              <select
+                value={filters.classId}
+                onChange={(e) => handleFilterChange("classId", e.target.value)}
+                disabled={!filters.grade || loadingClasses}
+                className="w-full p-3.5 pr-10 text-right capitalize border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blueprimary focus:border-blueprimary appearance-none bg-white text-gray-800 shadow-sm transition-all outline-none disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
               >
-                {classItem.classname}
-              </option>
-            ))}
-          </select>
-          {loadingClasses && (
-            <p className="mt-1 text-sm text-right text-gray-500">
-              <FilterIcon className="inline mr-1" />
-              {t("جارٍ تحميل الفصول...")}
-            </p>
-          )}
+                <option value="">{t("جميع الفصول")}</option>
+                {classes.map((classItem) => (
+                  <option key={classItem.id} value={classItem.id.toString()}>
+                    {classItem.classname}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 pointer-events-none">
+                <FiChevronDown size={20} />
+              </div>
+            </div>
+            {loadingClasses && (
+              <p className="text-xs text-right text-blueprimary animate-pulse">
+                {t("جارٍ تحميل الفصول...")}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* Gender Filter */}
-        {/* <div className="mb-6">
-          <label className="block mb-2 text-sm font-medium text-right text-gray-700">
-            {t("النوع")}
-          </label>
-          <select
-            value={filters.gender}
-            onChange={(e) => handleFilterChange("gender", e.target.value)}
-            className="w-full p-3 text-right border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            {genderOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div> */}
-
-        {/* Action Buttons */}
-        <div className="flex gap-3 overflow-y-auto">
-          <button
-            onClick={applyFilters}
-            className="flex-1 px-4 py-3 font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
-          >
-            {t("تطبيق التصفية")}
-          </button>
-          <button
+        {/* Buttons Footer */}
+        <div className="flex gap-3 mt-2">
+          <motion.button
             onClick={resetFilters}
-            className="flex-1 px-4 py-3 font-medium text-gray-700 transition-colors bg-gray-200 rounded-lg hover:bg-gray-300"
+            className="flex-1 py-3.5 font-bold text-gray-600 bg-gray-100 rounded-2xl text-center hover:bg-gray-200 transition-colors shadow-sm"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             {t("إعادة تعيين")}
-          </button>
+          </motion.button>
+          <motion.button
+            onClick={applyFilters}
+            className="flex-1 py-3.5 font-bold text-white bg-blueprimary rounded-2xl text-center hover:bg-blueprimary/90 transition-colors shadow-md shadow-blueprimary/10"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {t("تطبيق التصفية")}
+          </motion.button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

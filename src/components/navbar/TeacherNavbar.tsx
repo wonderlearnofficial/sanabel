@@ -39,7 +39,7 @@ const navList = [
     to: "/teacher/view",
   },
   {
-    title: "الاعدادات",
+    title: "الإعدادات",
     icon: <IoIosSettings size={30} />,
     to: "/teacher/profile",
   },

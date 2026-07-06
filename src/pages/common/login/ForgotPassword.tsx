@@ -64,10 +64,9 @@ const ForgotPassword: React.FC = () => {
     }
 
     try {
-      const response = await axios.patch(
-        `${API_BASE_URL}/users/send-otp`,
-        { email },
-      );
+      const response = await axios.patch(`${API_BASE_URL}/users/send-otp`, {
+        email,
+      });
 
       if (response.status === 200) {
         setIsOtpSent(true);
@@ -82,16 +81,16 @@ const ForgotPassword: React.FC = () => {
   const handleConfirmOTP = async () => {
     const otpCode = otp.join("");
 
-    if (otpCode.length !== 4) {
+    if (otpCode.length !== otp.length) {
       toast.error(t("enter4DigitOTP"));
       return;
     }
 
     try {
-      const response = await axios.patch(
-        `${API_BASE_URL}/users/verify-otp`,
-        { email, otp: otpCode },
-      );
+      const response = await axios.patch(`${API_BASE_URL}/users/verify-otp`, {
+        email,
+        otp: otpCode,
+      });
 
       if (response.status === 200) {
         toast.success(t("otpVerifySuccess"));
@@ -137,10 +136,10 @@ const ForgotPassword: React.FC = () => {
             }`}
           >
             {!isOtpSent ? (
-              t("أدخل بريدك الالكتروني لإعادة تعيين كلمة السر")
+              t("أدخل بريدك الإلكتروني لإعادة تعيين كلمة السر")
             ) : (
               <span>
-                {t("لقد أرسلنا للتو الرمز المكون من 5 أرقام إلى")}{" "}
+                {t("لقد أرسلنا للتو الرمز المكون من 4 أرقام إلى")}{" "}
                 <span className="font-semibold text-blueprimary">{email}</span>{" "}
                 {t("أدخله أدناه:")}
               </span>
@@ -190,7 +189,7 @@ const ForgotPassword: React.FC = () => {
         <div onClick={isOtpSent ? handleConfirmOTP : handleSendOTP}>
           <PrimaryButton
             style="fill"
-            text={`${isOtpSent ? "تأكيد الرمز" : "ارسل الرمز"}`}
+            text={`${isOtpSent ? "تأكيد الرمز" : "أرسل الرمز"}`}
             arrow="none"
           />
         </div>

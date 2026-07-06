@@ -99,11 +99,11 @@ const Step3: React.FC<Step3Props> = ({
 
         <div className="flex flex-col self-end gap-2">
           <h1 className="text-2xl font-bold text-black text-end " dir="ltr">
-            {t("ادخل تاريخ عيد ميلادك 🎂")}
+            {t("أدخل تاريخ عيد ميلادك 🎂")}
           </h1>
 
           <p className="text-[#B3B3B3] text-sm text-end">
-            {t("اكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء")}
+            {t("أكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء")}
           </p>
         </div>
       </div>

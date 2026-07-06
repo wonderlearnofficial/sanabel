@@ -34,6 +34,9 @@ export const studentHomeGuide: GuideConfig = {
       titleKey: "أرسل إنجازك",
       descriptionKey:
         "عند إنهاء المهمة اضغط هنا لإرسالها إلى معلمك أو ولي أمرك.",
+      personalTitleKey: "أكمل مهمتك ✅",
+      personalDescriptionKey:
+        "عند إنهاء المهمة اضغط هنا لتحصل على مكافأتك فورًا.",
       targetId: "mission-action",
       advanceOn: "interaction",
     },
@@ -41,6 +44,9 @@ export const studentHomeGuide: GuideConfig = {
       id: "done",
       titleKey: "تم إرسال طلبك بنجاح! 🎉",
       descriptionKey: "أحسنت! ستحصل على مكافأتك بعد الموافقة.",
+      personalTitleKey: "أحسنت! حصلت على مكافأتك 🎉",
+      personalDescriptionKey:
+        "رائع! لقد حصلت على مكافأتك مباشرة. واصل إنجاز مهامك اليومية.",
     },
   ],
 };
@@ -68,7 +74,7 @@ export const studentMissionSchoolGuide: GuideConfig = {
       id: "missions",
       titleKey: "التحديات",
       descriptionKey:
-        "ابدأ بإختيار قسم واحد. بعد إنجاز المهمة أرسل طلب الموافقة.",
+        "ابدأ باختيار قسم واحد. بعد إنجاز المهمة أرسل طلب الموافقة.",
     },
   ],
 };
@@ -82,7 +88,7 @@ export const studentXpGuide: GuideConfig = {
       id: "xp",
       titleKey: "المستوى ونقاط الخبرة",
       descriptionKey:
-        "تكسب XP من المهام. عندما يزيد مستواك تفتح أوسمة ومكافآت جديدة.",
+        "تكسب XP من المهام. عندما يرتفع مستواك تفتح أوسمة ومكافآت جديدة.",
     },
   ],
 };

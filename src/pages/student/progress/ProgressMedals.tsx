@@ -14,6 +14,7 @@ import i18n from "../../../i18n";
 import { calculateLevel } from "../../../utils/LevelCalculator";
 
 import { medalsData } from "../../../data/MedalsData";
+import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
 
 const calculateXpForLevel = (targetLevel: any) => {
   const baseXp = 10;
@@ -65,6 +66,8 @@ const Progress: React.FC = () => {
   const achievedMedals = medalsData.filter(
     (item) => xp >= calculateXpForLevel(item.level)
   ).length;
+
+  useAutoStartGuide("student-progress", !!user);
 
   return (
     <motion.div
@@ -120,7 +123,7 @@ const Progress: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-between w-full text-sm">
-          <h1 className="text-[#999999]">{t("المستوي التالي")}</h1>
+          <h1 className="text-[#999999]">{t("المستوى التالي")}</h1>
           <h1 className="text-[#999999] ">
             {t("تم إنجاز ")}{" "}
             <span className="text-[#F3B14E]">{t(`${currentXp}`)}</span>{" "}
@@ -202,7 +205,7 @@ const Progress: React.FC = () => {
               <img src={item.img} alt="" className="w-1/2" />
               <h1 className="text-xl font-bold text-black">{t(item.title)}</h1>
               <h1 className="text-blueprimary">
-                {t(item.level)} {t("المستوي")}
+                {t(item.level)} {t("المستوى")}
               </h1>
             </div>
           </motion.div>

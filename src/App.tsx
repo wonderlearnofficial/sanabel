@@ -2,6 +2,8 @@ import { Redirect, Route, Switch } from "react-router-dom";
 import { BrowserRouter as Router } from "react-router-dom";
 import { IonRouterOutlet, setupIonicReact } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
+import { useLocation } from "react-router-dom";
+import { AudioManager } from "./utils/AudioManager";
 import { ThemeProvider } from "./context/ThemeContext";
 import "./index.css";
 
@@ -31,7 +33,8 @@ import StudentSettings from "./pages/student/profile/StudentSettings";
 import StudentPrivacyPolicy from "./pages/student/profile/StudentPrivacyPolicy";
 import StudentHelpCenter from "./pages/student/profile/StudentHelpCenter";
 import StudentLeaderboards from "./pages/student/StudentLeaderboards";
-import StudentTutorial from "./pages/student/tutorial/StudentTutorial";
+import CreateAvatar from "./pages/student/onboarding/CreateAvatar";
+import AvatarReady from "./pages/student/onboarding/AvatarReady";
 
 import StudentChallenges from "./pages/student/StudentChallenges";
 import ChooseSanabelType from "./pages/student/challenges/ChooseSanabelType";
@@ -86,6 +89,9 @@ import ParentHome from "./pages/teacherorparent/ParentHome";
 import ParentInvite from "./pages/teacherorparent/ParentInvite";
 import ParentView from "./pages/teacherorparent/ParentView";
 import { NotificationProvider } from "./pages/Notifications/NotificationContext";
+import { GuideProvider } from "./guides/GuideProvider";
+import GuideOverlay from "./guides/GuideOverlay";
+import GuideReplayList from "./guides/GuideReplayList";
 
 import Avatar from "./Avatar";
 import Simulation from "./Simulation";
@@ -95,7 +101,6 @@ import NoInternetPage from "./pages/common/NoInternet";
 
 // Admin
 import AdminRoute from "./components/AdminRoute";
-import AdminHome from "./pages/admin/AdminHome";
 import AdminProfile from "./pages/admin/AdminProfile";
 import OrganizationsList from "./pages/admin/organizations/OrganizationsList";
 import OrganizationForm from "./pages/admin/organizations/OrganizationForm";
@@ -175,6 +180,21 @@ const useInternetConnection = () => {
   return isOnline;
 };
 
+const AdminHomeRedirect = () => {
+  useEffect(() => {
+    window.location.href = "/admin/userdata";
+  }, []);
+  return null;
+};
+
+const RouteChangeListener = () => {
+  const location = useLocation();
+  useEffect(() => {
+    AudioManager.play("swoosh");
+  }, [location.pathname]);
+  return null;
+};
+
 const App: React.FC = () => {
   const { darkMode, toggleDarkMode } = useTheme();
   const { t } = useTranslation();
@@ -198,6 +218,7 @@ const App: React.FC = () => {
     <UserProvider>
       <ThemeProvider>
         <NotificationProvider>
+        <GuideProvider>
           {/* Simulation & desktop admin pages: render outside the phone frame and Ionic router entirely */}
           {window.location.pathname === "/simulation" ? (
             <Simulation />
@@ -211,6 +232,7 @@ const App: React.FC = () => {
             {/* Phone frame: full-screen on mobile, centered 430px card on desktop */}
             <div className="relative w-full h-full md:max-w-[430px] md:shadow-2xl overflow-hidden bg-white">
             <IonReactRouter>
+              <RouteChangeListener />
               <IonRouterOutlet>
                 <Switch>
                   {/* // Splash Screen */}
@@ -227,8 +249,13 @@ const App: React.FC = () => {
                   />
                   <Route
                     exact
-                    path="/student/tutorial"
-                    component={StudentTutorial}
+                    path="/student/create-avatar"
+                    component={CreateAvatar}
+                  />
+                  <Route
+                    exact
+                    path="/student/avatar-ready"
+                    component={AvatarReady}
                   />
                   {/* Signup */}
                   <Route
@@ -296,6 +323,11 @@ const App: React.FC = () => {
                     path="/student/settings/helpcenter"
                     component={StudentHelpCenter}
                   />
+                  <Route
+                    exact
+                    path="/student/settings/guides"
+                    render={() => <GuideReplayList role="Student" />}
+                  />
 
                   <Route
                     exact
@@ -333,6 +365,15 @@ const App: React.FC = () => {
                     exact
                     path="/teacher/profile"
                     component={TeacherProfile}
+                  />
+                  <Route
+                    exact
+                    path="/teacher/settings/guides"
+                    render={() => (
+                      <GuideReplayList
+                        role={localStorage.getItem("role") === "Parent" ? "Parent" : "Teacher"}
+                      />
+                    )}
                   />
 
                   <Route
@@ -396,7 +437,7 @@ const App: React.FC = () => {
                   <Route exact path="/parent/view" component={ParentView} />
 
                   {/* Admin */}
-                  <AdminRoute exact path="/admin/home" component={AdminHome} />
+                  <AdminRoute exact path="/admin/home" component={AdminHomeRedirect} />
                   <AdminRoute exact path="/admin/profile" component={AdminProfile} />
                   <AdminRoute
                     exact
@@ -429,6 +470,8 @@ const App: React.FC = () => {
             </div>
           </div>
           )}
+          <GuideOverlay />
+        </GuideProvider>
         </NotificationProvider>
       </ThemeProvider>
     </UserProvider>

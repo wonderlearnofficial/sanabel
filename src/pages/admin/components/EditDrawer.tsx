@@ -48,9 +48,9 @@ interface EditDrawerProps {
   setEditGradeName: (v: string) => void;
 
   // Lists
-  gradesList: { id: number; name: string }[];
+  gradesList: { id: number; name: string; organizationId?: number | null }[];
   organizations: { id: number; name: string }[];
-  classesOptions: { id: number; classname: string; grade: string }[];
+  classesOptions: { id: number; classname: string; grade: string; organizationId?: number; gradeId?: number | null }[];
 }
 
 export const EditDrawer: React.FC<EditDrawerProps> = ({
@@ -96,6 +96,20 @@ export const EditDrawer: React.FC<EditDrawerProps> = ({
   if (!editingRow) return null;
 
   const isNew = !!editingRow.isNew;
+
+  const resolvedRole =
+    activeTab === "students"
+      ? "Student"
+      : activeTab === "teachers"
+      ? "Teacher"
+      : activeTab === "parents"
+      ? "Parent"
+      : activeTab === "admins"
+      ? "Admin"
+      : editingRow?.role;
+
+  const isStudent = resolvedRole === "Student";
+  const isTeacher = resolvedRole === "Teacher";
 
   const labelCls = "block mb-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right";
   const inputCls =
@@ -165,22 +179,56 @@ export const EditDrawer: React.FC<EditDrawerProps> = ({
                 />
               </div>
               <div>
-                <label className={labelCls}>{t("admin.modal.grade")}</label>
+                <label className={labelCls}>{t("admin.modal.org")}</label>
                 <select
-                  value={editGrade}
-                  onChange={(e) => setEditGrade(e.target.value)}
+                  value={editOrgId}
+                  onChange={(e) => {
+                    setEditOrgId(e.target.value);
+                    setEditGrade("");
+                  }}
                   className={selectCls}
                 >
-                  <option value="">{t("admin.modal.selectGrade")}</option>
-                  {gradesList.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {t(`admin.grade.${g.name}`) !== `admin.grade.${g.name}`
-                        ? t(`admin.grade.${g.name}`)
-                        : g.name}
+                  <option value="">{t("admin.modal.selectOrg")}</option>
+                  {organizations.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.name}
                     </option>
                   ))}
                 </select>
               </div>
+              <div>
+                <label className={labelCls}>{t("admin.modal.grade")}</label>
+                <select
+                  value={editGrade}
+                  onChange={(e) => setEditGrade(e.target.value)}
+                  disabled={!editOrgId}
+                  className={`${selectCls} disabled:opacity-50`}
+                >
+                  <option value="">{t("admin.modal.selectGrade")}</option>
+                  {gradesList
+                    .filter((g) => String(g.organizationId) === editOrgId)
+                    .map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {t(`admin.grade.${g.name}`) !== `admin.grade.${g.name}`
+                          ? t(`admin.grade.${g.name}`)
+                          : g.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </>
+          ) : activeTab === "organizations" ? (
+            <div>
+              <label className={labelCls}>{t("admin.modal.orgName")}</label>
+              <input
+                type="text"
+                value={editOrgName}
+                onChange={(e) => setEditOrgName(e.target.value)}
+                className={inputCls}
+              />
+            </div>
+          ) : activeTab === "grades" ? (
+            <div className="flex flex-col gap-4">
               <div>
                 <label className={labelCls}>{t("admin.modal.org")}</label>
                 <select
@@ -196,26 +244,15 @@ export const EditDrawer: React.FC<EditDrawerProps> = ({
                   ))}
                 </select>
               </div>
-            </>
-          ) : activeTab === "organizations" ? (
-            <div>
-              <label className={labelCls}>{t("admin.modal.orgName")}</label>
-              <input
-                type="text"
-                value={editOrgName}
-                onChange={(e) => setEditOrgName(e.target.value)}
-                className={inputCls}
-              />
-            </div>
-          ) : activeTab === "grades" ? (
-            <div>
-              <label className={labelCls}>{t("admin.modal.gradeName")}</label>
-              <input
-                type="text"
-                value={editGradeName}
-                onChange={(e) => setEditGradeName(e.target.value)}
-                className={inputCls}
-              />
+              <div>
+                <label className={labelCls}>{t("admin.modal.gradeName")}</label>
+                <input
+                  type="text"
+                  value={editGradeName}
+                  onChange={(e) => setEditGradeName(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
             </div>
           ) : (
             <>
@@ -252,27 +289,7 @@ export const EditDrawer: React.FC<EditDrawerProps> = ({
                 />
               </div>
 
-              {(activeTab === "students" || activeTab === "teachers") && (
-                <div>
-                  <label className={labelCls}>{t("admin.modal.grade")}</label>
-                  <select
-                    value={editGrade}
-                    onChange={(e) => setEditGrade(e.target.value)}
-                    className={selectCls}
-                  >
-                    <option value="">{t("admin.modal.selectGrade")}</option>
-                    {gradesList.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {t(`admin.grade.${g.name}`) !== `admin.grade.${g.name}`
-                          ? t(`admin.grade.${g.name}`)
-                          : g.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {(activeTab === "students" || activeTab === "teachers") && (
+              {(isStudent || isTeacher) && (
                 <div>
                   <label className={labelCls}>{t("admin.modal.org")}</label>
                   <select
@@ -293,7 +310,30 @@ export const EditDrawer: React.FC<EditDrawerProps> = ({
                 </div>
               )}
 
-              {activeTab === "students" && (
+              {isStudent && (
+                <div>
+                  <label className={labelCls}>{t("admin.modal.grade")}</label>
+                  <select
+                    value={editGrade}
+                    onChange={(e) => setEditGrade(e.target.value)}
+                    className={selectCls}
+                    disabled={!editOrgId}
+                  >
+                    <option value="">{t("admin.modal.selectGrade")}</option>
+                    {gradesList
+                      .filter((g) => classesOptions.some((c) => String(c.gradeId) === String(g.id)))
+                      .map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {t(`admin.grade.${g.name}`) !== `admin.grade.${g.name}`
+                            ? t(`admin.grade.${g.name}`)
+                            : g.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
+
+              {isStudent && (
                 <div>
                   <label className={labelCls}>{t("admin.th.class")}</label>
                   <select
@@ -303,20 +343,18 @@ export const EditDrawer: React.FC<EditDrawerProps> = ({
                     className={`${selectCls} disabled:opacity-50`}
                   >
                     <option value="">{t("admin.modal.noClass")}</option>
-                    {classesOptions.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.classname} ({
-                          t(`admin.grade.${c.grade}`) !== `admin.grade.${c.grade}`
-                            ? t(`admin.grade.${c.grade}`)
-                            : c.grade
-                        })
-                      </option>
-                    ))}
+                    {classesOptions
+                      .filter((c) => String(c.organizationId) === editOrgId && String(c.gradeId) === editGrade)
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.classname}
+                        </option>
+                      ))}
                   </select>
                 </div>
               )}
 
-              {activeTab === "teachers" && (
+              {isTeacher && (
                 <div className="flex flex-col gap-3">
                   <label className={labelCls}>{t("admin.th.class")}</label>
                   {/* Current assigned classes chips */}

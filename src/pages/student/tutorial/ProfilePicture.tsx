@@ -288,7 +288,7 @@ const Step1 = () => {
 
   const [gender, setGender] = useState<"boy" | "girl">("boy");
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarOption>(
-    boysAvatars[0]
+    boysAvatars[0],
   );
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -339,7 +339,7 @@ const Step1 = () => {
   // Update any avatar property
   const updateAvatarProperty = (
     property: keyof typeof avatarState,
-    value: string
+    value: string,
   ) => {
     setAvatarState((prev) => ({ ...prev, [property]: value }));
     triggerAnimation();
@@ -372,12 +372,15 @@ const Step1 = () => {
   const getGradientString = (color: string) => {
     return `linear-gradient(135deg, ${color} 0%, ${adjustColorBrightness(
       color,
-      -30
+      -30,
     )} 100%)`;
   };
 
   // Helper function to adjust color brightness
   const adjustColorBrightness = (hex: string, percent: number) => {
+    if (!hex || typeof hex !== "string" || hex.length < 7)
+      return hex || "#ffffff";
+
     // Convert hex to RGB
     let r = parseInt(hex.substring(1, 3), 16);
     let g = parseInt(hex.substring(3, 5), 16);
@@ -601,10 +604,10 @@ const Step1 = () => {
                             avatarState.bgColor
                           } 5px, ${adjustColorBrightness(
                             avatarState.bgColor,
-                            20
+                            20,
                           )} 5px, ${adjustColorBrightness(
                             avatarState.bgColor,
-                            20
+                            20,
                           )} 10px)`
                         : avatarState.bgColor,
                   }}
@@ -644,10 +647,10 @@ const Step1 = () => {
                             bgOption.color
                           }, ${bgOption.color} 5px, ${adjustColorBrightness(
                             bgOption.color,
-                            20
+                            20,
                           )} 5px, ${adjustColorBrightness(
                             bgOption.color,
-                            20
+                            20,
                           )} 10px)`
                         : bgOption.color,
                   }}
@@ -782,7 +785,7 @@ const Step1 = () => {
             {t("!اختر شخصيتك")}
           </h2>
           <p className="text-sm text-gray-500">
-            {t("صمم الشخصية المثالية للمغامرة")}
+            {t("صمم الشخصية المثالية للمغأمرة")}
           </p>
         </motion.div>
 
@@ -810,17 +813,17 @@ const Step1 = () => {
                       avatarState.bgColor
                     } 2px, ${adjustColorBrightness(
                       avatarState.bgColor,
-                      30
+                      30,
                     )} 2px) 0 0 / 10px 10px`
                   : avatarState.bgPattern === "lines"
                   ? `repeating-linear-gradient(45deg, ${avatarState.bgColor}, ${
                       avatarState.bgColor
                     } 5px, ${adjustColorBrightness(
                       avatarState.bgColor,
-                      20
+                      20,
                     )} 5px, ${adjustColorBrightness(
                       avatarState.bgColor,
-                      20
+                      20,
                     )} 10px)`
                   : avatarState.bgColor,
             }}

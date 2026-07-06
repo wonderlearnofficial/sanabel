@@ -38,6 +38,7 @@ interface Step2Props {
   onBack: () => void;
   gender: string;
   setGender: (gender: string) => void;
+  isSubmitting?: boolean;
 }
 
 const Step2: React.FC<Step2Props> = ({
@@ -45,13 +46,14 @@ const Step2: React.FC<Step2Props> = ({
   onBack,
   gender,
   setGender,
+  isSubmitting = false,
 }) => {
   const { darkMode, toggleDarkMode } = useTheme();
   const { t } = useTranslation();
 
   function handleGenderStep() {
     if (!gender) {
-      toast.error(t("اختار النوع (بنت - ولد)"));
+      toast.error(t("اختر النوع (بنت - ولد)"));
     } else {
       onContinue();
     }
@@ -71,11 +73,11 @@ const Step2: React.FC<Step2Props> = ({
 
         <div className="flex flex-col self-end gap-2">
           <h1 className="text-2xl font-bold text-black ">
-            {t("اختار النوع (بنت - ولد)")}
+            {t("اختر النوع (بنت - ولد)")}
           </h1>
 
           <p className="text-[#B3B3B3] text-sm ">
-            {t("اكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء")}
+            {t("أكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء")}
           </p>
         </div>
       </div>
@@ -127,8 +129,16 @@ const Step2: React.FC<Step2Props> = ({
         </div>
       </div>
 
-      <div onClick={handleGenderStep} className="w-full">
-        <PrimaryButton style="fill" text={t("متابعة")} arrow="left" />
+      <div
+        onClick={isSubmitting ? undefined : handleGenderStep}
+        className="w-full"
+      >
+        <PrimaryButton
+          style="fill"
+          text={isSubmitting ? "جاري التحميل..." : "متابعة"}
+          arrow="left"
+          disabled={isSubmitting}
+        />
       </div>
     </div>
   );

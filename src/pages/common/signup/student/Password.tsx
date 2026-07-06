@@ -110,7 +110,7 @@ const Password: React.FC<{
         <div className="flex flex-col gap-5">
           <GenericInput
             type="password"
-            placeholder={t("ادخل كلمة السر")}
+            placeholder={t("أدخل كلمة السر")}
             title={t("كلمة السر")}
             value={password}
             onChange={handlePasswordChange} // Updated onChange

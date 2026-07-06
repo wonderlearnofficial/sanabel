@@ -9,12 +9,16 @@ import { useUserContext } from "../../../context/StudentUserProvider";
 import SanabelTree from "../../../components/tree/SanabelTree";
 import Inventory from "../../../components/tree/Inventory";
 import Shop from "../../../components/tree/Shop";
+import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
 
 const Progress: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useUserContext();
   const treeProgress = Number(user?.treeProgress);
   console.log(treeProgress);
+
+  useAutoStartGuide("student-progress", !!user);
+
   return (
     <div className="flex flex-col w-full gap-1 overflow-y-scroll h-3/4 ">
       {treeProgress < 51 && (

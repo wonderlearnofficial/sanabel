@@ -4,16 +4,15 @@ import { useTranslation } from "react-i18next";
 import AdminNavbar from "../../components/navbar/AdminNavbar";
 import Logout from "../../icons/Profile/Logout";
 import { useUserContext } from "../../context/StudentUserProvider";
+import { logoutSession } from "../../utils/session";
 
 const AdminProfile: React.FC = () => {
   const { t } = useTranslation();
   const history = useHistory();
   const { user } = useUserContext();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.setItem("keepLoggedIn", "false");
+  const handleLogout = async () => {
+    await logoutSession();
     history.push("/login");
   };
 

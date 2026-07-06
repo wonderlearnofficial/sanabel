@@ -6,7 +6,7 @@
 // التقدم: "Progress",
 // البروفايل: "Profile",
 // استعراض: "View",
-// الاعدادات: "Settings",
+// الإعدادات: "Settings",
 
 // "سجل الآن وابدأ": "Register now and begin",
 // "رحلة الإحسان": "Journey of Benevolence",
@@ -22,7 +22,7 @@
 
 // متابعة: "Continue",
 // تخطي: "Skip",
-// "سنابل الإحسان هو تطبيق تفاعلي يعزز القيم النبيلة للأطفال":
+// "سنابل الإحسان هو تطبيق تفاعلي يعزز القيم النبيلة عند الأطفال":
 //   "Sanabel Al-Ihsan is an interactive application that promotes noble values ​​for children",
 // "تغيير اللغة": "Change Language",
 
@@ -32,8 +32,8 @@
 // "ازرع سنبلة تُثمر": "Plant a seed that will bear",
 // "خيراً وأجراً": "Goodness and reward",
 // "تسابقوا إلى": "Race towards",
-// "الخيرات، فإنها لا تدوم": "Good deeds, for they do not last",
-// "إغتنم الفرص لفعل الخير، فالحسنات تتضاعف مع كل عمل صالح":
+// "الخيرات، فإنها تدوم": "Good deeds, for they do not last",
+// "اغتنم الفرص لفعل الخير، فالحسنات تتضاعف مع كل عمل صالح":
 //   "Seize the opportunities to do good, as rewards multiply with every righteous deed",
 // "لا تفوّت الفرصة لفعل الخير، فالأجر يعمّ والحسنات تُكتب":
 //   "Don’t miss the chance to do good, as the reward spreads, and good deeds are written down",
@@ -44,12 +44,12 @@
 // رمز: "Special character",
 // "إعادة تعيين كلمة السر": "Reset Password",
 // "تأمين حسابك بكلمة مرور جديدة": "Secure your account with a new password",
-// "ادخل كلمة السر": "Enter your password",
+// "أدخل كلمة السر": "Enter your password",
 // "كلمة السر": "Password",
 // حفظ: "Save",
 // "ليس لديك حساب؟": "Don't have an account?",
 // "إنشاء حساب": "Create an account",
-// "تم تغير كلمة السر بنجاح": "Password changed successfully",
+// "تم تغيير كلمة السر بنجاح": "Password changed successfully",
 // "قم بتسجيل الدخول و ابدأ في جمع الحسنات":
 //   "Log in and start earning rewards",
 // "تسجيل الدخول": "Log in",
@@ -58,7 +58,7 @@
 
 // "التحقق من البريد الإلكتروني": "Email Verification",
 // "هل نسيت كلمة السر؟": "Forgot Password?",
-// "أدخل بريدك الالكتروني لإعادة تعيين كلمة السر":
+// "أدخل بريدك الإلكتروني لإعادة تعيين كلمة السر":
 //   "Enter your email to reset your password",
 // "لقد أرسلنا للتو الرمز المكون من 5 أرقام إلى":
 //   "We just sent a 4-digit code to",
@@ -66,7 +66,7 @@
 // الرمز: "Code",
 // "البريد الإلكتروني": "Email",
 // "تأكيد الرمز": "Confirm Code",
-// "ارسل الرمز": "Send Code",
+// "أرسل الرمز": "Send Code",
 // "لم تتلق رمز": "Didn’t receive a code",
 // "بعد؟": "yet?",
 // "إعادة الإرسال": "Resend",
@@ -80,34 +80,34 @@
 // "حفظ الحساب": "Keep me logged in",
 
 // // Signup process
-// "انشاء حساب جديد": "Create a new account",
+// "إنشاء حساب جديد": "Create a new account",
 // "هل لديك حساب؟": "Already have an account?",
 
-// "انشاء حساب واستمتع بتجربة تفاعلية تبني العطاء والانتماء":
+// "إنشاء حساب واستمتع بتجربة تفاعلية تبني العطاء والانتماء":
 //   "Sign up and enjoy an interactive experience that builds giving and belonging",
-// "ادخل اسمك واسم والدك": "Enter your name and your father's name",
-// "اكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء":
+// "أدخل اسمك واسم والدك": "Enter your name and your father's name",
+// "أكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء":
 //   "Complete your account and enjoy an interactive experience that fosters giving and belonging",
 // اسمك: "Your name",
 // "اسمك الأول": "First name",
 // "اسم والدك": "Father's name",
-// "اختار النوع (بنت - ولد)": "Select your gender (Boy - Girl)",
+// "اختر النوع (بنت - ولد)": "Select your gender (Boy - Girl)",
 // ولد: "Boy",
 // بنت: "Girl",
-// "ادخل تاريخ عيد ميلادك 🎂": "Enter your birthday 🎂",
+// "أدخل تاريخ عيد ميلادك 🎂": "Enter your birthday 🎂",
 // اليوم: "Day",
 // الشهر: "Month",
 // السنة: "Year",
-// "اختار مرحلتك الدراسية 🎓": "Choose your educational stage 🎓",
+// "اختر مرحلتك الدراسية 🎓": "Choose your educational stage 🎓",
 // الابتدائي: "Primary",
-// الاعدادي: "Intermediate",
+// الإعدادي: "Intermediate",
 // الثانوي: "Secondary",
-// "ادخل رمز لولي امرك": "Enter a code for your guardian",
+// "أدخل رمزاً لولي أمرك": "Enter a code for your guardian",
 // "رمز الوالدين": "Parent code",
-// "اصنع رمز لوالديك حتي يمكنهم تحرير تقدمك":
+// "اصنع رمزاً لولي أمرك حتى يمكنهم متابعة تقدمك":
 //   "Create a code for your parents to track your progress",
-// "اضع صورة شخصية لك": "Upload a profile picture",
-// "أبدا رحلة جمع الحسنات": "Start your journey of gathering good deeds",
+// "ضع صورة شخصية لك": "Upload a profile picture",
+// "ابدأ رحلة جمع الحسنات": "Start your journey of gathering good deeds",
 
 // // login toaster messages
 // fill_all_fields: "Please fill in all fields",
@@ -150,7 +150,7 @@
 // year_out_of_range: "The year must be between 1940 and the current year",
 // four_digit_year: "The year must be four digits long",
 
-// "ولي امر او  معلم": "Teacher or Parent",
+// "ولي أمر او  معلم": "Teacher or Parent",
 // طالب: "Student",
 
 // //signup parent or teacher
@@ -163,11 +163,11 @@
 // Teacher: "Teacher",
 // Male: "Male",
 // Female: "Female",
-// "اسمك الاخير": "Last name",
+// "اسمك الأخير": "Last name",
 
 // // Profile page
-// "تغيير الي الانجليزية": "Switch to English",
-// "تغيير الي العربية": "Switch to Arabic",
+// "تغيير إلى الانجليزية": "Switch to English",
+// "تغيير إلى العربية": "Switch to Arabic",
 // "تغيير كلمة المرور": "Change Password",
 // "سياسة الخصوصية": "Privacy Policy",
 // "مركز المساعدة": "Help Center",

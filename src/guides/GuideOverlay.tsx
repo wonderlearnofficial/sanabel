@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useGuide } from "./GuideProvider";
+import { useUserContext } from "../context/StudentUserProvider";
 
 // Spotlight guide: dims the page with a cutout around the step's real
 // element (data-guide-id) and anchors a small tooltip next to it. Steps with
@@ -29,6 +30,10 @@ const GuideOverlay: React.FC = () => {
     finish,
   } = useGuide();
   const { t, i18n } = useTranslation();
+  const { user } = useUserContext();
+  // Students with no class complete missions directly (instant reward, no
+  // parent/teacher approval), so guide steps use their "personal" wording.
+  const isPersonal = !user?.classId;
   const isRTL = i18n.language === "ar";
   const prefersReducedMotion = useReducedMotion();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -107,6 +112,15 @@ const GuideOverlay: React.FC = () => {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
+  const stepTitleKey =
+    isPersonal && activeStep.personalTitleKey
+      ? activeStep.personalTitleKey
+      : activeStep.titleKey;
+  const stepDescriptionKey =
+    isPersonal && activeStep.personalDescriptionKey
+      ? activeStep.personalDescriptionKey
+      : activeStep.descriptionKey;
+
   // Tooltip position: below the target if there's room, else above.
   let cardStyle: React.CSSProperties;
   if (rect) {
@@ -178,7 +192,7 @@ const GuideOverlay: React.FC = () => {
             id={`guide-title-${activeStep.id}`}
             className="text-base font-bold text-gray-900 break-words dark:text-white"
           >
-            {t(activeStep.titleKey)}
+            {t(stepTitleKey)}
           </h2>
           <button
             type="button"
@@ -192,9 +206,9 @@ const GuideOverlay: React.FC = () => {
           </button>
         </div>
 
-        {activeStep.descriptionKey && (
+        {stepDescriptionKey && (
           <p className="mt-1 text-sm leading-6 text-gray-600 break-words dark:text-gray-300">
-            {t(activeStep.descriptionKey)}
+            {t(stepDescriptionKey)}
           </p>
         )}
 

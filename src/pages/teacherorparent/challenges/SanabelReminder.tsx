@@ -12,7 +12,7 @@ const SanabelType: React.FC = () => {
   localStorage.setItem("sanabelReminder", "true");
 
   const [reminderPopup, setReminderPopup] = useState(
-    localStorage.getItem("sanabelReminder") === "true"
+    localStorage.getItem("sanabelReminder") === "true",
   );
 
   const reminderData = [
@@ -115,7 +115,7 @@ const SanabelType: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.5 }}
           >
-            {t("أبدا")}
+            {t("ابدأ")}
           </motion.div>
         </motion.div>
       )}

@@ -32,7 +32,7 @@ const Step4: React.FC<Step4Props> = ({
   return (
     <div className="flex flex-col h-full w-full items-center justify-between p-5 gap-10 pb-10">
       <div className="flex flex-col w-full gap-3">
-      <div className="flex self-end justify-start w-full">
+        <div className="flex self-end justify-start w-full">
           <GoBackButton onClick={onBack} />
         </div>
 
@@ -40,11 +40,11 @@ const Step4: React.FC<Step4Props> = ({
 
         <div className="flex flex-col gap-2 self-end">
           <h1 className="text-black font-bold text-2xl text-end " dir="ltr">
-            {t("اختار مرحلتك الدراسية 🎓")}
+            {t("اختر مرحلتك الدراسية 🎓")}
           </h1>
 
           <p className="text-[#B3B3B3] text-sm text-end">
-            {t("اكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء")}
+            {t("أكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء")}
           </p>
         </div>
       </div>

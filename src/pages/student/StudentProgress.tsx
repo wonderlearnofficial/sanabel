@@ -20,7 +20,7 @@ import tree from "../../assets/tree/28.png";
 const navbar = [
   { name: "التحديات", icon: missionsDoneImg },
   { name: "الجوائز", icon: trophyIcon },
-  { name: "المستوي", icon: xpIcon },
+  { name: "المستوى", icon: xpIcon },
   { name: "الشجرة", icon: tree },
 ];
 

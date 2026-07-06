@@ -19,9 +19,9 @@ const SplashScreen: React.FC = () => {
       if (keepLoggedIn) {
         // Logged-in user redirects to home based on role
         if (role === "Student") {
-          // Check if this is their first time (they need to see tutorial)
+          // Check if this is their first time (they need to create an avatar)
           if (firstTimer === "true") {
-            history.replace("/student/tutorial");
+            history.replace("/student/create-avatar");
           } else {
             // This is a returning user, send directly to home
             history.replace("/student/home");
@@ -31,7 +31,7 @@ const SplashScreen: React.FC = () => {
         } else if (role === "Parent") {
           history.replace("/parent/home");
         } else if (role === "Admin") {
-          history.replace("/admin/home");
+          window.location.href = "/admin/userdata";
         }
       } else if (!hasVisited) {
         // First-time visitor to app redirects to onboarding

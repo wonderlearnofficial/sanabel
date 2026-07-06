@@ -58,7 +58,7 @@ const StudentList: React.FC = () => {
 
       <div className="flex items-center justify-between w-full h-20 p-5 bg-redprimary rounded-xl">
         <h1 className="text-black">averagemedals</h1>
-        <h1 className="text-xl"> {t("فصل 2/1 الإبتدائي")}</h1>
+        <h1 className="text-xl"> {t("فصل 2/1 الابتدائي")}</h1>
       </div>
 
       <div className="flex flex-col items-end w-full gap-2 h-2/3">

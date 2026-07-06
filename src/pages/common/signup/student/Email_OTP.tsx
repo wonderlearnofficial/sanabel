@@ -78,10 +78,9 @@ const EmailOTP: React.FC<OTPProps> = ({
     }
     setIsLoading(true);
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/users/send-auth`,
-        { email }
-      );
+      const response = await axios.post(`${API_BASE_URL}/users/send-auth`, {
+        email,
+      });
 
       if (response.status === 200) {
         setIsOtpSent(true);
@@ -101,7 +100,7 @@ const EmailOTP: React.FC<OTPProps> = ({
   const handleConfirmOTP = async () => {
     const otpCode = otp.join("");
 
-    if (otpCode.length !== 4) {
+    if (otpCode.length !== otp.length) {
       toast.error(t("enter4DigitOTP"));
       return;
     }
@@ -109,7 +108,7 @@ const EmailOTP: React.FC<OTPProps> = ({
     try {
       const response = await axios.patch(
         `${API_BASE_URL}/users/verfication-auth`,
-        { email, otp: otpCode }
+        { email, otp: otpCode },
       );
 
       if (response.status === 200) {
@@ -140,11 +139,11 @@ const EmailOTP: React.FC<OTPProps> = ({
               <h1 className="text-2xl font-bold text-black">
                 {isOtpSent
                   ? t("التحقق من البريد الإلكتروني")
-                  : t("انشاء حساب جديد")}
+                  : t("إنشاء حساب جديد")}
               </h1>
               <p className="text-[#B3B3B3] text-sm">
                 {!isOtpSent ? (
-                  t("انشاء حساب واستمتع بتجربة تفاعلية تبني العطاء والانتماء")
+                  t("إنشاء حساب واستمتع بتجربة تفاعلية تبني العطاء والانتماء")
                 ) : (
                   <span>
                     {t("لقد أرسلنا للتو الرمز المكون من 4 أرقام إلى")}{" "}
@@ -208,7 +207,7 @@ const EmailOTP: React.FC<OTPProps> = ({
             >
               <PrimaryButton
                 style="fill"
-                text={`${isOtpSent ? "تأكيد الرمز" : "ارسل الرمز"}`}
+                text={`${isOtpSent ? "تأكيد الرمز" : "أرسل الرمز"}`}
                 arrow="none"
               />
             </div>

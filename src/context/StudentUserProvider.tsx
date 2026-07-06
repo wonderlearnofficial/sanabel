@@ -35,11 +35,14 @@ interface BaseUser {
   canAssignTask: boolean;
   classId?: number | null;
   organizationId?: number | null;
+  seenGuides: string[];
 }
 
 interface StudentUser extends BaseUser {
   grade: number;
   gradeId?: number | null;
+  classname?: string | null;
+  gradeName?: string | null;
   snabelRed: number;
   snabelBlue: number;
   snabelYellow: number;
@@ -131,6 +134,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
               role: role,
               grade: userData.student.grade,
               gradeId: userData.student.gradeId,
+              classname: userData.student.Class?.classname || userData.student.class?.classname || null,
+              gradeName: userData.student.GradeEntity?.name || userData.student.Class?.GradeEntity?.name || userData.student.class?.GradeEntity?.name || userData.student.grade || null,
               snabelRed: userData.student.snabelRed,
               snabelBlue: userData.student.snabelBlue,
               snabelYellow: userData.student.snabelYellow,
@@ -149,6 +154,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
               gender: userData.student.user.gender,
               dateOfBirth: userData.student.user.dateOfBirth,
               isAccess: userData.student.user.isAccess,
+              seenGuides: userData.student.user.seenGuides || [],
             } as StudentUser);
             break;
 
@@ -164,6 +170,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
               gender: userData.user.gender,
               dateOfBirth: userData.user.dateOfBirth,
               isAccess: userData.user.isAccess,
+              seenGuides: userData.user.seenGuides || [],
               // Default values for teacher (you may need to adjust based on actual API response)
               grade: 0,
               snabelRed: 0,
@@ -192,6 +199,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
               gender: userData.user.gender,
               dateOfBirth: userData.user.dateOfBirth,
               isAccess: userData.user.isAccess,
+              seenGuides: userData.user.seenGuides || [],
               // Default values for parent (you may need to adjust based on actual API response)
               grade: 0,
               snabelRed: 0,
@@ -220,6 +228,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
               gender: userData.gender,
               dateOfBirth: userData.dateOfBirth,
               isAccess: userData.isAccess,
+              seenGuides: userData.seenGuides || [],
               grade: 0,
               snabelRed: 0,
               snabelBlue: 0,

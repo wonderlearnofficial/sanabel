@@ -10,7 +10,7 @@ import SecondPlaceColumn from "../../icons/Leaderboards/SecondPlaceColumn";
 import ThirdPlaceColumn from "../../icons/Leaderboards/ThirdPlaceColumn";
 import FilterIcon from "../../icons/Leaderboards/FilterIcon";
 import PrimaryButton from "../../components/PrimaryButton";
-import { delay, motion } from "framer-motion";
+import { delay, motion, AnimatePresence } from "framer-motion";
 import MedalAndLevel from "../../components/MedalAndLevel";
 import { useEffect } from "react";
 import axios from "axios";
@@ -23,11 +23,13 @@ import { useUserContext } from "../../context/StudentUserProvider";
 import ParentNavbar from "../../components/navbar/ParentNavbar";
 import { FaSearch } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
+import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
 
 interface LeaderboardItem {
   id: number;
   xp: number;
   level: number;
+  userId?: number;
   user: {
     firstName: string;
     lastName: string;
@@ -71,6 +73,8 @@ const Leaderboards: React.FC = () => {
       history.replace("/student/home");
     }
   }, [user, history]);
+
+  useAutoStartGuide("student-leaderboard", !!user && user.role === "Student" && !!user.classId);
 
   const [leaderboardsData, setLeaderboardsData] = useState<LeaderboardItem[]>([
     {
@@ -274,7 +278,7 @@ const Leaderboards: React.FC = () => {
   const { user: currentUser } = useUserContext();
   const myEntry = React.useMemo(() => {
     if (!currentUser?.id || userRole !== "Student") return null;
-    return dataWithOriginalPositions.find((item) => item.id === currentUser.id) ?? null;
+    return dataWithOriginalPositions.find((item) => item.userId === currentUser.id || item.id === currentUser.id) ?? null;
   }, [dataWithOriginalPositions, currentUser, userRole]);
 
   // Animation Variants
@@ -480,7 +484,7 @@ const Leaderboards: React.FC = () => {
                 dataWithOriginalPositions.map((item, index) => (
                   <motion.div
                     key={item.id}
-                    className="flex items-center justify-between w-full transition-shadow bg-white border-2 shadow-sm rounded-2xl "
+                    className="flex items-center justify-between w-full p-3 transition-all bg-white border border-gray-100 shadow-sm rounded-2xl hover:shadow-md hover:scale-[1.01] duration-200"
                     variants={listItemVariants}
                   >
                     <div className="flex items-center gap-3">
@@ -658,7 +662,7 @@ const Leaderboards: React.FC = () => {
                   .map((item: LeaderboardItem, index: number) => (
                     <motion.div
                       key={item.id}
-                      className="flex flex-row-reverse items-center justify-between w-full p-1 border-2 rounded-2xl"
+                      className="flex flex-row-reverse items-center justify-between w-full p-3 transition-all bg-white border border-gray-100 shadow-sm rounded-2xl hover:shadow-md hover:scale-[1.01] duration-200"
                       variants={listItemVariants}
                     >
                       <div className="scale-90">
@@ -736,11 +740,15 @@ const Leaderboards: React.FC = () => {
         )}
 
         {/* Filter Modal */}
-        <LeaderboardsFilter
-          isVisible={showFilterModal}
-          onClose={() => setShowFilterModal(false)}
-          onFilterChange={handleFilterChange}
-        />
+        <AnimatePresence>
+          {showFilterModal && (
+            <LeaderboardsFilter
+              isVisible={showFilterModal}
+              onClose={() => setShowFilterModal(false)}
+              onFilterChange={handleFilterChange}
+            />
+          )}
+        </AnimatePresence>
 
         {userRole == "Student" ? (
           <StudentNavbar />

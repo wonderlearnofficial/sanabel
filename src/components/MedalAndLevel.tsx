@@ -53,7 +53,7 @@ const MedalAndLevel: React.FC<MedalAndLevelProps> = ({
         className={`${size}`}
       />
       <h1 className={`text-md ${color}`}>
-        {t("المستوي")} {level}
+        {t("المستوى")} {level}
       </h1>
     </div>
   );

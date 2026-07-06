@@ -12,6 +12,7 @@ import { useRef, useEffect, useState } from "react";
 import StudentToDoList from "./StudentToDoList";
 import ChooseSanabelType from "./challenges/ChooseSanabelType";
 import { useUserContext } from "../../context/StudentUserProvider";
+import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
 
 const Challenges: React.FC = () => {
   const { t } = useTranslation();
@@ -41,6 +42,10 @@ const Challenges: React.FC = () => {
   // Students with no class assigned get the "personal" to-do list; school
   // students choose a Sanabel type first, matching StudentNavbar's gating.
   const isPersonal = !user?.classId;
+  useAutoStartGuide(
+    isPersonal ? "student-mission-personal" : "student-mission-school",
+    !!user
+  );
   return (
     <motion.div
       className="flex flex-col items-center w-full h-full overflow-y-auto" // Added pb-4 for bottom padding

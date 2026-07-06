@@ -86,7 +86,7 @@ const Challenges: React.FC = () => {
           variants={welcomeVariants}
           className="text-greenprimary"
         >
-          {t("اختروا مغامرتكم القادمة")}
+          {t("اختروا مغأمرتكم القادمة")}
         </motion.h1>
 
         <motion.h1

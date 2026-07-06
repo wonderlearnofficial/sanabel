@@ -2,7 +2,7 @@ import { API_BASE_URL } from "../../config/api";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
-import { playSound } from "../../utils/soundHelper";
+import { AudioManager } from "../../utils/AudioManager";
 
 import TeacherNavbar from "../../components/navbar/TeacherNavbar";
 import StudentNavbar from "../../components/navbar/StudentNavbar";
@@ -271,11 +271,13 @@ const AddMissionModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
-      <div className="w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-xl p-5">
-        <h2 className="mb-4 text-xl font-bold text-center text-black">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+      <div className="flex flex-col w-11/12 max-w-2xl max-h-[90vh] bg-white rounded-xl p-5">
+        <h2 className="flex-shrink-0 mb-4 text-xl font-bold text-center text-black">
           {t("إضافة مهمة جديدة")}
         </h2>
+
+        <div className="flex-1 overflow-y-auto pr-2 min-h-0">
 
         {loading && (
           <div className="flex items-center justify-center py-8">
@@ -345,7 +347,7 @@ const AddMissionModal = ({
             <h3 className="mb-3 text-lg font-semibold text-black">
               {t("اختر المهمة")}
             </h3>
-            <div className="flex flex-col gap-3 overflow-y-auto max-h-[80vh]">
+            <div className="flex flex-col gap-3">
               {filteredTasks.map((task: Task) => (
                 <div
                   key={task.id}
@@ -370,8 +372,10 @@ const AddMissionModal = ({
           </div>
         )}
 
+        </div>
+
         {/* Action Buttons */}
-        <div className="flex w-full gap-3 mt-4">
+        <div className="flex-shrink-0 flex w-full gap-3 mt-4 pt-2">
           <PrimaryButton
             style="stroke"
             text={t("إلغاء")}
@@ -509,7 +513,7 @@ const TodoList = () => {
       });
 
       if (response.ok) {
-        playSound.success();
+        AudioManager.play("success");
         setTodoItems((prev) =>
           prev.map((item) =>
             item.id === selectedMissionId ? { ...item, completed: true } : item,
@@ -522,7 +526,7 @@ const TodoList = () => {
         setShowConfirmPopup(false);
         setShowCongratsPopup(true);
       } else {
-        playSound.error();
+        AudioManager.play("soft_warning");
         const errorData = await response.json();
         console.error("Failed to mark mission complete:", errorData);
         alert(
@@ -534,7 +538,7 @@ const TodoList = () => {
         );
       }
     } catch (error) {
-      playSound.error();
+      AudioManager.play("soft_warning");
       console.error("Error marking mission complete:", error);
       alert(t("حدث خطأ أثناء تحديد المهمة كمكتملة."));
     } finally {

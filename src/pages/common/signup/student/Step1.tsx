@@ -35,9 +35,16 @@ interface Step1Props {
   onBack: () => void;
   name: { firstName: string; parentName: string };
   setName: (name: { firstName: string; parentName: string }) => void;
+  isSubmitting?: boolean;
 }
 
-const Step1: React.FC<Step1Props> = ({ onContinue, onBack, name, setName }) => {
+const Step1: React.FC<Step1Props> = ({
+  onContinue,
+  onBack,
+  name,
+  setName,
+  isSubmitting = false,
+}) => {
   const { darkMode, toggleDarkMode } = useTheme();
   const { t } = useTranslation();
 
@@ -75,15 +82,15 @@ const Step1: React.FC<Step1Props> = ({ onContinue, onBack, name, setName }) => {
           <GoBackButton onClick={onBack} />
         </div>
 
-        <ProgressBar filledBars={1} />
+        <ProgressBar filledBars={2} />
 
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-bold text-black text-start ">
-            {t("ادخل اسمك واسم والدك")}
+            {t("أدخل اسمك واسم والدك")}
           </h1>
 
           <p className="text-[#B3B3B3] text-sm text-start">
-            {t("اكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء")}
+            {t("أكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء")}
           </p>
         </div>
       </div>
@@ -101,19 +108,20 @@ const Step1: React.FC<Step1Props> = ({ onContinue, onBack, name, setName }) => {
             />
             <GenericInput
               type="text"
-              placeholder={t("اسمك الاخير")}
-              title={t("اسمك الاخير")}
+              placeholder={t("اسمك الأخير")}
+              title={t("اسمك الأخير")}
               onChange={(e) => handleNameChange("parentName", e.target.value)}
               value={name.parentName}
             />
           </div>
         </div>
       </div>
-      <div className="w-full " onClick={finishStep1}>
+      <div className="w-full " onClick={isSubmitting ? undefined : finishStep1}>
         <PrimaryButton
           style="fill"
-          text={t("متابعة")}
+          text={isSubmitting ? "جاري التحميل..." : "إنشاء حساب جديد"}
           arrow={isRTL ? "left" : "right"}
+          disabled={isSubmitting}
         />
       </div>
     </div>

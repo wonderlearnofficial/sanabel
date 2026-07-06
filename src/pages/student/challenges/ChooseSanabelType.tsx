@@ -121,7 +121,7 @@ const SanabelType: React.FC = () => {
       {/* Popup */}
       {reminderPopup && (
         <motion.div
-          className="flex-col flex items-center  overflow-y-auto justify-between w-screen h-[9vh] absolute bottom-0 rounded-t-3xl border-t-2  bg-white z-30 p-4"
+          className="flex-col flex items-center  overflow-y-auto justify-between w-screen h-[9vh]  absolute bottom-0 rounded-t-3xl border-t-2  bg-white z-30 p-4"
           initial="hidden"
           animate="visible"
           exit="exit"
@@ -176,13 +176,13 @@ const SanabelType: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.5 }}
           >
-            {t("أبدا")}
+            {t("ابدأ")}
           </motion.div>
         </motion.div>
       )}
       {/* Popup */}
 
-      <div className="flex flex-row-reverse items-center justify-between w-full mb-4">
+      <div className="flex flex-row-reverse items-center justify-between w-full mb-1">
         <motion.div
           className="font-bold text-black cursor-pointer"
           initial={{ x: 50, opacity: 0 }}
@@ -217,7 +217,7 @@ const SanabelType: React.FC = () => {
         </div>
       </div>
       <motion.div
-        className="flex flex-col items-center justify-center w-full h-full gap-4 overflow-y-auto"
+        className="flex flex-col items-center justify-center w-full h-full gap-4 overflow-y-auto "
         initial="hidden"
         animate="visible"
         variants={{

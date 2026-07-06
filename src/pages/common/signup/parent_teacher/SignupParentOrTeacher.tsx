@@ -99,7 +99,7 @@ const Signup: React.FC = () => {
           error.response.data,
         );
         toast.error(
-          t("خطأ في الخادم: ") +
+          t("خطأ في السيرفر: ") +
             (error.response.data?.message || error.response.status),
         );
       } else if (error.request) {

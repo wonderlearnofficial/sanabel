@@ -35,7 +35,7 @@ const Profile: React.FC = () => {
     { title: "قائمة المتصدرين", content: "s", icon: LeaderboardIcon },
     { title: "تحديات", content: "s", icon: LeaderboardIcon },
     { title: "مجموع الحسنات", content: "s", icon: LeaderboardIcon },
-    { title: "مستوي الشارة", content: "s", icon: LeaderboardIcon },
+    { title: "مستوى الشارة", content: "s", icon: LeaderboardIcon },
   ];
 
   return (
@@ -56,7 +56,7 @@ const Profile: React.FC = () => {
           {user?.firstName} {user?.lastName}
         </h1>
         <h1 className="text-[#B3B3B3]"> طالب</h1>
-        <h1 className="text-[#B3B3B3]"> المرحلة الاعدادية - فصل 4/8</h1>
+        <h1 className="text-[#B3B3B3]"> المرحلة الإعدادية - فصل 4/8</h1>
       </div>
 
       <div className="flex flex-col items-center w-full gap-1">
@@ -123,7 +123,7 @@ const Profile: React.FC = () => {
             {/* Medals */}
             <div className="flex items-center justify-end sanabel-shadow-bottom rounded-2xl ">
               <h1 className="font-bold text-greenprimary">
-                {t("مستوي الشارة")}
+                {t("مستوى الشارة")}
               </h1>
 
               <div className="p-2rounded-full flex-center">

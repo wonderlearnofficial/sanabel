@@ -15,13 +15,13 @@ const onboardingData = [
     title: "مرحباً بك في",
     span: "👋سنابل الإحسان",
     img: slide1Img,
-    description: "سنابل الإحسان هو تطبيق تفاعلي يعزز القيم النبيلة للأطفال",
+    description: "سنابل الإحسان هو تطبيق تفاعلي يعزز القيم النبيلة عند الأطفال",
   },
   {
     title: "ازرع سنبلة تُثمر",
     span: "خيراً وأجراً",
     img: slide3Img,
-    description: "إغتنم الفرص لفعل الخير، فالحسنات تتضاعف مع كل عمل صالح",
+    description: "اغتنم الفرص لفعل الخير، فالحسنات تتضاعف مع كل عمل صالح",
   },
   {
     title: "تسابقوا إلى",
@@ -75,11 +75,11 @@ const OnBoarding: React.FC = () => {
       </div>
 
       {/* Animated Image with key and exit animation */}
-      <div className="w-full h-1/3 flex-center">
+      <div className="w-full h-1/3 flex-center overflow-hidden">
         <motion.img
           key={stepCount}
           src={onboardingData[stepCount].img}
-          className="w-2/3 "
+          className="w-2/3 h-auto max-h-full object-contain"
           initial={{ opacity: 0, y: -250 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -50 }} // Exit animation for the old image

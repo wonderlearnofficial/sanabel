@@ -180,7 +180,7 @@ const Progress: React.FC = () => {
           }`}
           onClick={() => handleTrophyTypeChange(1)}
         >
-          {t("جوائز أخري")}
+          {t("جوائز أخرى")}
         </h1>
       </div>
 

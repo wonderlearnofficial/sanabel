@@ -15,10 +15,12 @@ import { t } from "i18next";
 import { toast } from "react-toastify";
 import { useHistory } from "react-router-dom";
 import { getErrorMessage } from "../../../../config/getErrorMessage";
+import { AudioManager } from "../../../../utils/AudioManager";
 
 const Signup: React.FC = () => {
   const [stepIndex, setStepIndex] = useState(0);
   const history = useHistory();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   // State for storing data from each step
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,16 +50,11 @@ const Signup: React.FC = () => {
       password={password}
     />,
     <Step1
-      onContinue={() => setStepIndex(stepIndex + 1)}
+      onContinue={() => handleSubmit()}
       onBack={() => setStepIndex(stepIndex - 1)}
       name={name}
       setName={setName}
-    />,
-    <Step2
-      onContinue={() => handleSubmit()}
-      onBack={() => setStepIndex(stepIndex - 1)}
-      gender={gender}
-      setGender={setGender}
+      isSubmitting={isSubmitting}
     />,
     // <Step3
     //   onContinue={() => handleSubmit()}
@@ -87,6 +84,9 @@ const Signup: React.FC = () => {
   ];
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     // Format name and date of birth
     const formattedName = {
       firstName: name.firstName,
@@ -121,13 +121,17 @@ const Signup: React.FC = () => {
       );
 
       if (response.status === 201) {
+        AudioManager.play("success");
         history.push(`/login`);
         // PUSH TO LOGIN
         toast.success("Sign up");
       }
     } catch (error) {
+      AudioManager.play("soft_warning");
       console.error("Error", error);
       toast.error(t(getErrorMessage(error, "registrationFailed")));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -138,6 +142,7 @@ const Signup: React.FC = () => {
         <button
           onClick={() => setStepIndex(stepIndex - 1)}
           className="back-button"
+          disabled={isSubmitting}
         >
           {t("الرجوع")}
         </button>

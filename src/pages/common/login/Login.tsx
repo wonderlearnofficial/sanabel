@@ -16,6 +16,7 @@ import sanabelVideo from "../../../assets/login/loginVideo.mp4";
 import { FaHome } from "react-icons/fa";
 import { useUserContext } from "../../../context/StudentUserProvider";
 import { getErrorMessage } from "../../../config/getErrorMessage";
+import { AudioManager } from "../../../utils/AudioManager";
 
 const Toaster = () => (
   <ToastContainer
@@ -54,20 +55,26 @@ const Login: React.FC = () => {
   // Modified handleLogin function with proper firstTimer handling
   const handleLogin = async () => {
     try {
-      const response = await axios.patch(
-        `${API_BASE_URL}/users/login`,
-        {
-          email,
-          password,
-        },
-      );
+      const response = await axios.patch(`${API_BASE_URL}/users/login`, {
+        email,
+        password,
+      });
 
       if (response.status === 200) {
+        AudioManager.play("welcome");
         // Store auth token
         localStorage.setItem(
           "token",
           `${response.data.data.user.token.toString()}`,
         );
+
+        // Store refresh token for silent access-token renewal
+        if (response.data.data.user.refreshToken) {
+          localStorage.setItem(
+            "refreshToken",
+            response.data.data.user.refreshToken,
+          );
+        }
 
         // Store Role preference
         localStorage.setItem("role", response.data.data.user.role.toString());
@@ -126,6 +133,7 @@ const Login: React.FC = () => {
               connectCode: userData.connectCode,
               profileImg: userData.user.profileImg || "", // Add this line
               canAssignTask: userData.canAssignTask,
+              seenGuides: userData.user.seenGuides || [],
             });
           }
         } catch (error) {
@@ -186,7 +194,7 @@ const Login: React.FC = () => {
         <div className="flex flex-col gap-5">
           <GenericInput
             type="password"
-            placeholder={t("ادخل كلمة السر")}
+            placeholder={t("أدخل كلمة السر")}
             title={t("كلمة السر")}
             onChange={(e) => setPassword(e.target.value)}
             value={password}

@@ -18,6 +18,7 @@ import axios from "axios";
 import { calculateLevel } from "../../utils/LevelCalculator";
 import { medalsData } from "../../data/MedalsData";
 import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
+import { AudioManager } from "../../utils/AudioManager";
 
 const Skeleton = ({ className }: { className: string }) => (
   <div className={`animate-pulse bg-gray-200 rounded-xl ${className}`} />
@@ -58,6 +59,7 @@ const StudentHome: React.FC = () => {
   useEffect(() => {
     if (prevLevelRef.current !== null && level > prevLevelRef.current) {
       setShowLevelUp(true);
+      AudioManager.play("celebration");
       const timer = setTimeout(() => setShowLevelUp(false), 3000);
       return () => clearTimeout(timer);
     }
@@ -231,7 +233,7 @@ const StudentHome: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-between w-full text-sm">
-                <span className="text-[#999999]">{t("المستوي التالي")}</span>
+                <span className="text-[#999999]">{t("المستوى التالي")}</span>
                 <span className="text-[#999999]">
                   {t("تم إنجاز")} {currentXp} {t("نقطة")}
                 </span>

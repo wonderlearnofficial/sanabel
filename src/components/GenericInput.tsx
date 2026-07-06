@@ -35,15 +35,22 @@ function GenericInput({
       <input
         type={type === "password" && showPassword ? "text" : type}
         placeholder={placeholder}
-        className={`bg-white text-[#121212] focus:text-[#121212] font-medium  border-2 border-[#EAECF0] rounded-xl w-full p-3 placeholder:text-[#ccc] `}
+        className={`bg-white text-[#121212] focus:text-[#121212] font-medium border-2 border-[#EAECF0] rounded-xl w-full p-3 placeholder:text-[#ccc] ${
+          type === "password" || type === "email" ? "text-left" : ""
+        } ${type === "password" ? "pr-12" : ""}`}
+        dir={type === "password" || type === "email" ? "ltr" : undefined}
         value={value}
         onChange={onChange}
       />
       <div
         onClick={handleShowPassword}
         className={`text-[#B3B3B3] text-2xl absolute top-[55%] ${
-          i18n.language === "ar" ? "left-5" : "right-5"
-        } -transform-y-1/2`}
+          type === "password"
+            ? "right-5"
+            : i18n.language === "ar"
+            ? "left-5"
+            : "right-5"
+        } -transform-y-1/2 cursor-pointer`}
       >
         {type === "password" && (showPassword ? <FaEye /> : <FaEyeSlash />)}
       </div>

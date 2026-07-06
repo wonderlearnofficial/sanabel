@@ -154,7 +154,7 @@ const TeacherView: React.FC = () => {
       }
     } catch (error) {
       console.error("Error in inviting student:", error);
-      setErrorMessage(t("حدث خطأ في الاتصال بالخادم"));
+      setErrorMessage(t("حدث خطأ في الاتصال بالسيرفر"));
       setShowErrorPopup(true);
       setViewingStudent(false);
     }
@@ -203,7 +203,7 @@ const TeacherView: React.FC = () => {
             </div>
             <p className="leading-relaxed text-blue-700">
               {t(
-                "يمكن للطفل العثور على الكود الخاص به من خلال الدخول إلى حسابه والذهاب إلى صفحة الملف الشخصي. سيجد الكود مُعرَّض بوضوح في قسم معلومات الحساب",
+                "يمكن للطفل العثور على الكود الخاص به من خلال الدخول إلى حسابه والذهاب إلى صفحة الملف الشخصي. سيجد الكود معروضاً بوضوح في قسم معلومات الحساب",
               )}
             </p>
           </div>
@@ -217,7 +217,7 @@ const TeacherView: React.FC = () => {
           <div className="w-full space-y-4">
             <input
               type="text"
-              placeholder={t("ادخل كود دعوة الطفل")}
+              placeholder={t("أدخل كود دعوة الطفل")}
               value={code}
               onChange={(e) => setCode(e.target.value)}
               className="w-full p-4 font-medium text-center text-gray-700 transition duration-200 bg-white border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"

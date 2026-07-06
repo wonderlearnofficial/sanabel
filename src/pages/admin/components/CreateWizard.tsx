@@ -15,7 +15,7 @@ interface CreateWizardProps {
   // Option lists
   gradesList: { id: number; name: string }[];
   organizations: { id: number; name: string }[];
-  classes: { id: number; classname: string; grade: string }[];
+  classes: { id: number; classname: string; grade: string; organizationId?: number; gradeId?: number | null }[];
   fetchClassesForOrg: (orgId: string) => Promise<void>;
 }
 
@@ -294,23 +294,28 @@ export const CreateWizard: React.FC<CreateWizardProps> = ({
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className={labelCls}>{t("admin.modal.grade")}</label>
-                    <select
-                      value={gradeId}
-                      onChange={(e) => setGradeId(e.target.value)}
-                      className={selectCls}
-                    >
-                      <option value="">{t("admin.modal.selectGrade")}</option>
-                      {gradesList.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {t(`admin.grade.${g.name}`) !== `admin.grade.${g.name}`
-                            ? t(`admin.grade.${g.name}`)
-                            : g.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {role === "Student" && (
+                    <div>
+                      <label className={labelCls}>{t("admin.modal.grade")}</label>
+                      <select
+                        value={gradeId}
+                        onChange={(e) => setGradeId(e.target.value)}
+                        className={selectCls}
+                        disabled={!orgId}
+                      >
+                        <option value="">{t("admin.modal.selectGrade")}</option>
+                        {gradesList
+                          .filter((g) => classes.some((c) => String(c.gradeId) === String(g.id)))
+                          .map((g) => (
+                            <option key={g.id} value={g.id}>
+                              {t(`admin.grade.${g.name}`) !== `admin.grade.${g.name}`
+                                ? t(`admin.grade.${g.name}`)
+                                : g.name}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               )}
 

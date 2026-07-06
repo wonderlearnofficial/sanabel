@@ -23,6 +23,7 @@ import { IonRouterLink } from "@ionic/react";
 import { useTheme } from "../../../context/ThemeContext";
 
 import GoBackButton from "../../../components/GoBackButton";
+import { logoutSession } from "../../../utils/session";
 import DeleteAccountPopup from "../../student/profile/StudentDeleteAccountPopup";
 import DarkModeComingSoon from "../../common/DarkModeComingSoon";
 import { avatars } from "../../../data/Avatars";
@@ -31,13 +32,11 @@ const Profile: React.FC = () => {
   const { darkMode, toggleDarkMode } = useTheme();
   const history = useHistory();
   const { t } = useTranslation();
-  function logout() {
-    // Set both values to false
+  async function logout() {
     localStorage.setItem("hasVisited", "false");
-    localStorage.setItem("keepLoggedIn", "false");
 
-    // Optional: Clear the auth token or other session info
-    localStorage.removeItem("authToken");
+    // Invalidate the session server-side and clear token/refreshToken/role
+    await logoutSession();
 
     // Redirect to login or onboarding page
     history.push("/choosesignmethod");
@@ -69,26 +68,36 @@ const Profile: React.FC = () => {
   const profileButtons = [
     {
       title: `${
-        i18n.language === "en" ? "تغيير الي العربية" : "تغيير الي الانجليزية"
+        i18n.language === "en" ? "تغيير إلى العربية" : "تغيير إلى الإنجليزية"
       }`,
       icon: <ChangeLanguage size={25} />,
       to: "",
       function: handleLanguageToggle,
+      type: "link",
     },
     {
       title: "تغيير كلمة المرور",
       icon: <ChangePassword size={25} />,
       to: "/changeprofilepassword",
+      type: "link",
     },
     {
       title: "سياسة الخصوصية",
       icon: <PrivacyPolicy size={25} />,
       to: "/student/settings/privacypolicy",
+      type: "link",
     },
     {
       title: "مركز المساعدة",
       icon: <HelpCenter size={25} />,
       to: "/student/settings/helpcenter",
+      type: "link",
+    },
+    {
+      title: "دليل الصفحات",
+      icon: <HelpCenter size={25} />,
+      to: "/teacher/settings/guides",
+      type: "link",
     },
     {
       title: "تفعيل الوضع الداكن",
@@ -98,6 +107,7 @@ const Profile: React.FC = () => {
         <MdDarkMode size={25} color="#4AAAD6" />
       ),
       to: "",
+      type: "darkModeToggle",
     },
   ];
 
@@ -115,7 +125,7 @@ const Profile: React.FC = () => {
         <div className="opacity-0 w-[45px]" />
 
         <h1 className="text-2xl font-bold text-black text-end " dir="ltr">
-          {t("الاعدادات")}
+          {t("الإعدادات")}
         </h1>
         <GoBackButton />
       </div>
@@ -136,7 +146,7 @@ const Profile: React.FC = () => {
                 item.function ? item.function() : redirectPage(item.to)
               }
             >
-              {index === 4 ? (
+              {item.type === "darkModeToggle" ? (
                 <label className="inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -163,20 +173,8 @@ const Profile: React.FC = () => {
               )}
 
               <div className="flex-row-reverse gap-3 flex-center">
-                <h1
-                  className={`${
-                    index == 5 ? "text-[#E14E54]" : "text-black dark:text-white"
-                  }`}
-                >
-                  {t(item.title)}
-                </h1>
-                <div
-                  className={`${
-                    index == 5 ? "bg-[#e14e5349]" : "bg-[#D5EBF6]"
-                  }  p-2 rounded-full`}
-                >
-                  {item.icon}
-                </div>
+                <h1 className="text-black dark:text-white">{t(item.title)}</h1>
+                <div className="bg-[#D5EBF6] p-2 rounded-full">{item.icon}</div>
               </div>
             </div>
 

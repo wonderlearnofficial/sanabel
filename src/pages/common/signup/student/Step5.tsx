@@ -32,7 +32,7 @@ const Step5: React.FC<Step5Props> = ({
   return (
     <div className="flex flex-col items-center justify-between w-full h-full gap-10 p-5 pb-10">
       <div className="flex flex-col w-full gap-3">
-      <div className="flex self-end justify-start w-full">
+        <div className="flex self-end justify-start w-full">
           <GoBackButton onClick={onBack} />
         </div>
 
@@ -40,11 +40,11 @@ const Step5: React.FC<Step5Props> = ({
 
         <div className="flex flex-col self-end gap-2">
           <h1 className="text-2xl font-bold text-black text-end " dir="ltr">
-            {t("ادخل رمز لولي امرك")}
+            {t("أدخل رمزاً لولي أمرك")}
           </h1>
 
           <p className="text-[#B3B3B3] text-sm text-end">
-            {t("اكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء")}
+            {t("أكمل حسابك واستمتع بتجربة تفاعلية تبني العطاء والانتماء")}
           </p>
         </div>
       </div>
@@ -52,7 +52,7 @@ const Step5: React.FC<Step5Props> = ({
       <div className="flex items-center justify-center w-full gap-3">
         <GenericInput
           type="text"
-          placeholder={t("اصنع رمز لوالديك حتي يمكنهم تحرير تقدمك")}
+          placeholder={t("اصنع رمزاً لولي أمرك حتى يمكنهم متابعة تقدمك")}
           title={t("رمز الوالدين")}
           onChange={handleInputChange}
           value={parentCode}
