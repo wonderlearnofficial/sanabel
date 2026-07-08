@@ -30,7 +30,10 @@ const AdminProfile: React.FC = () => {
 
       <div className="flex flex-col w-full gap-3 p-4">
         <div
+          role="button"
+          tabIndex={0}
           onClick={handleLogout}
+          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleLogout()}
           className="flex items-center justify-between w-full p-4 bg-white shadow-md cursor-pointer rounded-2xl"
         >
           <h2 className="text-lg font-medium text-red-500">

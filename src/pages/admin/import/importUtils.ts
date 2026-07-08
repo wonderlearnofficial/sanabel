@@ -16,11 +16,75 @@ export function arrayToCSV(rows: Record<string, any>[], headers: string[]): stri
   return lines.join("\n");
 }
 
+// RFC4180-ish CSV parser: handles quoted fields (with embedded commas,
+// escaped "" quotes, and embedded newlines) and CRLF/LF line endings. A plain
+// `line.split(",")` breaks the moment any field — a school name, an address —
+// contains a comma: every column after it shifts by one, which can garble the
+// email column enough to fail validation and silently drop the whole row.
 function parseCSVText(text: string): { headers: string[]; rows: string[][] } {
   const withoutBom = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-  const lines = withoutBom.trim().split("\n");
-  const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
-  const rows = lines.slice(1).map((l) => l.split(",").map((c) => c.trim().replace(/^"|"$/g, "")));
+
+  const table: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  let i = 0;
+
+  const endField = () => {
+    row.push(field);
+    field = "";
+  };
+  const endRow = () => {
+    endField();
+    table.push(row);
+    row = [];
+  };
+
+  while (i < withoutBom.length) {
+    const c = withoutBom[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (withoutBom[i + 1] === '"') {
+          field += '"';
+          i += 2;
+          continue;
+        }
+        inQuotes = false;
+        i += 1;
+        continue;
+      }
+      field += c;
+      i += 1;
+      continue;
+    }
+    if (c === '"') {
+      inQuotes = true;
+      i += 1;
+      continue;
+    }
+    if (c === ",") {
+      endField();
+      i += 1;
+      continue;
+    }
+    if (c === "\r") {
+      i += 1;
+      continue;
+    }
+    if (c === "\n") {
+      endRow();
+      i += 1;
+      continue;
+    }
+    field += c;
+    i += 1;
+  }
+  // Last field/row (file may or may not end with a newline).
+  if (field !== "" || row.length > 0) endRow();
+
+  const nonEmpty = table.filter((r) => !(r.length === 1 && r[0] === ""));
+  const headers = (nonEmpty[0] || []).map((h) => h.trim());
+  const rows = nonEmpty.slice(1).map((r) => r.map((c) => c.trim()));
   return { headers, rows };
 }
 
@@ -205,13 +269,17 @@ export function validateRows(
   });
 }
 
-export function buildBatches(rows: ImportRow[], config: TabImportConfig, batchSize = 50): Blob[] {
+export function buildBatches(
+  rows: ImportRow[],
+  config: TabImportConfig,
+  batchSize = 50,
+): { blob: Blob; rows: Record<string, string>[] }[] {
   const importable = rows.filter((r) => r.status !== "blocked").map((r) => r.data);
-  const batches: Blob[] = [];
+  const batches: { blob: Blob; rows: Record<string, string>[] }[] = [];
   for (let i = 0; i < importable.length; i += batchSize) {
     const chunk = importable.slice(i, i + batchSize);
     const csv = arrayToCSV(chunk, config.officialHeaders);
-    batches.push(new Blob([csv], { type: "text/csv" }));
+    batches.push({ blob: new Blob([csv], { type: "text/csv" }), rows: chunk });
   }
   return batches;
 }

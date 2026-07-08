@@ -38,9 +38,11 @@ const OrganizationsList: React.FC = () => {
   const [total, setTotal] = useState(0);
   const limit = 20;
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchOrganizations = async () => {
     const token = localStorage.getItem("token");
+    setIsLoading(true);
     try {
       const params: Record<string, string | number> = { page, limit };
       if (search) params.search = search;
@@ -54,6 +56,9 @@ const OrganizationsList: React.FC = () => {
       setTotal(response.data.total);
     } catch (error) {
       console.error("Error fetching organizations:", error);
+      toast.error(t("تعذر تحميل قائمة المدارس"));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -101,6 +106,7 @@ const OrganizationsList: React.FC = () => {
         </div>
         <input
           type="text"
+          aria-label={t("ابحث باسم المدرسة") as string}
           placeholder={t("ابحث باسم المدرسة") as string}
           className="w-full py-3 text-black bg-transparent outline-none drop-shadow-sm text-start"
           value={search}
@@ -112,7 +118,10 @@ const OrganizationsList: React.FC = () => {
       </div>
 
       <div className="flex flex-col w-full gap-2 overflow-y-auto">
-        {organizations.map((org) => (
+        {isLoading && (
+          <p className="mt-4 text-center text-gray-400">{t("جاري التحميل...")}</p>
+        )}
+        {!isLoading && organizations.map((org) => (
           <div
             key={org.id}
             className="flex items-center justify-between w-full p-4 bg-white shadow-sm rounded-xl"
@@ -140,6 +149,7 @@ const OrganizationsList: React.FC = () => {
               </div>
             ) : (
               <button
+                aria-label={t("حذف المدرسة") as string}
                 className="p-2 text-red-500"
                 onClick={() => setConfirmDeleteId(org.id)}
               >
@@ -148,7 +158,7 @@ const OrganizationsList: React.FC = () => {
             )}
           </div>
         ))}
-        {organizations.length === 0 && (
+        {!isLoading && organizations.length === 0 && (
           <p className="mt-4 text-center text-gray-400">{t("لا توجد نتائج")}</p>
         )}
       </div>

@@ -52,7 +52,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   const showOrg =
     activeTab === "students" ||
     activeTab === "teachers" ||
-    activeTab === "classes";
+    activeTab === "classes" ||
+    activeTab === "grades";
   const showRole = activeTab === "users";
   const showVerified = activeTab === "users";
 

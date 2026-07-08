@@ -63,6 +63,7 @@ const StudentsManagement: React.FC = () => {
   const limit = 20;
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -99,6 +100,7 @@ const StudentsManagement: React.FC = () => {
 
   const fetchStudents = async () => {
     const token = localStorage.getItem("token");
+    setIsLoading(true);
     try {
       const params: Record<string, string | number> = { page, limit };
       if (search) params.search = search;
@@ -121,6 +123,9 @@ const StudentsManagement: React.FC = () => {
       setTotal(response.data.total);
     } catch (error) {
       console.error("Error fetching students:", error);
+      toast.error(t("تعذر تحميل قائمة الطلاب"));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -162,6 +167,7 @@ const StudentsManagement: React.FC = () => {
         </div>
         <input
           type="text"
+          aria-label={t("ابحث عن طالب") as string}
           placeholder={t("ابحث عن طالب") as string}
           className="w-full py-3 text-black bg-transparent outline-none drop-shadow-sm text-start"
           value={search}
@@ -225,7 +231,10 @@ const StudentsManagement: React.FC = () => {
       </div>
 
       <div className="flex flex-col w-full gap-2 overflow-y-auto">
-        {students.map((student) => (
+        {isLoading && (
+          <p className="mt-4 text-center text-gray-400">{t("جاري التحميل...")}</p>
+        )}
+        {!isLoading && students.map((student) => (
           <div
             key={student.id}
             className="flex items-center justify-between w-full p-3 bg-white shadow-sm rounded-xl"
@@ -262,13 +271,17 @@ const StudentsManagement: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <button className="p-2 text-red-500" onClick={() => setConfirmDeleteId(student.id)}>
+              <button
+                aria-label={t("حذف الطالب") as string}
+                className="p-2 text-red-500"
+                onClick={() => setConfirmDeleteId(student.id)}
+              >
                 <FaTrash />
               </button>
             )}
           </div>
         ))}
-        {students.length === 0 && (
+        {!isLoading && students.length === 0 && (
           <p className="mt-4 text-center text-gray-400">{t("لا توجد نتائج")}</p>
         )}
       </div>

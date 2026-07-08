@@ -202,6 +202,7 @@ const en = {
     "دليل الصفحات": "Page Guides",
     "تفعيل الوضع الداكن": "Enable Dark Mode",
     "تسجيل الخروج": "Logout",
+    "مساعدة هذه الصفحة": "Page Help",
     "المستوى التالي": "Next Level",
     المستوى: "Level",
     "مستوى الشارة": "Badge Level",

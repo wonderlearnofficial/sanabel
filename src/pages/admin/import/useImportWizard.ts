@@ -66,7 +66,7 @@ export function useImportWizard(config: TabImportConfig, refs: Refs, token: stri
     const aggregate: BatchResult = { successCount: 0, failureCount: 0, successfulEntries: [], failedEntries: [] };
     for (let i = 0; i < batches.length; i++) {
       const form = new FormData();
-      form.append("file", batches[i], "batch.csv");
+      form.append("file", batches[i].blob, "batch.csv");
       try {
         const res = await axios.post(config.endpoint, form, {
           headers: { Authorization: `Bearer ${token}` },
@@ -77,8 +77,14 @@ export function useImportWizard(config: TabImportConfig, refs: Refs, token: stri
         aggregate.successfulEntries.push(...(data.successfulEntries || []));
         aggregate.failedEntries.push(...(data.failedEntries || []));
       } catch (e: any) {
-        aggregate.failureCount += 1;
-        aggregate.failedEntries.push({ row: {}, error: e?.response?.data?.message || "Batch upload failed" });
+        const errorMsg = e?.response?.data?.message || "Batch upload failed";
+        // Attribute the failure to every row in this batch, not just one,
+        // so the reported failureCount/failedEntries reflect what was
+        // actually lost (a batch can hold up to 50 rows).
+        aggregate.failureCount += batches[i].rows.length;
+        aggregate.failedEntries.push(
+          ...batches[i].rows.map((row) => ({ row, error: errorMsg })),
+        );
       }
       setProgress({ done: i + 1, total: batches.length });
     }

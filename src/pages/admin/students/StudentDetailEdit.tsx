@@ -56,6 +56,7 @@ const StudentDetailEdit: React.FC = () => {
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -90,6 +91,7 @@ const StudentDetailEdit: React.FC = () => {
         setClassId(String(student.classId || ""));
         setTotalCompletedTasks(totalCompletedTasks);
         setCategoryCounts(categoryCounts);
+        setDataLoaded(true);
       })
       .catch((error) => {
         console.error("Error fetching student detail:", error);
@@ -113,6 +115,11 @@ const StudentDetailEdit: React.FC = () => {
   }, [organizationId]);
 
   const handleSubmit = async () => {
+    if (!dataLoaded) return;
+    if (!firstName.trim() || !email.trim()) {
+      toast.error(t("الاسم الأول والبريد الإلكتروني مطلوبان"));
+      return;
+    }
     const token = localStorage.getItem("token");
     setIsLoading(true);
     try {
@@ -254,6 +261,7 @@ const StudentDetailEdit: React.FC = () => {
           arrow="none"
           text={isLoading ? "جاري الحفظ..." : "حفظ التعديلات"}
           onClick={handleSubmit}
+          disabled={isLoading || !dataLoaded}
         />
       </div>
 
