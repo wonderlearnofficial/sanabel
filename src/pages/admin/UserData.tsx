@@ -308,8 +308,9 @@ const UserData: React.FC = () => {
         setStats((prev) => ({ ...prev, ...res.data.stats }));
       }
       loadedTabRef.current = activeTab;
-    } catch {
-      toast.error(t("admin.toast.loadFailed"));
+    } catch (err: any) {
+      console.error(`[Admin UserData] fetchData failed for tab ${activeTab}:`, err?.response?.data || err?.message || err);
+      toast.error(getErrorMessage(err, t("admin.toast.loadFailed")));
     } finally {
       setLoading(false);
     }
