@@ -35,7 +35,9 @@ type Tab =
   | "admins"
   | "classes"
   | "organizations"
-  | "grades";
+  | "grades"
+  | "scores"
+  | "history";
 type UserLikeTab = "users" | "students" | "teachers" | "parents" | "admins";
 type SortDir = "asc" | "desc" | null;
 
@@ -58,6 +60,8 @@ const TAB_ACCENT: Record<Tab, { from: string; to: string; glow: string; light: s
   classes: { from: "#f43f5e", to: "#e11d48", glow: "rgba(244,63,94,0.35)", light: "#ffe4e6" },
   organizations: { from: "#6366f1", to: "#4f46e5", glow: "rgba(99,102,241,0.35)", light: "#e0e7ff" },
   grades: { from: "#8b5cf6", to: "#7c3aed", glow: "rgba(139,92,246,0.35)", light: "#ede9fe" },
+  scores: { from: "#f59e0b", to: "#d97706", glow: "rgba(245,158,11,0.35)", light: "#fef3c7" },
+  history: { from: "#10b981", to: "#059669", glow: "rgba(16,185,129,0.35)", light: "#d1fae5" },
 };
 
 const ENDPOINTS: Record<Tab, string> = {
@@ -69,6 +73,8 @@ const ENDPOINTS: Record<Tab, string> = {
   classes: `${API_BASE_URL}/admin/classes`,
   organizations: `${API_BASE_URL}/admin/organizations`,
   grades: `${API_BASE_URL}/admin/grades`,
+  scores: `${API_BASE_URL}/admin/scores`,
+  history: `${API_BASE_URL}/admin/history`,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -288,12 +294,19 @@ const UserData: React.FC = () => {
       if (filterOrgId) params.organizationId = filterOrgId;
       if (filterRole && activeTab !== "admins") params.role = filterRole;
       if (filterVerified) params.verified = "true";
+      if (sortField && activeTab === "scores") {
+        params.sortBy = sortField;
+        if (sortDir) params.sortDir = sortDir;
+      }
       const res = await axios.get(ENDPOINTS[activeTab], {
         headers: { Authorization: `Bearer ${token}` },
         params,
       });
       setRows(res.data.data);
       setTotal(res.data.total);
+      if (res.data.stats) {
+        setStats((prev) => ({ ...prev, ...res.data.stats }));
+      }
       loadedTabRef.current = activeTab;
     } catch {
       toast.error(t("admin.toast.loadFailed"));
@@ -308,6 +321,8 @@ const UserData: React.FC = () => {
     filterOrgId,
     filterRole,
     filterVerified,
+    sortField,
+    sortDir,
     t,
     token,
   ]);
@@ -723,7 +738,73 @@ const UserData: React.FC = () => {
       const data: any[] = res.data.data;
       let csvHeaders: string[] = [];
       let mapped: Record<string, any>[] = [];
-      if (activeTab === "students") {
+      if (activeTab === "scores") {
+        csvHeaders = [
+          "id",
+          "firstName",
+          "lastName",
+          "email",
+          "school",
+          "class",
+          "grade",
+          "level",
+          "medal",
+          "xp",
+          "treeProgress",
+          "snabelYellow",
+          "snabelBlue",
+          "snabelRed",
+          "totalSanabel",
+        ];
+        mapped = data.map((r) => ({
+          id: r.id,
+          firstName: r.user?.firstName,
+          lastName: r.user?.lastName,
+          email: r.user?.email,
+          school: r.organization?.name,
+          class: r.Class?.classname,
+          grade: r.GradeEntity?.name ?? r.grade,
+          level: r.level || 1,
+          medal: r.medal || 1,
+          xp: r.xp || 0,
+          treeProgress: r.treeProgress || 1,
+          snabelYellow: r.snabelYellow || 0,
+          snabelBlue: r.snabelBlue || 0,
+          snabelRed: r.snabelRed || 0,
+          totalSanabel: (r.snabelYellow || 0) + (r.snabelBlue || 0) + (r.snabelRed || 0),
+        }));
+      } else if (activeTab === "history") {
+        csvHeaders = [
+          "id",
+          "date",
+          "studentFirstName",
+          "studentLastName",
+          "studentEmail",
+          "school",
+          "class",
+          "taskTitle",
+          "taskCategory",
+          "xp",
+          "snabelYellow",
+          "snabelBlue",
+          "snabelRed",
+        ];
+        mapped = data.map((r) => ({
+          id: r.id,
+          date: r.updatedAt || r.createdAt || r.date,
+          studentFirstName: r.Student?.user?.firstName,
+          studentLastName: r.Student?.user?.lastName,
+          studentEmail: r.Student?.user?.email,
+          school: r.Student?.organization?.name,
+          class: r.Student?.Class?.classname,
+          taskTitle: r.Task?.title,
+          taskCategory: r.Task?.category?.title || r.Task?.type,
+          xp: r.Task?.xp || 0,
+          snabelYellow: r.Task?.snabelYellow || 0,
+          snabelBlue: r.Task?.snabelBlue || 0,
+          snabelRed: r.Task?.snabelRed || 0,
+        }));
+      } else if (activeTab === "students") {
         csvHeaders = ["id", "firstName", "lastName", "email", "grade", "school", "class"];
         mapped = data.map((r) => ({
           id: r.id,
@@ -848,6 +929,8 @@ const UserData: React.FC = () => {
             classes: 0,
             organizations: 0,
             grades: 0,
+            scores: 0,
+            history: 0,
           }
         }
         accentColor={accent.from}

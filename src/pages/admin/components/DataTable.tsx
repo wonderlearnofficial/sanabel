@@ -23,7 +23,9 @@ type Tab =
   | "admins"
   | "classes"
   | "organizations"
-  | "grades";
+  | "grades"
+  | "scores"
+  | "history";
 
 interface DataTableProps {
   activeTab: Tab;
@@ -58,23 +60,28 @@ const GRADE_COLORS: Record<string, string> = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const getUserId = (tab: Tab, row: any): number =>
-  tab === "users" || tab === "admins" ? row.id : row.userId;
+  tab === "users" || tab === "admins" ? row.id : row.userId ?? row.id;
 
 const getName = (tab: Tab, row: any): string => {
   if (tab === "users" || tab === "admins")
     return `${row.firstName ?? ""} ${row.lastName ?? ""}`.trim();
+  if (tab === "history") {
+    const u = row.Student?.user ?? row.Student?.User;
+    return `${u?.firstName ?? ""} ${u?.lastName ?? ""}`.trim();
+  }
   return `${row.user?.firstName ?? row.User?.firstName ?? ""} ${
     row.user?.lastName ?? row.User?.lastName ?? ""
   }`.trim();
 };
 
-const getEmail = (tab: Tab, row: any): string =>
-  tab === "users" || tab === "admins"
-    ? row.email
-    : row.user?.email ?? row.User?.email ?? "";
+const getEmail = (tab: Tab, row: any): string => {
+  if (tab === "users" || tab === "admins") return row.email;
+  if (tab === "history") return row.Student?.user?.email ?? row.Student?.User?.email ?? "";
+  return row.user?.email ?? row.User?.email ?? "";
+};
 
 const getDeleteId = (tab: Tab, row: any): number =>
-  tab === "users" || tab === "students" || tab === "teachers" || tab === "parents" || tab === "admins"
+  tab === "users" || tab === "students" || tab === "teachers" || tab === "parents" || tab === "admins" || tab === "scores"
     ? getUserId(tab, row)
     : row.id;
 
@@ -169,8 +176,8 @@ export const DataTable: React.FC<DataTableProps> = ({
   const getSelId = (row: any) => {
     return activeTab === "users" || activeTab === "admins"
       ? row.id
-      : activeTab === "students" || activeTab === "teachers" || activeTab === "parents"
-      ? row.userId
+      : activeTab === "students" || activeTab === "teachers" || activeTab === "parents" || activeTab === "scores"
+      ? row.userId ?? row.id
       : row.id;
   };
 
@@ -191,6 +198,38 @@ export const DataTable: React.FC<DataTableProps> = ({
     const chk: HeaderDef = { key: "_check", label: "" };
     const act: HeaderDef = { key: "_actions", label: "admin.th.actions" };
     switch (activeTab) {
+      case "scores":
+        return [
+          chk,
+          { key: "id", label: "admin.th.id", sortable: true },
+          { key: "name", label: "admin.th.name", sortable: true },
+          { key: "email", label: "admin.th.email" },
+          { key: "org", label: "admin.th.organization" },
+          { key: "class", label: "admin.th.class" },
+          { key: "grade", label: "admin.th.grade" },
+          { key: "level", label: isRTL ? "المستوى" : "Level", sortable: true },
+          { key: "medal", label: isRTL ? "الميدالية" : "Medal", sortable: true },
+          { key: "xp", label: "XP", sortable: true },
+          { key: "treeProgress", label: isRTL ? "الشجرة" : "Tree Stage", sortable: true },
+          { key: "snabelYellow", label: "🌾 Yellow", sortable: true },
+          { key: "snabelBlue", label: "🔹 Blue", sortable: true },
+          { key: "snabelRed", label: "🔴 Red", sortable: true },
+          { key: "totalSanabel", label: "✨ Total", sortable: true },
+          act,
+        ];
+      case "history":
+        return [
+          chk,
+          { key: "id", label: "admin.th.id", sortable: true },
+          { key: "createdAt", label: isRTL ? "التاريخ والوقت" : "Date & Time", sortable: true },
+          { key: "studentName", label: isRTL ? "الطالب" : "Student", sortable: true },
+          { key: "email", label: "admin.th.email" },
+          { key: "schoolClass", label: isRTL ? "المدرسة والفصل" : "School / Class" },
+          { key: "taskTitle", label: isRTL ? "المهمة" : "Task Title" },
+          { key: "taskCategory", label: isRTL ? "التصنيف" : "Category" },
+          { key: "rewards", label: isRTL ? "المكافآت" : "Rewards" },
+          { key: "approvedBy", label: isRTL ? "الاعتماد" : "Verified By" },
+        ];
       case "students":
         return [
           chk,
@@ -270,6 +309,127 @@ export const DataTable: React.FC<DataTableProps> = ({
     const avatarBg = `linear-gradient(135deg, ${accentColor}, ${accentColor}dd)`;
 
     switch (activeTab) {
+      case "scores":
+        return [
+          <span className="font-mono text-xs text-slate-400">#{row.id}</span>,
+          <div className="flex items-center gap-2.5">
+            <div
+              className="flex items-center justify-center flex-shrink-0 w-8 h-8 text-[11px] font-bold text-white rounded-full shadow-sm"
+              style={{ background: avatarBg }}
+            >
+              {initials}
+            </div>
+            <span className="font-semibold text-slate-800">
+              <Highlight text={name} query={search} />
+            </span>
+          </div>,
+          <span className="text-slate-500 font-medium text-xs" dir="ltr">
+            <Highlight text={email} query={search} />
+          </span>,
+          <span className="text-slate-600 font-medium text-xs">
+            {row.organization?.name ?? row.Organization?.name ?? (
+              <span className="text-slate-300">—</span>
+            )}
+          </span>,
+          <span className="text-slate-600 font-medium text-xs">
+            {row.Class?.classname ?? row.class?.classname ?? (
+              <span className="text-slate-300">—</span>
+            )}
+          </span>,
+          row.GradeEntity?.name ? (
+            <GradeBadge name={row.GradeEntity.name} t={t} />
+          ) : row.grade ? (
+            <GradeBadge name={row.grade} t={t} />
+          ) : (
+            <span className="text-slate-300">—</span>
+          ),
+          <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 font-bold text-xs border border-purple-100/80">
+            Lvl {row.level || 1}
+          </span>,
+          <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-bold text-xs border border-amber-100/80">
+            🏅 #{row.medal || 1}
+          </span>,
+          <span className="font-extrabold text-indigo-600 text-xs">
+            {row.xp || 0} XP
+          </span>,
+          <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-semibold text-xs border border-emerald-100/80">
+            🌳 Stage {row.treeProgress || row.Tree?.stage || 1}
+          </span>,
+          <span className="font-bold text-amber-600 text-xs">
+            🌾 {row.snabelYellow || 0}
+          </span>,
+          <span className="font-bold text-blue-600 text-xs">
+            🔹 {row.snabelBlue || 0}
+          </span>,
+          <span className="font-bold text-rose-600 text-xs">
+            🔴 {row.snabelRed || 0}
+          </span>,
+          <span className="font-black text-slate-800 text-xs bg-slate-100 px-2 py-0.5 rounded-md">
+            ✨ {(row.snabelYellow || 0) + (row.snabelBlue || 0) + (row.snabelRed || 0)}
+          </span>,
+        ];
+      case "history":
+        return [
+          <span className="font-mono text-xs text-slate-400">#{row.id}</span>,
+          <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">
+            {row.updatedAt || row.createdAt || row.date
+              ? new Date(row.updatedAt || row.createdAt || row.date).toLocaleString(
+                  isRTL ? "ar-EG" : "en-US",
+                  { dateStyle: "short", timeStyle: "short" }
+                )
+              : "—"}
+          </span>,
+          <div className="flex items-center gap-2.5">
+            <div
+              className="flex items-center justify-center flex-shrink-0 w-8 h-8 text-[11px] font-bold text-white rounded-full shadow-sm"
+              style={{ background: avatarBg }}
+            >
+              {initials}
+            </div>
+            <span className="font-semibold text-slate-800">
+              <Highlight text={name} query={search} />
+            </span>
+          </div>,
+          <span className="text-slate-500 font-medium text-xs" dir="ltr">
+            <Highlight text={email} query={search} />
+          </span>,
+          <div className="flex flex-col text-xs">
+            <span className="font-medium text-slate-700">
+              {row.Student?.organization?.name || row.Student?.Organization?.name || "—"}
+            </span>
+            <span className="text-slate-400 font-normal">
+              {row.Student?.Class?.classname || "—"}
+            </span>
+          </div>,
+          <span className="font-bold text-slate-800 text-xs">
+            <Highlight text={row.Task?.title || "Task"} query={search} />
+          </span>,
+          <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-xs font-medium border border-blue-100">
+            {row.Task?.category?.title || row.Task?.type || "General"}
+          </span>,
+          <div className="flex items-center gap-1.5 text-xs font-bold flex-wrap">
+            {row.Task?.xp > 0 && <span className="text-indigo-600">+{row.Task.xp} XP</span>}
+            {row.Task?.snabelYellow > 0 && <span className="text-amber-600">+{row.Task.snabelYellow} 🌾</span>}
+            {row.Task?.snabelBlue > 0 && <span className="text-blue-600">+{row.Task.snabelBlue} 🔹</span>}
+            {row.Task?.snabelRed > 0 && <span className="text-rose-600">+{row.Task.snabelRed} 🔴</span>}
+            {!(row.Task?.xp || row.Task?.snabelYellow || row.Task?.snabelBlue || row.Task?.snabelRed) && (
+              <span className="text-slate-400 font-normal">—</span>
+            )}
+          </div>,
+          row.Parent?.User || row.Parent?.user ? (
+            <span className="text-[11px] text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+              👨‍👩‍👧 {(row.Parent.User || row.Parent.user).firstName}
+            </span>
+          ) : row.Teacher?.User || row.Teacher?.user ? (
+            <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              👨‍🏫 {(row.Teacher.User || row.Teacher.user).firstName}
+            </span>
+          ) : (
+            <span className="text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+              ✓ Completed
+            </span>
+          ),
+        ];
       case "students":
         return [
           <span className="font-mono text-xs text-slate-400">#{row.id}</span>,

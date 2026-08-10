@@ -12,6 +12,8 @@ import {
   FaGraduationCap,
   FaSignOutAlt,
   FaQuestionCircle,
+  FaTrophy,
+  FaHistory,
 } from "react-icons/fa";
 import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
 import { useGuide } from "../../../guides/GuideProvider";
@@ -24,7 +26,9 @@ type Tab =
   | "admins"
   | "classes"
   | "organizations"
-  | "grades";
+  | "grades"
+  | "scores"
+  | "history";
 
 interface SidebarProps {
   activeTab: Tab;
@@ -43,6 +47,8 @@ const TAB_ICONS: Record<Tab, React.ReactNode> = {
   classes: <FaSchool size={16} />,
   organizations: <FaBuilding size={16} />,
   grades: <FaGraduationCap size={16} />,
+  scores: <FaTrophy size={16} />,
+  history: <FaHistory size={16} />,
 };
 
 const TAB_I18N: Record<Tab, string> = {
@@ -54,6 +60,8 @@ const TAB_I18N: Record<Tab, string> = {
   classes: "admin.tab.classes",
   organizations: "admin.tab.organizations",
   grades: "admin.tab.grades",
+  scores: "admin.tab.scores",
+  history: "admin.tab.history",
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -140,6 +148,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Navigation Groups */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
+        {/* Group: Scores & Activity */}
+        <div className="space-y-1.5">
+          <p className="px-3.5 text-[10px] font-bold tracking-wider uppercase text-amber-400">
+            {isRTL ? "النشاط والتقدم" : "Scores & Activity"}
+          </p>
+          <div className="space-y-1">
+            {renderTabButton("scores")}
+            {renderTabButton("history")}
+          </div>
+        </div>
+
         {/* Group: People */}
         <div className="space-y-1.5" data-guide-id="admin-tabs">
           <p className="px-3.5 text-[10px] font-bold tracking-wider uppercase text-slate-500">

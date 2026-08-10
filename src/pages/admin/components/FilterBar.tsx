@@ -10,7 +10,9 @@ type Tab =
   | "admins"
   | "classes"
   | "organizations"
-  | "grades";
+  | "grades"
+  | "scores"
+  | "history";
 
 interface FilterBarProps {
   search: string;
@@ -48,12 +50,18 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
 
-  const showGrade = activeTab === "students" || activeTab === "classes";
+  const showGrade =
+    activeTab === "students" ||
+    activeTab === "classes" ||
+    activeTab === "scores" ||
+    activeTab === "history";
   const showOrg =
     activeTab === "students" ||
     activeTab === "teachers" ||
     activeTab === "classes" ||
-    activeTab === "grades";
+    activeTab === "grades" ||
+    activeTab === "scores" ||
+    activeTab === "history";
   const showRole = activeTab === "users";
   const showVerified = activeTab === "users";
 

@@ -16,7 +16,9 @@ type Tab =
   | "admins"
   | "classes"
   | "organizations"
-  | "grades";
+  | "grades"
+  | "scores"
+  | "history";
 
 interface AdminHeaderProps {
   activeTab: Tab;
@@ -40,6 +42,8 @@ const TAB_I18N: Record<Tab, string> = {
   classes: "admin.tab.classes",
   organizations: "admin.tab.organizations",
   grades: "admin.tab.grades",
+  scores: "admin.tab.scores",
+  history: "admin.tab.history",
 };
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({
@@ -58,6 +62,10 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
   const getSubDescription = (): string => {
     switch (activeTab) {
+      case "scores":
+        return t("Monitor student scores, XP, level, medal, tree progress, and sanabel counts.");
+      case "history":
+        return t("View recent student task completion history and rewards granted.");
       case "users":
         return t("Manage every user inside your platform.");
       case "students":
@@ -122,19 +130,21 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         </button>
 
         {/* Create Primary Button */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onCreateClick}
-          className="flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-xl shadow-md"
-          style={{
-            backgroundColor: accentColor,
-            boxShadow: `0 4px 12px ${accentColor}25`,
-          }}
-        >
-          <FaPlus size={10} />
-          <span>{createLabel}</span>
-        </motion.button>
+        {createLabel && (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onCreateClick}
+            className="flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-xl shadow-md"
+            style={{
+              backgroundColor: accentColor,
+              boxShadow: `0 4px 12px ${accentColor}25`,
+            }}
+          >
+            <FaPlus size={10} />
+            <span>{createLabel}</span>
+          </motion.button>
+        )}
       </div>
     </header>
   );

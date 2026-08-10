@@ -1223,6 +1223,8 @@ const en = {
     "admin.tab.classes": "Classes",
     "admin.tab.organizations": "Schools",
     "admin.tab.grades": "Grades",
+    "admin.tab.scores": "Scores & Progress",
+    "admin.tab.history": "Task History",
 
     // Stats cards
     "admin.stats.totalUsers": "Total Users",
@@ -1230,6 +1232,12 @@ const en = {
     "admin.stats.totalTeachers": "Teachers",
     "admin.stats.totalParents": "Parents",
     "admin.stats.totalAdmins": "Admins",
+    "admin.stats.playingStudents": "Active Players",
+    "admin.stats.totalXp": "Total XP",
+    "admin.stats.totalSanabel": "Total Sanabel",
+    "admin.stats.topLevel": "Highest Level",
+    "admin.stats.completedTasks": "Completed Tasks",
+    "admin.stats.completedToday": "Completed Today",
 
     // Table headers
     "admin.th.id": "ID",

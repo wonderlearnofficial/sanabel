@@ -284,6 +284,8 @@ const ar = {
     "admin.tab.classes": "الفصول",
     "admin.tab.organizations": "المدارس",
     "admin.tab.grades": "المراحل الدراسية",
+    "admin.tab.scores": "النقاط والتقدم",
+    "admin.tab.history": "سجل إنجاز المهام",
 
     // Stats cards
     "admin.stats.totalUsers": "إجمالي المستخدمين",
@@ -291,6 +293,12 @@ const ar = {
     "admin.stats.totalTeachers": "المعلمون",
     "admin.stats.totalParents": "أولياء الأمور",
     "admin.stats.totalAdmins": "المشرفون",
+    "admin.stats.playingStudents": "الطلاب المشاركون",
+    "admin.stats.totalXp": "إجمالي النقاط (XP)",
+    "admin.stats.totalSanabel": "إجمالي السنابل",
+    "admin.stats.topLevel": "أعلى مستوى",
+    "admin.stats.completedTasks": "المهام المكتملة",
+    "admin.stats.completedToday": "المكتملة اليوم",
 
     // Table headers
     "admin.th.id": "المعرّف",

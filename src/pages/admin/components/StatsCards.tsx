@@ -22,6 +22,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import { FaTrophy, FaHistory, FaCheckCircle, FaStar, FaSeedling } from "react-icons/fa";
+
 type Tab =
   | "users"
   | "students"
@@ -30,7 +32,9 @@ type Tab =
   | "admins"
   | "classes"
   | "organizations"
-  | "grades";
+  | "grades"
+  | "scores"
+  | "history";
 
 interface StatsCardsProps {
   stats: Record<string, number>;
@@ -94,32 +98,86 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
     return months;
   }, [rows]);
 
-  const cardItems = [
-    {
-      label: t("admin.tab.users"),
-      value: stats.users ?? 0,
-      icon: <FaUsers size={16} />,
-      color: "bg-blue-50 text-blue-600 border-blue-100",
-    },
-    {
-      label: t("admin.tab.students"),
-      value: stats.students ?? 0,
-      icon: <FaChild size={16} />,
-      color: "bg-cyan-50 text-cyan-600 border-cyan-100",
-    },
-    {
-      label: t("admin.tab.teachers"),
-      value: stats.teachers ?? 0,
-      icon: <FaChalkboardTeacher size={16} />,
-      color: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    },
-    {
-      label: t("admin.tab.parents"),
-      value: stats.parents ?? 0,
-      icon: <FaUserFriends size={16} />,
-      color: "bg-amber-50 text-amber-600 border-amber-100",
-    },
-  ];
+  const cardItems = React.useMemo(() => {
+    if (activeTab === "scores") {
+      return [
+        {
+          label: t("admin.stats.playingStudents"),
+          value: stats.playingStudents ?? stats.totalStudents ?? rows.length,
+          icon: <FaChild size={16} />,
+          color: "bg-cyan-50 text-cyan-600 border-cyan-100",
+        },
+        {
+          label: t("admin.stats.totalXp"),
+          value: stats.totalXp ?? 0,
+          icon: <FaStar size={16} />,
+          color: "bg-indigo-50 text-indigo-600 border-indigo-100",
+        },
+        {
+          label: t("admin.stats.totalSanabel"),
+          value: stats.totalSanabel ?? 0,
+          icon: <FaSeedling size={16} />,
+          color: "bg-amber-50 text-amber-600 border-amber-100",
+        },
+        {
+          label: t("admin.stats.topLevel"),
+          value: stats.maxLevel ?? 1,
+          icon: <FaTrophy size={16} />,
+          color: "bg-purple-50 text-purple-600 border-purple-100",
+        },
+      ];
+    }
+
+    if (activeTab === "history") {
+      return [
+        {
+          label: t("admin.stats.completedTasks"),
+          value: stats.totalCompleted ?? rows.length,
+          icon: <FaCheckCircle size={16} />,
+          color: "bg-emerald-50 text-emerald-600 border-emerald-100",
+        },
+        {
+          label: t("admin.stats.completedToday"),
+          value: stats.completedToday ?? 0,
+          icon: <FaHistory size={16} />,
+          color: "bg-blue-50 text-blue-600 border-blue-100",
+        },
+        {
+          label: t("admin.stats.totalStudents"),
+          value: new Set(rows.map((r) => r.studentId)).size,
+          icon: <FaChild size={16} />,
+          color: "bg-cyan-50 text-cyan-600 border-cyan-100",
+        },
+      ];
+    }
+
+    return [
+      {
+        label: t("admin.tab.users"),
+        value: stats.users ?? 0,
+        icon: <FaUsers size={16} />,
+        color: "bg-blue-50 text-blue-600 border-blue-100",
+      },
+      {
+        label: t("admin.tab.students"),
+        value: stats.students ?? 0,
+        icon: <FaChild size={16} />,
+        color: "bg-cyan-50 text-cyan-600 border-cyan-100",
+      },
+      {
+        label: t("admin.tab.teachers"),
+        value: stats.teachers ?? 0,
+        icon: <FaChalkboardTeacher size={16} />,
+        color: "bg-emerald-50 text-emerald-600 border-emerald-100",
+      },
+      {
+        label: t("admin.tab.parents"),
+        value: stats.parents ?? 0,
+        icon: <FaUserFriends size={16} />,
+        color: "bg-amber-50 text-amber-600 border-amber-100",
+      },
+    ];
+  }, [activeTab, stats, rows, t]);
 
   return (
     <div className="flex flex-col gap-4 mb-6">

@@ -11,7 +11,9 @@ type Tab =
   | "admins"
   | "classes"
   | "organizations"
-  | "grades";
+  | "grades"
+  | "scores"
+  | "history";
 
 interface EditDrawerProps {
   activeTab: Tab;
