@@ -1212,6 +1212,8 @@ const en = {
     "Registration failed": "Registration failed",
     "Error sending OTP": "Error sending OTP",
     "Error verifying OTP": "Error verifying OTP",
+    "A valid email and 4-digit OTP are required":
+      "A valid email and 4-digit OTP are required",
     "Error resetting password": "Error resetting password",
     "Incorrect current password": "Incorrect current password",
     "An error occurred during login": "An error occurred during login",

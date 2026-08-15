@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "../../../../config/api";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTheme } from "../../../../context/ThemeContext";
 import PrimaryButton from "../../../../components/PrimaryButton";
 import { IonRouterLink } from "@ionic/react";
@@ -14,6 +14,7 @@ import "react-toastify/dist/ReactToastify.css";
 import i18n from "../../../../i18n";
 import Loading from "../../../../components/Loading";
 import { getErrorMessage } from "../../../../config/getErrorMessage";
+import { isCompleteOTP } from "../../../../utils/otp";
 
 import studentImg from "../../../../assets/choosesignmethod/choosestudent.png";
 
@@ -52,6 +53,7 @@ const EmailOTP: React.FC<OTPProps> = ({
   const { t } = useTranslation();
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const requestInFlightRef = useRef(false);
 
   const handleOtpChange = (value: string, index: number) => {
     if (!/^\d*$/.test(value)) return; // Prevents entering non-numeric values
@@ -76,6 +78,9 @@ const EmailOTP: React.FC<OTPProps> = ({
       toast.error(t("invalidEmailFormat"));
       return;
     }
+
+    if (requestInFlightRef.current) return;
+    requestInFlightRef.current = true;
     setIsLoading(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/users/send-auth`, {
@@ -84,15 +89,18 @@ const EmailOTP: React.FC<OTPProps> = ({
 
       if (response.status === 200) {
         setIsOtpSent(true);
-        toast.success(t("otpSentSuccess"));
+        toast.success(t("otpSentSuccess"), { toastId: "signup-otp-sent" });
       }
       if (response.status === 202) {
         onContinue();
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
-      toast.error(t(getErrorMessage(error, "otpSendFailed")));
+      toast.error(t(getErrorMessage(error, "otpSendFailed")), {
+        toastId: "signup-otp-send-error",
+      });
     } finally {
+      requestInFlightRef.current = false;
       setIsLoading(false);
     }
   };
@@ -100,10 +108,16 @@ const EmailOTP: React.FC<OTPProps> = ({
   const handleConfirmOTP = async () => {
     const otpCode = otp.join("");
 
-    if (otpCode.length !== otp.length) {
-      toast.error(t("enter4DigitOTP"));
+    if (!isCompleteOTP(otp)) {
+      toast.error(t("enter4DigitOTP"), {
+        toastId: "signup-otp-incomplete",
+      });
       return;
     }
+
+    if (requestInFlightRef.current) return;
+    requestInFlightRef.current = true;
+    setIsLoading(true);
 
     try {
       const response = await axios.patch(
@@ -112,12 +126,19 @@ const EmailOTP: React.FC<OTPProps> = ({
       );
 
       if (response.status === 200) {
-        toast.success(t("otpVerifySuccess"));
+        toast.success(t("otpVerifySuccess"), {
+          toastId: "signup-otp-verified",
+        });
         onContinue();
       }
     } catch (error) {
       console.error("Error verifying OTP:", error);
-      toast.error(t(getErrorMessage(error, "invalidOTP")));
+      toast.error(t(getErrorMessage(error, "invalidOTP")), {
+        toastId: "signup-otp-verification-error",
+      });
+    } finally {
+      requestInFlightRef.current = false;
+      setIsLoading(false);
     }
   };
 
@@ -202,13 +223,13 @@ const EmailOTP: React.FC<OTPProps> = ({
               </div>
             )}
 
-            <div onClick={isOtpSent ? handleConfirmOTP : handleSendOTP}>
-              <PrimaryButton
-                style="fill"
-                text={`${isOtpSent ? "تأكيد الرمز" : "أرسل الرمز"}`}
-                arrow="none"
-              />
-            </div>
+            <PrimaryButton
+              style="fill"
+              text={`${isOtpSent ? "تأكيد الرمز" : "أرسل الرمز"}`}
+              arrow="none"
+              onClick={isOtpSent ? handleConfirmOTP : handleSendOTP}
+              disabled={isLoading}
+            />
             {isOtpSent && (
               <h1
                 className="text-[#B3B3B3] text-center"

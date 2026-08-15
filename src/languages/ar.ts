@@ -146,6 +146,8 @@ const ar = {
     "Registration failed": "فشل إنشاء الحساب",
     "Error sending OTP": "حدث خطأ أثناء إرسال الرمز",
     "Error verifying OTP": "حدث خطأ أثناء التحقق من الرمز",
+    "A valid email and 4-digit OTP are required":
+      "يرجى إدخال بريد إلكتروني صحيح ورمز مكوّن من 4 أرقام",
     "Error resetting password": "حدث خطأ أثناء إعادة تعيين كلمة المرور",
     "Incorrect current password": "كلمة المرور الحالية غير صحيحة",
     "An error occurred during login": "حدث خطأ أثناء تسجيل الدخول",

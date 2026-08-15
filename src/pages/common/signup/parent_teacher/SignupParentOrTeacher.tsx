@@ -8,6 +8,7 @@ import Step1 from "./Step1";
 import Password from "./Password";
 import { useHistory } from "react-router-dom";
 import { AudioManager } from "../../../../utils/AudioManager";
+import { createEmptyOTP } from "../../../../utils/otp";
 
 const Signup: React.FC = () => {
   const history = useHistory();
@@ -19,7 +20,7 @@ const Signup: React.FC = () => {
   const [role, setRole] = useState("Teacher");
   const [avatar, setAvatar] = useState("");
   const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otp, setOtp] = useState(createEmptyOTP);
   const [name, setName] = useState({ firstName: "", lastName: "" });
 
   const steps = [

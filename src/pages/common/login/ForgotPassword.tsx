@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "../../../config/api";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import PrimaryButton from "../../../components/PrimaryButton";
 import { IonRouterLink } from "@ionic/react";
@@ -12,6 +12,7 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getErrorMessage } from "../../../config/getErrorMessage";
+import { createEmptyOTP, isCompleteOTP } from "../../../utils/otp";
 
 const Toaster = () => (
   <ToastContainer
@@ -35,7 +36,9 @@ const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
 
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otp, setOtp] = useState(createEmptyOTP);
+  const [isRequestPending, setIsRequestPending] = useState(false);
+  const requestInFlightRef = useRef(false);
 
   const history = useHistory();
 
@@ -63,6 +66,10 @@ const ForgotPassword: React.FC = () => {
       return;
     }
 
+    if (requestInFlightRef.current) return;
+    requestInFlightRef.current = true;
+    setIsRequestPending(true);
+
     try {
       const response = await axios.patch(`${API_BASE_URL}/users/send-otp`, {
         email,
@@ -70,21 +77,34 @@ const ForgotPassword: React.FC = () => {
 
       if (response.status === 200) {
         setIsOtpSent(true);
-        toast.success(t("otpSentSuccess"));
+        toast.success(t("otpSentSuccess"), {
+          toastId: "password-otp-sent",
+        });
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
-      toast.error(t(getErrorMessage(error, "otpSendFailed")));
+      toast.error(t(getErrorMessage(error, "otpSendFailed")), {
+        toastId: "password-otp-send-error",
+      });
+    } finally {
+      requestInFlightRef.current = false;
+      setIsRequestPending(false);
     }
   };
 
   const handleConfirmOTP = async () => {
     const otpCode = otp.join("");
 
-    if (otpCode.length !== otp.length) {
-      toast.error(t("enter4DigitOTP"));
+    if (!isCompleteOTP(otp)) {
+      toast.error(t("enter4DigitOTP"), {
+        toastId: "password-otp-incomplete",
+      });
       return;
     }
+
+    if (requestInFlightRef.current) return;
+    requestInFlightRef.current = true;
+    setIsRequestPending(true);
 
     try {
       const response = await axios.patch(`${API_BASE_URL}/users/verify-otp`, {
@@ -93,7 +113,9 @@ const ForgotPassword: React.FC = () => {
       });
 
       if (response.status === 200) {
-        toast.success(t("otpVerifySuccess"));
+        toast.success(t("otpVerifySuccess"), {
+          toastId: "password-otp-verified",
+        });
         history.push({
           pathname: "/changepassword",
           state: { email },
@@ -101,7 +123,12 @@ const ForgotPassword: React.FC = () => {
       }
     } catch (error) {
       console.error("Error verifying OTP:", error);
-      toast.error(t(getErrorMessage(error, "invalidOTP")));
+      toast.error(t(getErrorMessage(error, "invalidOTP")), {
+        toastId: "password-otp-verification-error",
+      });
+    } finally {
+      requestInFlightRef.current = false;
+      setIsRequestPending(false);
     }
   };
 
@@ -186,13 +213,13 @@ const ForgotPassword: React.FC = () => {
           />
         )}
 
-        <div onClick={isOtpSent ? handleConfirmOTP : handleSendOTP}>
-          <PrimaryButton
-            style="fill"
-            text={`${isOtpSent ? "تأكيد الرمز" : "أرسل الرمز"}`}
-            arrow="none"
-          />
-        </div>
+        <PrimaryButton
+          style="fill"
+          text={`${isOtpSent ? "تأكيد الرمز" : "أرسل الرمز"}`}
+          arrow="none"
+          onClick={isOtpSent ? handleConfirmOTP : handleSendOTP}
+          disabled={isRequestPending}
+        />
         <h1
           className={`text-[#B3B3B3] ${isRTL ? "text-center" : "text-center"}`}
           onClick={handleSendOTP}

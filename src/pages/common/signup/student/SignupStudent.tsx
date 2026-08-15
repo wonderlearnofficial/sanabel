@@ -16,6 +16,7 @@ import { toast } from "react-toastify";
 import { useHistory } from "react-router-dom";
 import { getErrorMessage } from "../../../../config/getErrorMessage";
 import { AudioManager } from "../../../../utils/AudioManager";
+import { createEmptyOTP } from "../../../../utils/otp";
 
 const Signup: React.FC = () => {
   const [stepIndex, setStepIndex] = useState(0);
@@ -24,7 +25,7 @@ const Signup: React.FC = () => {
   // State for storing data from each step
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otp, setOtp] = useState(createEmptyOTP);
   const [name, setName] = useState({ firstName: "", parentName: "" });
   const [gender, setGender] = useState("");
   const [birthdate, setBirthdate] = useState({ day: "", month: "", year: "" });
