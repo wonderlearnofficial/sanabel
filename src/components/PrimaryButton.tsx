@@ -27,7 +27,7 @@ function PrimaryButton({ style, text, arrow, onClick, disabled }: ButtonProps) {
 
   return (
     <div
-      className={`flex-center p-3 gap-3 w-full rounded-xl font-bold text-lg cursor-pointer ${
+      className={`flex-center min-h-[52px] p-3 gap-3 w-full rounded-xl font-bold text-lg text-center cursor-pointer ${
         disabled ? "opacity-50 pointer-events-none" : ""
       } ${
         style == "stroke"

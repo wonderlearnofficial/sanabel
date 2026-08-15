@@ -86,7 +86,7 @@ const Step3: React.FC<Step3Props> = ({
     }
   }
   return (
-    <div className="flex flex-col items-center justify-between w-full h-full gap-10 p-5 pb-10 overflow-y-auto">
+    <div className="registration-page">
       <div className="absolute">
         <Toaster />
       </div>
@@ -110,8 +110,8 @@ const Step3: React.FC<Step3Props> = ({
 
       <div className="flex items-center justify-center w-full gap-3">
         <div className="flex flex-col items-center justify-center w-full gap-3">
-          <img src={cakeImage} alt="" className="w-64 h-64" />
-          <div className="flex w-full gap-3">
+          <img src={cakeImage} alt="" className="signup-illustration" />
+          <div className="grid w-full grid-cols-3 gap-2 sm:gap-3">
             <GenericInput
               type="text"
               placeholder={t("السنة")}

@@ -30,7 +30,7 @@ const Step5: React.FC<Step5Props> = ({
     setParentCode(e.target.value);
   };
   return (
-    <div className="flex flex-col items-center justify-between w-full h-full gap-10 p-5 pb-10">
+    <div className="registration-page">
       <div className="flex flex-col w-full gap-3">
         <div className="flex self-end justify-start w-full">
           <GoBackButton onClick={onBack} />

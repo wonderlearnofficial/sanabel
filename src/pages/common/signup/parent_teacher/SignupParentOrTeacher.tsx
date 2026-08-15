@@ -117,7 +117,7 @@ const Signup: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-full overflow-y-auto">
+    <div className="w-full h-full overflow-hidden">
       {steps[stepIndex]}
       {stepIndex > 0 && (
         <button

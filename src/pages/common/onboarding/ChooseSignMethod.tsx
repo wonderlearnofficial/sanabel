@@ -23,7 +23,7 @@ const ChooseSignMethod: React.FC = () => {
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="flex flex-col items-center justify-end w-full h-full gap-2 p-3 pb-3 overflow-y-auto" // Added a subtle background gradient
+      className="onboarding-page"
     >
       <div className="flex self-end justify-start w-full">
         <GoBackButton />
@@ -37,32 +37,32 @@ const ChooseSignMethod: React.FC = () => {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, y: -50 }}
             transition={{ duration: 0.6 }}
-            className="flex flex-col items-center justify-center w-full" // Centered content
+            className="flex flex-col items-center w-full max-w-md gap-4 pb-2 mx-auto"
           >
             {/* Trophy Image remains */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.7, ease: "easeOut" }}
-              className="w-full max-w-sm mb-8" // Added max-width for better control on larger screens
+              className="flex justify-center w-full shrink-0"
             >
               <img
                 src={trophyImg}
-                className="w-full h-auto" // Ensure image scales correctly
+                className="onboarding-trophy"
                 alt="Sign Method"
               />
             </motion.div>
 
-            <div className="flex flex-col w-full max-w-md gap-6 p-4 bg-white rounded-2xl">
+            <div className="flex flex-col w-full gap-4 p-2 bg-white sm:gap-6 sm:p-4 rounded-2xl">
               {/* Added card-like styling */}
-              <h1 className="text-[#040415] text-3xl text-center font-extrabold leading-tight">
+              <h1 className="text-[#040415] text-2xl sm:text-3xl text-center font-extrabold leading-tight">
                 {/* Increased font weight and line height */}
                 {t("سجل الآن وابدأ")}
                 <br />
                 <span className="text-blue-600"> {t("رحلة الإحسان")}</span>{" "}
                 {/* Used a more vibrant blue */}
               </h1>
-              <p className="text-lg text-center text-gray-600">
+              <p className="text-base text-center text-gray-600 sm:text-lg">
                 {/* Adjusted text color and size */}
                 {t("سجل الآن واستمتع بتجربة تفاعلية تبني العطاء والانتماء")}
               </p>
@@ -85,74 +85,74 @@ const ChooseSignMethod: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
             transition={{ duration: 0.6 }}
-            className="flex flex-col items-center justify-center w-full h-full gap-3 overflow-y-auto " // Adjusted gap and centering
+            className="flex flex-col items-center w-full max-w-md gap-3 pb-2 mx-auto"
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
-              className="w-full max-w-sm mb-4"
+              className="flex justify-center w-full shrink-0"
             >
               <img
                 src={trophyImg}
-                className="w-full h-auto"
+                className="onboarding-trophy onboarding-trophy--compact"
                 alt="Sign Method"
               />
             </motion.div>
-            <h2 className="text-[#040415] text-3xl font-extrabold text-center">
+            <h2 className="text-[#040415] text-2xl sm:text-3xl font-extrabold text-center leading-tight">
               {" "}
               {/* Larger, bolder heading */}
               {t("اختر نوع التسجيل")}
             </h2>
 
-            <div className="flex justify-center w-full max-w-2xl gap-1 px-4 overflow-y-auto md:flex-row">
+            <div className="grid w-full grid-cols-2 gap-2 sm:gap-3">
               {" "}
               {/* Responsive layout for cards */}
               {/* User Card */}
               <IonRouterLink
                 routerLink="/signupstudent"
-                className="flex flex-col items-center justify-center flex-1 p-5 px-6 transition-all duration-300 ease-in-out bg-white border-2 border-blue-400 shadow-lg cursor-pointer rounded-2xl hover:shadow-xl hover:scale-105" // Enhanced styling
+                className="flex flex-col items-center justify-start min-w-0 p-2 py-3 transition-all duration-300 ease-in-out bg-white border-2 border-blue-400 shadow-lg cursor-pointer sm:p-4 rounded-2xl hover:shadow-xl hover:scale-[1.02]"
               >
                 <motion.div
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5, delay: 0.8 }}
-                  className="mb-4 bg-blue-100 rounded-full shadow-md w-28 h-28 flex-center" // Circle background for icon
+                  className="w-20 h-20 mb-2 bg-blue-100 rounded-full shadow-md sm:w-24 sm:h-24 sm:mb-3 flex-center shrink-0"
                 >
                   <IonIcon
                     icon={personOutline}
                     className="text-blue-600"
-                    style={{ fontSize: "80px" }} // Adjusted icon size
+                    style={{ fontSize: "clamp(52px, 16vw, 70px)" }}
                   />
                 </motion.div>
-                <h1 className="mb-2 text-2xl font-bold text-center text-gray-800">
+                <h1 className="mb-1 text-xl font-bold text-center text-gray-800 sm:text-2xl">
                   {t("مستخدم")}
                 </h1>
-                <p className="text-sm text-center text-gray-500">
+                <p className="text-xs leading-snug text-center text-gray-500 sm:text-sm">
                   {t("سجل كفرد للاستفادة من جميع الميزات")}
                 </p>
               </IonRouterLink>
               {/* School Card */}
               <IonRouterLink
                 routerLink="/signupparentorteacher"
-                className="flex flex-col items-center justify-center flex-1 p-5 px-6 transition-all duration-300 ease-in-out bg-white border-2 border-yellow-400 shadow-lg cursor-pointer rounded-2xl hover:shadow-xl hover:scale-105" // Enhanced styling
+                className="flex flex-col items-center justify-start min-w-0 p-2 py-3 transition-all duration-300 ease-in-out bg-white border-2 border-yellow-400 shadow-lg cursor-pointer sm:p-4 rounded-2xl hover:shadow-xl hover:scale-[1.02]"
               >
                 <motion.div
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5, delay: 1.0 }}
-                  className="mb-4 bg-yellow-100 rounded-full shadow-md w-28 h-28 flex-center" // Circle background for icon
+                  className="w-20 h-20 mb-2 bg-yellow-100 rounded-full shadow-md sm:w-24 sm:h-24 sm:mb-3 flex-center shrink-0"
                 >
                   <IonIcon
                     icon={schoolOutline} // Changed icon to schoolOutline
                     className="text-yellow-600"
-                    style={{ fontSize: "80px" }} // Adjusted icon size
+                    style={{ fontSize: "clamp(52px, 16vw, 70px)" }}
                   />
                 </motion.div>
-                <h1 className="mb-2 text-2xl font-bold text-center text-gray-800">
+                <h1 className="mb-1 text-xl font-bold text-center text-gray-800 sm:text-2xl">
                   {t("مدرسة")} {/* Changed to "School" */}
                 </h1>
-                <p className="text-sm text-center text-gray-500">
+                <p className="text-xs leading-snug text-center text-gray-500 sm:text-sm">
                   {t("يمكن أن يكون معلمًا أو ولي أمر")}{" "}
                   {/* Added clarifying text */}
                 </p>

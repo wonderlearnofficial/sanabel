@@ -127,7 +127,7 @@ const Step1: React.FC<Step1Props> = ({
   };
 
   return (
-    <div className="flex flex-col items-center justify-between w-full h-full gap-10 p-5 pb-10 overflow-y-auto">
+    <div className="registration-page">
       <div className="absolute z-50 transform -translate-x-1/2 top-4 left-1/2">
         <Toaster />
       </div>
@@ -148,12 +148,12 @@ const Step1: React.FC<Step1Props> = ({
         </div>
       </div>
 
-      <div className="flex flex-col w-full gap-5">
+      <div className="flex flex-col w-full gap-4">
         {/* Role Selection */}
         <div className="flex flex-col gap-5 transition-all duration-300">
-          <div className="flex justify-center gap-5">
+          <div className="grid grid-cols-2 gap-3">
             <div
-              className={`flex flex-col items-center gap-2 p-4 rounded-lg cursor-pointer transition-all duration-200 transform hover:scale-105 ${
+              className={`flex min-w-0 flex-col items-center gap-2 p-3 rounded-lg cursor-pointer transition-all duration-200 transform hover:scale-[1.02] ${
                 role === "Parent"
                   ? "bg-blue-600 text-white shadow-lg"
                   : "bg-gray-100 text-black hover:bg-gray-200"
@@ -163,15 +163,15 @@ const Step1: React.FC<Step1Props> = ({
               <img
                 src={parentFemaleImg}
                 alt="Parent"
-                className="object-cover w-24 h-24 rounded-full"
+                className="object-cover w-20 h-20 rounded-full sm:w-24 sm:h-24"
               />
-              <p className="text-xl font-semibold text-center">
+              <p className="text-lg font-semibold text-center sm:text-xl">
                 {t("Parent") || "Parent"}
               </p>
             </div>
 
             <div
-              className={`flex flex-col items-center gap-2 p-4 rounded-lg cursor-pointer transition-all duration-200 transform hover:scale-105 ${
+              className={`flex min-w-0 flex-col items-center gap-2 p-3 rounded-lg cursor-pointer transition-all duration-200 transform hover:scale-[1.02] ${
                 role === "Teacher"
                   ? "bg-blue-600 text-white shadow-lg"
                   : "bg-gray-100 text-black hover:bg-gray-200"
@@ -181,9 +181,9 @@ const Step1: React.FC<Step1Props> = ({
               <img
                 src={teacherFemaleImg}
                 alt="Teacher"
-                className="object-cover w-24 h-24 rounded-full"
+                className="object-cover w-20 h-20 rounded-full sm:w-24 sm:h-24"
               />
-              <p className="text-xl font-semibold text-center">
+              <p className="text-lg font-semibold text-center sm:text-xl">
                 {t("Teacher") || "Teacher"}
               </p>
             </div>
@@ -192,7 +192,7 @@ const Step1: React.FC<Step1Props> = ({
 
         {/* Name Input Fields */}
         <div className="flex flex-col w-full gap-5">
-          <div className="flex gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <GenericInput
               type="text"
               placeholder={t("اسمك") || "First Name"}

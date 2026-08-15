@@ -30,12 +30,12 @@ function GenericInput({
   }
 
   return (
-    <div className="relative flex flex-col justify-end w-full gap-2">
-      <h1 className=" text-[#121212] ">{title}</h1>
+    <div className="relative flex flex-col justify-end w-full min-w-0 gap-2">
+      <h1 className="text-[#121212] leading-tight break-words">{title}</h1>
       <input
         type={type === "password" && showPassword ? "text" : type}
         placeholder={placeholder}
-        className={`bg-white text-[#121212] focus:text-[#121212] font-medium border-2 border-[#EAECF0] rounded-xl w-full p-3 placeholder:text-[#ccc] ${
+        className={`bg-white text-[#121212] focus:text-[#121212] text-base font-medium border-2 border-[#EAECF0] rounded-xl w-full min-w-0 p-3 placeholder:text-[#ccc] ${
           type === "password" || type === "email" ? "text-left" : ""
         } ${type === "password" ? "pr-12" : ""}`}
         dir={type === "password" || type === "email" ? "ltr" : undefined}

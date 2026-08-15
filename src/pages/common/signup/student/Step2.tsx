@@ -60,7 +60,7 @@ const Step2: React.FC<Step2Props> = ({
     console.log(gender);
   }
   return (
-    <div className="flex flex-col items-center justify-between w-full h-full gap-10 p-5 pb-10 overflow-y-auto">
+    <div className="registration-page">
       <div className="absolute">
         <Toaster />
       </div>
@@ -96,7 +96,7 @@ const Step2: React.FC<Step2Props> = ({
             } rounded-xl text-[#121212] cursor-pointer`}
             onClick={() => setGender("boy")}
           >
-            <img src={boyImage} alt="" className="w-32 h-32" />
+            <img src={boyImage} alt="" className="object-contain w-24 h-24 sm:w-32 sm:h-32" />
           </motion.div>
           <h1
             className={`text-black text-xl ${
@@ -117,7 +117,7 @@ const Step2: React.FC<Step2Props> = ({
             } rounded-xl text-[#121212] cursor-pointer`}
             onClick={() => setGender("girl")}
           >
-            <img src={girlImage} alt="" className="w-32 h-32" />
+            <img src={girlImage} alt="" className="object-contain w-24 h-24 sm:w-32 sm:h-32" />
           </motion.div>
           <h1
             className={`text-black text-xl ${

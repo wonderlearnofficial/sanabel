@@ -120,7 +120,7 @@ const EmailOTP: React.FC<OTPProps> = ({
     }
   };
   return (
-    <div className="flex flex-col items-center justify-between w-full h-full gap-10 p-5 pb-10 overflow-y-auto">
+    <div className="registration-page">
       <div className="absolute">
         <Toaster />
       </div>
@@ -155,7 +155,7 @@ const EmailOTP: React.FC<OTPProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-col w-full gap-7 ">
+          <div className="flex flex-col w-full gap-5">
             {isOtpSent ? (
               <div className="flex flex-col items-center gap-6">
                 <h1 className=" text-[#121212] ">{t("الرمز")}</h1>
@@ -180,10 +180,11 @@ const EmailOTP: React.FC<OTPProps> = ({
               </div>
             ) : (
               <div className="flex flex-col gap-3 ">
-                <div className="flex-col gap-4 flex-center">
+                <div className="flex-col gap-3 flex-center">
                   <img
                     src={parentOrTeacherImg}
-                    className="w-1/3 border-2 rounded-full bg-yellowprimary"
+                    className="border-2 rounded-full signup-avatar bg-yellowprimary"
+                    alt={t("ولي أمر أو معلم")}
                   />
                   <h1 className="text-xl text-center text-gray-800 text-bold">
                     {t("ولي أمر أو معلم")}
@@ -199,10 +200,7 @@ const EmailOTP: React.FC<OTPProps> = ({
               </div>
             )}
 
-            <div
-              onClick={isOtpSent ? handleConfirmOTP : handleSendOTP}
-              className="pb-24"
-            >
+            <div onClick={isOtpSent ? handleConfirmOTP : handleSendOTP}>
               <PrimaryButton
                 style="fill"
                 text={`${isOtpSent ? "تأكيد الرمز" : "أرسل الرمز"}`}
@@ -220,7 +218,7 @@ const EmailOTP: React.FC<OTPProps> = ({
             )}
           </div>
 
-          <IonRouterLink routerLink="/login" className="text-md">
+          <IonRouterLink routerLink="/login" className="pt-1 text-md">
             <h1 className="text-[#8E99A4] font-semibold">
               {t("هل لديك حساب؟")}{" "}
               <span className="text-blueprimary ">{t("تسجيل الدخول")}</span>

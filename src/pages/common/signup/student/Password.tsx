@@ -87,7 +87,7 @@ const Password: React.FC<{
       : "bg-gray-200";
 
   return (
-    <div className="flex flex-col items-center justify-between w-full h-full gap-10 p-5 pb-10 overflow-y-auto">
+    <div className="registration-page">
       <div className="absolute">
         <Toaster></Toaster>
       </div>
@@ -106,7 +106,7 @@ const Password: React.FC<{
         </div>
       </div>
 
-      <div className="flex flex-col w-full gap-10">
+      <div className="flex flex-col w-full gap-6">
         <div className="flex flex-col gap-5">
           <GenericInput
             type="password"
@@ -124,7 +124,7 @@ const Password: React.FC<{
         </div>
         <div className="flex flex-col items-start gap-3">
           {validationCircles.map((circle) => (
-            <div className="flex-row-reverse gap-3 flex-center ">
+            <div key={circle.text} className="flex-row-reverse gap-3 flex-center">
               <h1
                 className={classNames(
                   circle.condition ? "text-green-500" : "text-[#8E99A4]",
@@ -156,7 +156,7 @@ const Password: React.FC<{
         <PrimaryButton style={""} text={"حفظ"} arrow={"none"} />
       </div>
 
-      <IonRouterLink routerLink="/login" className="text-md">
+      <IonRouterLink routerLink="/login" className="pt-1 text-md">
         <h1 className="text-[#8E99A4] font-semibold">
           {t("هل لديك حساب؟")}{" "}
           <span className="text-blueprimary ">{t("تسجيل الدخول")}</span>

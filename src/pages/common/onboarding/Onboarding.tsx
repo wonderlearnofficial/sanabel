@@ -62,7 +62,7 @@ const OnBoarding: React.FC = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
-      className="flex flex-col items-center justify-between w-full h-full gap-2 p-1 pt-5 pb-6 overflow-y-auto"
+      className="onboarding-page"
     >
       <div className="flex flex-row-reverse items-center justify-between w-full">
         <div
@@ -75,11 +75,11 @@ const OnBoarding: React.FC = () => {
       </div>
 
       {/* Animated Image with key and exit animation */}
-      <div className="w-full h-1/3 flex-center overflow-hidden">
+      <div className="flex justify-center w-full min-h-[180px] max-h-[34dvh] overflow-hidden shrink-0">
         <motion.img
           key={stepCount}
           src={onboardingData[stepCount].img}
-          className="w-2/3 h-auto max-h-full object-contain"
+          className="object-contain w-2/3 h-auto max-h-full"
           initial={{ opacity: 0, y: -250 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -50 }} // Exit animation for the old image
@@ -106,14 +106,14 @@ const OnBoarding: React.FC = () => {
 
       {/* Animated Text Content */}
       <motion.div
-        className="flex flex-col gap-6"
+        className="flex flex-col w-full gap-4 pb-2"
         key={stepCount}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-[#040415] text-3xl text-center font-bold">
+        <h1 className="text-[#040415] text-2xl sm:text-3xl text-center font-bold leading-tight">
           {t(onboardingData[stepCount].title)}
           <br />
           <span className="text-blueprimary">

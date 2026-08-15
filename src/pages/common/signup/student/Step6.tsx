@@ -90,7 +90,7 @@ const Step6: React.FC<Step6Props> = ({
   }
   console.log(character);
   return (
-    <div className="flex flex-col items-center justify-between w-full h-full gap-10 p-5 pb-10">
+    <div className="registration-page">
       <div className="absolute">
         <Toaster />
       </div>
@@ -111,14 +111,14 @@ const Step6: React.FC<Step6Props> = ({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-5">
+      <div className="grid w-full grid-cols-3 gap-4 place-items-center sm:grid-cols-4">
         {(gender === "boy" ? boysAvatars : girlsAvatars).map(
           (avatar, index) => (
             <img
               key={index}
               src={avatar}
               alt={`Avatar ${index + 1}`}
-              className={`w-20 h-20 bg-redprimary rounded-full  ${
+              className={`w-16 h-16 sm:w-20 sm:h-20 bg-redprimary rounded-full  ${
                 character == avatar ? "scale-125 opacity-100" : "opacity-70"
               }`}
               onClick={() => setCharacter(avatar)}
