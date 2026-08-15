@@ -1586,6 +1586,10 @@ const en = {
     "جولة الكؤوس": "Trophies tour",
     "أكمل التحديات لتجمع الكؤوس وتفتح إنجازات جديدة.":
       "Complete challenges to collect trophies and unlock new achievements.",
+    "لا توجد جوائز بعد": "No trophies yet",
+    "أكمل التحديات لتحصل على جوائزك الأولى":
+      "Complete challenges to earn your first trophy.",
+    "جاري تحميل الجوائز...": "Loading trophies...",
     "جولة الملف الشخصي": "Profile tour",
     "ملفك الشخصي": "Your profile",
     "من هنا تشارك كود الربط مع ولي أمرك وتغيّر صورتك وإعداداتك.":

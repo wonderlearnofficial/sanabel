@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { OtherTrophies } from "../../../data/OtherTrophies";
 import { SanabelTrophies } from "../../../data/SanabelTrophies";
+import TrophyEmptyState from "../../../components/TrophyEmptyState";
 
 import treestage1 from "../../../assets/trophies/Other Trophies/مرحلة - 1.png";
 import treestage2 from "../../../assets/trophies/Other Trophies/مرحلة - 2.png";
@@ -109,7 +110,7 @@ const StudentProfileTrophies: React.FC<StudentProfileTrophiesProps> = ({
     >
       {isLoading ? (
         <div className="flex-center">
-          <p>Loading trophies...</p>
+          <p>{t("جاري تحميل الجوائز...")}</p>
         </div>
       ) : (
         <motion.div
@@ -148,8 +149,8 @@ const StudentProfileTrophies: React.FC<StudentProfileTrophiesProps> = ({
               </motion.div>
             ))
           ) : (
-            <div className="col-span-4 text-center">
-              <p>No trophies found. Complete challenges to earn trophies!</p>
+            <div className="col-span-4">
+              <TrophyEmptyState />
             </div>
           )}
         </motion.div>
