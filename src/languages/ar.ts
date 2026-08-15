@@ -116,6 +116,8 @@ const ar = {
     login_successful: "تم تسجيل الدخول بنجاح!",
     login_failed:
       "فشل تسجيل الدخول. البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    account_deleted_message:
+      "تم حذف حسابك. تواصل مع المسؤول إذا كنت تعتقد أن هذا خطأ.",
 
     // Signup OTP toaster messages
     otpSentSuccess: "تم إرسال الرمز بنجاح!",

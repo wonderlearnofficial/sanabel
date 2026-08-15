@@ -268,6 +268,44 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
     fetchUserData();
   }, []);
 
+  useEffect(() => {
+    let checkInFlight = false;
+
+    const validateOpenSession = async () => {
+      const token = localStorage.getItem("token");
+      if (!token || checkInFlight) return;
+
+      checkInFlight = true;
+      try {
+        await axios.get(`${API_BASE_URL}/users/session`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch {
+        // Confirmed deletion/expiry is handled by the global axios interceptor.
+        // Network and server outages deliberately leave the local session intact.
+      } finally {
+        checkInFlight = false;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void validateOpenSession();
+      }
+    };
+
+    void validateOpenSession();
+    const intervalId = window.setInterval(validateOpenSession, 10_000);
+    window.addEventListener("focus", validateOpenSession);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", validateOpenSession);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   return (
     <UserContext.Provider
       value={{ user, setUser, refreshUserData: fetchUserData, isLoading }}

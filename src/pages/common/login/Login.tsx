@@ -47,6 +47,13 @@ const Login: React.FC = () => {
   const [isKeepLogged, setIsKeepLogged] = useState(false);
   const history = useHistory();
 
+  useEffect(() => {
+    if (sessionStorage.getItem("accountDeleted") === "true") {
+      sessionStorage.removeItem("accountDeleted");
+      toast.error(t("account_deleted_message"));
+    }
+  }, [t]);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 

@@ -7,18 +7,26 @@ let refreshing: Promise<string> | null = null;
 let redirectingToLogin = false;
 
 class SessionExpiredError extends Error {
-  constructor() {
+  reason: "expired" | "accountDeleted";
+
+  constructor(reason: "expired" | "accountDeleted" = "expired") {
     super("Session expired");
     this.name = "SessionExpiredError";
+    this.reason = reason;
   }
 }
 
-function endExpiredSession(): void {
+function endExpiredSession(
+  reason: "expired" | "accountDeleted" = "expired",
+): void {
   clearClientSession();
   if (redirectingToLogin || window.location.pathname === "/login") return;
 
   redirectingToLogin = true;
-  sessionStorage.setItem("sessionExpired", "true");
+  sessionStorage.setItem(
+    reason === "accountDeleted" ? "accountDeleted" : "sessionExpired",
+    "true",
+  );
   window.location.replace("/login");
 }
 
@@ -48,7 +56,11 @@ async function doRefresh(): Promise<string> {
       axios.isAxiosError(error) &&
       (error.response?.status === 401 || error.response?.status === 403)
     ) {
-      throw new SessionExpiredError();
+      throw new SessionExpiredError(
+        error.response?.data?.code === "ACCOUNT_DELETED"
+          ? "accountDeleted"
+          : "expired",
+      );
     }
     throw error;
   }
@@ -68,9 +80,15 @@ export function setupAxiosAuth(): void {
       const url: string = original?.url || "";
       const isAuthCall =
         url.includes("/users/refresh") || url.includes("/users/login");
+      const isDeletedAccount = code === "ACCOUNT_DELETED";
       const canRefresh =
         (status === 401 && code === "TOKEN_EXPIRED") ||
         (status === 403 && code === "TOKEN_INVALID");
+
+      if (isDeletedAccount) {
+        endExpiredSession("accountDeleted");
+        return Promise.reject(error);
+      }
 
       if (
         canRefresh &&
@@ -91,7 +109,7 @@ export function setupAxiosAuth(): void {
           return axios(original);
         } catch (refreshError) {
           if (refreshError instanceof SessionExpiredError) {
-            endExpiredSession();
+            endExpiredSession(refreshError.reason);
           }
           return Promise.reject(refreshError);
         }

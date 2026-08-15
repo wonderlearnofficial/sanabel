@@ -1080,6 +1080,8 @@ const en = {
     "!اختر شخصيتك": "Choose your character",
 
     login_failed: "Email or password is incorrect. Please try again.",
+    account_deleted_message:
+      "Your account was deleted. Contact an administrator if you think this is a mistake.",
 
     "لم يقم الطالب بإكمال أي مهام بعد":
       "The student hasn't completed any tasks yet",
