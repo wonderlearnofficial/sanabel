@@ -205,6 +205,7 @@ const en = {
     "مركز المساعدة": "Help Center",
     "دليل الصفحات": "Page Guides",
     "تفعيل الوضع الداكن": "Enable Dark Mode",
+    "المؤثرات الصوتية": "Sound effects",
     "تسجيل الخروج": "Logout",
     "مساعدة هذه الصفحة": "Page Help",
     "المستوى التالي": "Next Level",

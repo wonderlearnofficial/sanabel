@@ -586,7 +586,7 @@ const TodoList = () => {
       });
 
       if (response.ok) {
-        AudioManager.play("success");
+        AudioManager.play("reward");
         setTodoItems((prev) =>
           prev.map((item) =>
             item.id === selectedMissionId ? { ...item, completed: true } : item,
@@ -599,7 +599,7 @@ const TodoList = () => {
         setShowConfirmPopup(false);
         setShowCongratsPopup(true);
       } else {
-        AudioManager.play("soft_warning");
+        AudioManager.play("error");
         const errorData = await response.json();
         console.error("Failed to mark mission complete:", errorData);
         alert(
@@ -611,7 +611,7 @@ const TodoList = () => {
         );
       }
     } catch (error) {
-      AudioManager.play("soft_warning");
+      AudioManager.play("error");
       console.error("Error marking mission complete:", error);
       alert(t("حدث خطأ أثناء تحديد المهمة كمكتملة."));
     } finally {

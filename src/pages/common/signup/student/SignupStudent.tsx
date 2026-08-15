@@ -127,7 +127,7 @@ const Signup: React.FC = () => {
         toast.success("Sign up");
       }
     } catch (error) {
-      AudioManager.play("soft_warning");
+      AudioManager.play("error");
       console.error("Error", error);
       toast.error(t(getErrorMessage(error, "registrationFailed")));
     } finally {

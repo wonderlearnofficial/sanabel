@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import Step1 from "./Step1";
 import Password from "./Password";
 import { useHistory } from "react-router-dom";
+import { AudioManager } from "../../../../utils/AudioManager";
 
 const Signup: React.FC = () => {
   const history = useHistory();
@@ -81,13 +82,16 @@ const Signup: React.FC = () => {
 
       // Check for success status codes (200, 201, 204)
       if (response.status >= 200 && response.status < 300) {
+        AudioManager.play("success");
         console.log("Registration successful, navigating to login...");
         history.push("/login");
       } else {
+        AudioManager.play("error");
         console.warn("Unexpected response status:", response.status);
         toast.error(t("حدث خطأ أثناء التسجيل"));
       }
     } catch (error: any) {
+      AudioManager.play("error");
       console.error("Registration error:", error);
 
       // Handle different types of errors

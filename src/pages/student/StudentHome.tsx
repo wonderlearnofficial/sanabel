@@ -64,7 +64,7 @@ const StudentHome: React.FC = () => {
   useEffect(() => {
     if (prevLevelRef.current !== null && level > prevLevelRef.current) {
       setShowLevelUp(true);
-      AudioManager.play("celebration");
+      AudioManager.play("reward");
       const timer = setTimeout(() => setShowLevelUp(false), 3000);
       return () => clearTimeout(timer);
     }

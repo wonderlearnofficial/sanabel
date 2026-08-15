@@ -16,13 +16,8 @@ function PrimaryButton({ style, text, arrow, onClick, disabled }: ButtonProps) {
 
   const handleClick = () => {
     if (disabled) return;
-    AudioManager.play("pop");
+    AudioManager.play("tap");
     if (onClick) onClick();
-  };
-
-  const handleMouseEnter = () => {
-    if (disabled) return;
-    AudioManager.play("tick");
   };
 
   return (
@@ -35,7 +30,6 @@ function PrimaryButton({ style, text, arrow, onClick, disabled }: ButtonProps) {
           : "bg-gradient-to-r from-[#2293c7] from-5% to-45% to-blueprimary text-white"
       }`}
       onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
     >
       {arrow !== "none" && (
         <BackArrow

@@ -19,6 +19,8 @@ import {
   MdLightMode,
   MdNotificationsActive,
   MdNotificationsOff,
+  MdVolumeOff,
+  MdVolumeUp,
 } from "react-icons/md";
 import { API_BASE_URL } from "../../../config/api";
 import axios from "axios";
@@ -43,6 +45,16 @@ const Profile: React.FC = () => {
   const [prayerNotifications, setPrayerNotifications] = useState(
     localStorage.getItem("prayerNotifications") === "true"
   );
+  const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(
+    AudioManager.effectsEnabled,
+  );
+
+  const handleSoundEffectsToggle = () => {
+    const enabled = !soundEffectsEnabled;
+    AudioManager.setEffectsEnabled(enabled);
+    setSoundEffectsEnabled(enabled);
+    if (enabled) AudioManager.play("tap", true);
+  };
 
   const handlePrayerNotificationsToggle = async () => {
     const newValue = !prayerNotifications;
@@ -99,7 +111,7 @@ const Profile: React.FC = () => {
   };
 
   async function logout() {
-    AudioManager.play("fade_out");
+    AudioManager.play("tap");
     localStorage.setItem("hasVisited", "false");
 
     // Invalidate the session server-side and clear token/refreshToken/role
@@ -161,6 +173,17 @@ const Profile: React.FC = () => {
       type: "link",
     },
     {
+      title: "المؤثرات الصوتية",
+      icon: soundEffectsEnabled ? (
+        <MdVolumeUp size={25} color="#4AAAD6" />
+      ) : (
+        <MdVolumeOff size={25} color="#4AAAD6" />
+      ),
+      to: "",
+      function: handleSoundEffectsToggle,
+      type: "soundToggle",
+    },
+    {
       title: "تفعيل الوضع الداكن",
       icon: darkMode ? (
         <MdLightMode size={25} color="#4AAAD6" />
@@ -219,7 +242,22 @@ const Profile: React.FC = () => {
                 item.function ? item.function() : redirectPage(item.to)
               }
             >
-              {item.type === "darkModeToggle" ? (
+              {item.type === "soundToggle" ? (
+                <label
+                  className="inline-flex items-center cursor-pointer"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <input
+                    type="checkbox"
+                    checked={soundEffectsEnabled}
+                    onChange={handleSoundEffectsToggle}
+                    className="sr-only peer"
+                  />
+                  <div
+                    className="relative w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blueprimary"
+                  />
+                </label>
+              ) : item.type === "darkModeToggle" ? (
                 <label className="inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"

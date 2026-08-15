@@ -68,7 +68,7 @@ const Login: React.FC = () => {
       });
 
       if (response.status === 200) {
-        AudioManager.play("welcome");
+        AudioManager.play("success");
         // Store auth token
         localStorage.setItem(
           "token",
@@ -130,6 +130,7 @@ const Login: React.FC = () => {
         }
       }
     } catch (error) {
+      AudioManager.play("error");
       toast.error(t(getErrorMessage(error, "login_failed")));
     }
   };

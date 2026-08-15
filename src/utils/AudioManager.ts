@@ -1,158 +1,184 @@
 import { Howl, Howler } from "howler";
 
-// --- Configuration ---
-// Map of all sound effects available in the app.
-// Some are preloaded immediately, others are lazy-loaded on demand.
-export const SOUNDS = {
-  // Low Importance (UI)
-  click: { src: ["/sounds/click.mp3"], preload: true },
-  pop: { src: ["/sounds/pop.mp3"], preload: true },
-  tick: { src: ["/sounds/tick.mp3"], preload: true },
-  swoosh: { src: ["/sounds/swoosh.mp3"], preload: false },
-  
-  // Medium Importance (Missions & Auth)
-  card_flip: { src: ["/sounds/card_flip.mp3"], preload: false },
-  chime: { src: ["/sounds/chime.mp3"], preload: true },
-  reward: { src: ["/sounds/reward.mp3"], preload: true },
-  welcome: { src: ["/sounds/welcome.mp3"], preload: false },
-  notification: { src: ["/sounds/notification.mp3"], preload: false },
-  soft_confirm: { src: ["/sounds/soft_confirm.mp3"], preload: false },
-  soft_warning: { src: ["/sounds/soft_warning.mp3"], preload: true },
-  delete: { src: ["/sounds/delete.mp3"], preload: false },
-  fade_out: { src: ["/sounds/fade_out.mp3"], preload: false },
-  coin: { src: ["/sounds/coin.mp3"], preload: false },
-  
-  // High Importance (Gamification)
-  success: { src: ["/sounds/success.mp3"], preload: true },
-  sparkle: { src: ["/sounds/sparkle.mp3"], preload: false },
-  nature_magic: { src: ["/sounds/nature_magic.mp3"], preload: false },
-  upgrade: { src: ["/sounds/upgrade.mp3"], preload: false },
-  celebration: { src: ["/sounds/celebration.mp3"], preload: false },
-  trophy: { src: ["/sounds/trophy.mp3"], preload: false },
+export const SOUND_EFFECTS_STORAGE_KEY = "sanabel:sound-effects";
+
+const SOUND_FILES = {
+  click: "/sounds/click.mp3",
+  success: "/sounds/success.mp3",
+  error: "/sounds/error.mp3",
+} as const;
+
+// Keep sound names tied to meaning instead of individual files. The reward
+// profile intentionally reuses the success jingle with a brighter treatment.
+export const SOUND_PROFILES = {
+  tap: {
+    src: SOUND_FILES.click,
+    volume: 0.22,
+    rate: 1.08,
+    cooldownMs: 240,
+    maxDurationMs: 500,
+    priority: 1,
+  },
+  success: {
+    src: SOUND_FILES.success,
+    volume: 0.38,
+    rate: 1.05,
+    cooldownMs: 800,
+    maxDurationMs: 2000,
+    priority: 2,
+  },
+  error: {
+    src: SOUND_FILES.error,
+    volume: 0.3,
+    rate: 1,
+    cooldownMs: 600,
+    maxDurationMs: 300,
+    priority: 3,
+  },
+  reward: {
+    src: SOUND_FILES.success,
+    volume: 0.5,
+    rate: 1.12,
+    cooldownMs: 1200,
+    maxDurationMs: 1950,
+    priority: 4,
+  },
+} as const;
+
+export type SoundKey = keyof typeof SOUND_PROFILES;
+
+type ActivePlayback = {
+  id: number;
+  key: SoundKey;
+  priority: number;
+  sound: Howl;
 };
 
-export type SoundKey = keyof typeof SOUNDS;
-
-class AudioManagerClass {
-  private sounds: Map<SoundKey, Howl> = new Map();
-  private lastPlayed: Map<SoundKey, number> = new Map();
-  
-  // Default Debounce time to prevent overlapping identical sounds (ms)
-  private debounceMs = 150; 
-  
-  // User Settings
+export class AudioManagerClass {
+  private sounds = new Map<string, Howl>();
+  private lastPlayed = new Map<SoundKey, number>();
+  private activePlayback: ActivePlayback | null = null;
+  private stopTimer: ReturnType<typeof setTimeout> | null = null;
   private _effectsEnabled: boolean;
-  private _musicEnabled: boolean;
-  private _masterVolume: number;
 
   constructor() {
-    this._effectsEnabled = true;
-    this._musicEnabled = true;
-    this._masterVolume = 1.0;
+    this._effectsEnabled = this.readEffectsPreference();
 
-    // Apply initial settings
-    Howler.volume(this._masterVolume);
+    // Individual profiles control loudness. Keeping the global level below
+    // full volume prevents short effects from feeling harsh on headphones.
+    Howler.volume(0.8);
     Howler.mute(!this._effectsEnabled);
-
-    // Preload critical sounds
-    this.initPreloads();
+    this.preloadSounds();
   }
 
-  private initPreloads() {
-    for (const [key, config] of Object.entries(SOUNDS)) {
-      if (config.preload) {
-        this.getOrCreateSound(key as SoundKey);
-      }
+  private readEffectsPreference(): boolean {
+    if (typeof window === "undefined") return true;
+
+    try {
+      return window.localStorage.getItem(SOUND_EFFECTS_STORAGE_KEY) !== "false";
+    } catch {
+      return true;
     }
   }
 
-  private getOrCreateSound(key: SoundKey): Howl | null {
-    if (!SOUNDS[key]) return null;
+  private saveEffectsPreference(enabled: boolean) {
+    if (typeof window === "undefined") return;
 
-    if (!this.sounds.has(key)) {
-      const config = SOUNDS[key];
-      const howl = new Howl({
-        src: config.src,
-        preload: config.preload,
-      });
-      this.sounds.set(key, howl);
+    try {
+      window.localStorage.setItem(
+        SOUND_EFFECTS_STORAGE_KEY,
+        String(enabled),
+      );
+    } catch {
+      // Sound should keep working even when storage is unavailable.
     }
-    return this.sounds.get(key)!;
   }
 
-  /**
-   * Plays a specific sound effect.
-   * @param key The sound to play.
-   * @param overrideDebounce If true, ignores the debounce restriction.
-   */
-  public play(key: SoundKey, overrideDebounce = false) {
-    if (!this._effectsEnabled) return;
+  private preloadSounds() {
+    const uniqueSources = new Set(
+      Object.values(SOUND_PROFILES).map((profile) => profile.src),
+    );
 
+    uniqueSources.forEach((source) => this.getOrCreateSound(source));
+  }
+
+  private getOrCreateSound(source: string): Howl {
+    const existingSound = this.sounds.get(source);
+    if (existingSound) return existingSound;
+
+    const sound = new Howl({ src: [source], preload: true });
+    this.sounds.set(source, sound);
+    return sound;
+  }
+
+  private clearStopTimer() {
+    if (this.stopTimer) {
+      clearTimeout(this.stopTimer);
+      this.stopTimer = null;
+    }
+  }
+
+  private stopActivePlayback() {
+    this.clearStopTimer();
+
+    if (this.activePlayback) {
+      this.activePlayback.sound.stop(this.activePlayback.id);
+      this.activePlayback = null;
+    }
+  }
+
+  /** Plays one intentional sound cue. Returns false when it is suppressed. */
+  public play(key: SoundKey, overrideCooldown = false): boolean {
+    if (!this._effectsEnabled) return false;
+
+    const profile = SOUND_PROFILES[key];
     const now = Date.now();
-    const last = this.lastPlayed.get(key) || 0;
+    const lastPlayedAt = this.lastPlayed.get(key) ?? 0;
 
-    // Prevent identical sounds from playing too rapidly (overlapping)
-    if (!overrideDebounce && now - last < this.debounceMs) {
-      return;
+    if (!overrideCooldown && now - lastPlayedAt < profile.cooldownMs) {
+      return false;
     }
 
-    const sound = this.getOrCreateSound(key);
-    if (sound) {
-      // Small variation in playback rate makes repetitive sounds feel less artificial
-      if (key === "tick" || key === "pop") {
-         sound.rate(0.95 + Math.random() * 0.1); 
-      }
-      sound.play();
-      this.lastPlayed.set(key, now);
+    if (
+      this.activePlayback?.sound.playing(this.activePlayback.id) &&
+      profile.priority < this.activePlayback.priority
+    ) {
+      return false;
     }
+
+    this.stopActivePlayback();
+
+    const sound = this.getOrCreateSound(profile.src);
+    sound.volume(profile.volume);
+    sound.rate(profile.rate);
+
+    const id = sound.play();
+    this.activePlayback = { id, key, priority: profile.priority, sound };
+    this.lastPlayed.set(key, now);
+
+    this.stopTimer = setTimeout(() => {
+      if (sound.playing(id)) sound.stop(id);
+      if (this.activePlayback?.id === id) this.activePlayback = null;
+      this.stopTimer = null;
+    }, profile.maxDurationMs);
+
+    return true;
   }
 
-  /**
-   * Gets current master volume.
-   */
-  public get volume(): number {
-    return this._masterVolume;
-  }
-
-  /**
-   * Sets the global master volume (0.0 to 1.0).
-   */
-  public setVolume(vol: number) {
-    const clamped = Math.max(0, Math.min(1, vol));
-    this._masterVolume = clamped;
-    Howler.volume(clamped);
-  }
-
-  /**
-   * Gets if sound effects are enabled.
-   */
   public get effectsEnabled(): boolean {
     return this._effectsEnabled;
   }
 
-  /**
-   * Toggles sound effects ON/OFF.
-   */
   public setEffectsEnabled(enabled: boolean) {
     this._effectsEnabled = enabled;
+    this.saveEffectsPreference(enabled);
     Howler.mute(!enabled);
-  }
 
-  /**
-   * Gets if music is enabled.
-   */
-  public get musicEnabled(): boolean {
-    return this._musicEnabled;
-  }
-
-  /**
-   * Toggles music ON/OFF. (For future music support)
-   */
-  public setMusicEnabled(enabled: boolean) {
-    this._musicEnabled = enabled;
-    // Implementation for pausing/playing background music would go here.
+    if (!enabled) {
+      this.stopActivePlayback();
+      Howler.stop();
+    }
   }
 }
 
-// Export singleton instance
 export const AudioManager = new AudioManagerClass();

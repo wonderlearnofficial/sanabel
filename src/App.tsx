@@ -2,8 +2,6 @@ import { Redirect, Route, Switch } from "react-router-dom";
 import { BrowserRouter as Router } from "react-router-dom";
 import { IonRouterOutlet, setupIonicReact } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
-import { useLocation } from "react-router-dom";
-import { AudioManager } from "./utils/AudioManager";
 import { ThemeProvider } from "./context/ThemeContext";
 import "./index.css";
 
@@ -187,14 +185,6 @@ const AdminHomeRedirect = () => {
   return null;
 };
 
-const RouteChangeListener = () => {
-  const location = useLocation();
-  useEffect(() => {
-    AudioManager.play("swoosh");
-  }, [location.pathname]);
-  return null;
-};
-
 const App: React.FC = () => {
   const { darkMode, toggleDarkMode } = useTheme();
   const { t } = useTranslation();
@@ -232,7 +222,6 @@ const App: React.FC = () => {
             {/* Phone frame: full-screen on mobile, centered 430px card on desktop */}
             <div className="relative w-full h-full md:max-w-[430px] md:shadow-2xl overflow-hidden bg-white">
             <IonReactRouter>
-              <RouteChangeListener />
               <IonRouterOutlet>
                 <Switch>
                   {/* // Splash Screen */}

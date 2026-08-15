@@ -35,7 +35,7 @@ const SanabelTree = () => {
 
   useEffect(() => {
     if (prevTreeProgressRef.current !== null && treeProgress > prevTreeProgressRef.current) {
-      AudioManager.play("nature_magic");
+      AudioManager.play("reward");
     }
     prevTreeProgressRef.current = treeProgress;
   }, [treeProgress]);
