@@ -30,6 +30,11 @@ import mixedSanabel from "../../../assets/resources/سنابل.png";
 // Navbar
 import missionsDoneImg from "../../../assets/target.png";
 import axios from "axios";
+import {
+  normalizeCategoryCounts,
+  TASK_CATEGORY_TITLES,
+  toFiniteNumber,
+} from "../../../utils/numericData";
 
 // Define the colors for the chart
 const COLORS = ["#FAB700", "#E14E54", "#495638", "#4AAAD6"];
@@ -87,8 +92,8 @@ const ProgressMissions: React.FC = () => {
       );
 
       if (response.status === 200) {
-        setCompletedTasks(response.data.totalCompletedTasks);
-        setCategoryCounts(response.data.categoryCounts);
+        setCompletedTasks(toFiniteNumber(response.data.totalCompletedTasks));
+        setCategoryCounts(normalizeCategoryCounts(response.data.categoryCounts));
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -105,34 +110,31 @@ const ProgressMissions: React.FC = () => {
     value: number;
   }
 
-  const [categoryCounts, setCategoryCounts] = useState({
-    "سنابل الإحسان في العلاقة مع الله": 0,
-    "سنابل الإحسان في العلاقة مع النفس": 0,
-    "سنابل الإحسان في العلاقة مع الأسرة والمجتمع": 0,
-    "سنابل الإحسان في العلاقة مع الأرض والكون": 0,
-  });
+  const [categoryCounts, setCategoryCounts] = useState(() =>
+    normalizeCategoryCounts(null),
+  );
 
   // Dynamic chart data
   const sanabelType = [
     {
       name: t("العلاقة مع الله"),
       img: sanabelType4Img,
-      value: Object.values(categoryCounts)[0],
+      value: categoryCounts[TASK_CATEGORY_TITLES[0]],
     },
     {
       name: t("العلاقة مع النفس"),
       img: sanabelType2Img,
-      value: Object.values(categoryCounts)[1],
+      value: categoryCounts[TASK_CATEGORY_TITLES[1]],
     },
     {
       name: t("العلاقة مع الأسرة والمجتمع"),
       img: sanabelType1Img,
-      value: Object.values(categoryCounts)[2],
+      value: categoryCounts[TASK_CATEGORY_TITLES[2]],
     },
     {
       name: t("العلاقة مع الأرض والكون"),
       img: sanabelType3Img,
-      value: Object.values(categoryCounts)[3],
+      value: categoryCounts[TASK_CATEGORY_TITLES[3]],
     },
   ];
 

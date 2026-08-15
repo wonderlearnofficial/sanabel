@@ -10,11 +10,12 @@ import SanabelTree from "../../../components/tree/SanabelTree";
 import Inventory from "../../../components/tree/Inventory";
 import Shop from "../../../components/tree/Shop";
 import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
+import { toFiniteNumber } from "../../../utils/numericData";
 
 const Progress: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useUserContext();
-  const treeProgress = Number(user?.treeProgress);
+  const treeProgress = toFiniteNumber(user?.treeProgress);
   console.log(treeProgress);
 
   useAutoStartGuide("student-progress", !!user);
@@ -23,11 +24,11 @@ const Progress: React.FC = () => {
     <div className="flex flex-col w-full gap-1 overflow-y-scroll h-3/4 ">
       {treeProgress < 51 && (
         <Inventory
-          waterCount={Number(user?.water)}
-          fertilizerCount={Number(user?.fertilizer)}
-          blueCount={Number(user?.snabelBlue)}
-          redCount={Number(user?.snabelRed)}
-          yellowCount={Number(user?.snabelYellow)}
+          waterCount={toFiniteNumber(user?.water)}
+          fertilizerCount={toFiniteNumber(user?.fertilizer)}
+          blueCount={toFiniteNumber(user?.snabelBlue)}
+          redCount={toFiniteNumber(user?.snabelRed)}
+          yellowCount={toFiniteNumber(user?.snabelYellow)}
         />
       )}
 

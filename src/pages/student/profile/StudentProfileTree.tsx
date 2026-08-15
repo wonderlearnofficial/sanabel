@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useTheme } from "../../../context/ThemeContext";
 import { useUserContext } from "../../../context/StudentUserProvider";
 import { treeStages } from "../../../data/Tree";
+import { toFiniteNumber } from "../../../utils/numericData";
 
 const Profile: React.FC = () => {
   const { darkMode, toggleDarkMode } = useTheme();
@@ -13,9 +14,9 @@ const Profile: React.FC = () => {
   const { user } = useUserContext();
 
   //  المرحلة
-  const treeStage = Number(user?.treeStage);
+  const treeStage = toFiniteNumber(user?.treeStage);
 
-  const treeProgress = Number(user?.treeProgress);
+  const treeProgress = toFiniteNumber(user?.treeProgress);
 
   const currentStage = treeProgress + 3;
   const [stage, setStage] = useState(0);

@@ -20,6 +20,7 @@ import { useUserContext } from "../../context/StudentUserProvider";
 import CheckmarkAnimation from "../../assets/checkmarkAnimation";
 import { treeStages } from "../../data/Tree";
 import axios from "axios";
+import { toFiniteNumber } from "../../utils/numericData";
 
 const Toaster = () => (
   <ToastContainer
@@ -47,19 +48,19 @@ const Shop: React.FC = () => {
     { icon: yellowSanabel },
   ];
 
-  const waterCount = Number(user?.water);
-  const fertilizerCount = Number(user?.fertilizer);
+  const waterCount = toFiniteNumber(user?.water);
+  const fertilizerCount = toFiniteNumber(user?.fertilizer);
 
-  const blueCount = Number(user?.snabelBlue);
-  const redCount = Number(user?.snabelRed);
-  const yellowCount = Number(user?.snabelYellow);
+  const blueCount = toFiniteNumber(user?.snabelBlue);
+  const redCount = toFiniteNumber(user?.snabelRed);
+  const yellowCount = toFiniteNumber(user?.snabelYellow);
 
-  const waterNeeded = Number(user?.waterNeeded);
-  const fertilizerNeeded = Number(user?.fertilizerNeeded);
+  const waterNeeded = toFiniteNumber(user?.waterNeeded);
+  const fertilizerNeeded = toFiniteNumber(user?.fertilizerNeeded);
 
   //  المرحلة
-  const treeStage = Number(user?.treeStage);
-  const treeProgress = Number(user?.treeProgress);
+  const treeStage = toFiniteNumber(user?.treeStage);
+  const treeProgress = toFiniteNumber(user?.treeProgress);
 
   const waterCost = treeProgress == 1 ? 10 : 20;
   const fertilizerCost = treeProgress == 1 ? 15 : 30;

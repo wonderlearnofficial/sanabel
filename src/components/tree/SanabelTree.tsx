@@ -13,22 +13,23 @@ import { treeStages } from "../../data/Tree";
 import { motion } from "framer-motion";
 import { AudioManager } from "../../utils/AudioManager";
 import { useEffect, useRef } from "react";
+import { toFiniteNumber } from "../../utils/numericData";
 
 const SanabelTree = () => {
   const history = useHistory();
   const { t } = useTranslation();
   const { user } = useUserContext();
 
-  const currentWater = Number(user?.water);
-  const currentFertilizer = Number(user?.fertilizer);
+  const currentWater = toFiniteNumber(user?.water);
+  const currentFertilizer = toFiniteNumber(user?.fertilizer);
 
-  const waterNeeded = Number(user?.waterNeeded);
-  const fertilizerNeeded = Number(user?.fertilizerNeeded);
+  const waterNeeded = toFiniteNumber(user?.waterNeeded);
+  const fertilizerNeeded = toFiniteNumber(user?.fertilizerNeeded);
 
   //  المرحلة
-  const treeStage = Number(user?.treeStage);
+  const treeStage = toFiniteNumber(user?.treeStage);
 
-  const treeProgress = Number(user?.treeProgress);
+  const treeProgress = toFiniteNumber(user?.treeProgress);
 
   const prevTreeProgressRef = useRef<number | null>(null);
 

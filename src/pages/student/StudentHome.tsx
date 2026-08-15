@@ -19,6 +19,7 @@ import { calculateLevel } from "../../utils/LevelCalculator";
 import { medalsData } from "../../data/MedalsData";
 import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
 import { AudioManager } from "../../utils/AudioManager";
+import { toFiniteNumber } from "../../utils/numericData";
 
 const Skeleton = ({ className }: { className: string }) => (
   <div className={`animate-pulse bg-gray-200 rounded-xl ${className}`} />
@@ -49,7 +50,7 @@ const StudentHome: React.FC = () => {
     isLoading: isUserLoading,
     refreshUserData,
   } = useUserContext();
-  const xp = Number(user?.xp);
+  const xp = toFiniteNumber(user?.xp);
 
   const [missionsDoneToday, setMissionsDoneToday] = useState(0);
   const [isMissionsLoading, setIsMissionsLoading] = useState(true);
@@ -299,11 +300,11 @@ const StudentHome: React.FC = () => {
             </div>
           ) : (
             <Inventory
-              waterCount={Number(user?.water)}
-              fertilizerCount={Number(user?.fertilizer)}
-              blueCount={Number(user?.snabelBlue)}
-              redCount={Number(user?.snabelRed)}
-              yellowCount={Number(user?.snabelYellow)}
+              waterCount={toFiniteNumber(user?.water)}
+              fertilizerCount={toFiniteNumber(user?.fertilizer)}
+              blueCount={toFiniteNumber(user?.snabelBlue)}
+              redCount={toFiniteNumber(user?.snabelRed)}
+              yellowCount={toFiniteNumber(user?.snabelYellow)}
             />
           )}
         </motion.div>

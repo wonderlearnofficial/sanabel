@@ -15,6 +15,7 @@ import { calculateLevel } from "../../../utils/LevelCalculator";
 
 import { medalsData } from "../../../data/MedalsData";
 import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
+import { toFiniteNumber } from "../../../utils/numericData";
 
 const calculateXpForLevel = (targetLevel: any) => {
   const baseXp = 10;
@@ -32,7 +33,7 @@ const calculateXpForLevel = (targetLevel: any) => {
 const Progress: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useUserContext();
-  const xp = Number(user?.xp);
+  const xp = toFiniteNumber(user?.xp);
 
   const { level, remainingXp, xpForNextLevel } = calculateLevel(xp);
 

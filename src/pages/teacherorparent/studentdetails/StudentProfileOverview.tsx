@@ -12,18 +12,16 @@ import missionsDoneImg from "../../../assets/target.png";
 import MedalAndLevel from "../../../components/MedalAndLevel";
 import { calculateLevel } from "../../../utils/LevelCalculator";
 import { motion } from "framer-motion";
-
-// Types
-interface CategoryCounts {
-  "سنابل الإحسان في العلاقة مع الله": number;
-  "سنابل الإحسان في العلاقة مع النفس": number;
-  "سنابل الإحسان في العلاقة مع الأسرة والمجتمع": number;
-  "سنابل الإحسان في العلاقة مع الأرض والكون": number;
-}
+import {
+  CategoryCounts,
+  normalizeCategoryCounts,
+  TASK_CATEGORY_TITLES,
+  toFiniteNumber,
+} from "../../../utils/numericData";
 
 interface ProfileProps {
   xp: number;
-  categoryCounts: CategoryCounts;
+  categoryCounts: CategoryCounts | null | undefined;
   totalCompletedTasks: number;
 }
 
@@ -61,28 +59,29 @@ const StudentProfileOverview: React.FC<ProfileProps> = ({
   const history = useHistory();
   const { t } = useTranslation();
 
-  const { level } = calculateLevel(xp);
+  const { level } = calculateLevel(toFiniteNumber(xp));
+  const safeCategoryCounts = normalizeCategoryCounts(categoryCounts);
 
   const sanabelType = [
     {
       name: "العلاقة مع الله",
       img: sanabelType4Img,
-      value: categoryCounts["سنابل الإحسان في العلاقة مع الله"] || 0,
+      value: safeCategoryCounts[TASK_CATEGORY_TITLES[0]],
     },
     {
       name: "العلاقة مع النفس",
       img: sanabelType2Img,
-      value: categoryCounts["سنابل الإحسان في العلاقة مع النفس"] || 0,
+      value: safeCategoryCounts[TASK_CATEGORY_TITLES[1]],
     },
     {
       name: "العلاقة مع الأسرة والمجتمع",
       img: sanabelType1Img,
-      value: categoryCounts["سنابل الإحسان في العلاقة مع الأسرة والمجتمع"] || 0,
+      value: safeCategoryCounts[TASK_CATEGORY_TITLES[2]],
     },
     {
       name: "العلاقة مع الأرض والكون",
       img: sanabelType3Img,
-      value: categoryCounts["سنابل الإحسان في العلاقة مع الأرض والكون"] || 0,
+      value: safeCategoryCounts[TASK_CATEGORY_TITLES[3]],
     },
   ];
 
@@ -112,7 +111,7 @@ const StudentProfileOverview: React.FC<ProfileProps> = ({
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            {totalCompletedTasks}
+            {toFiniteNumber(totalCompletedTasks)}
           </motion.h1>
 
           <motion.h1

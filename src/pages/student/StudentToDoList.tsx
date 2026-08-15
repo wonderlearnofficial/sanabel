@@ -27,6 +27,7 @@ import sanabelType2Img from "../../assets/sanabeltype/سنابل الإحسان 
 import sanabelType3Img from "../../assets/sanabeltype/سنابل الإحسان في العلاقة مع الأسرة والمجتمع.png";
 import sanabelType4Img from "../../assets/sanabeltype/سنابل-الإحسان-في-العلاقة-مع-الأرض-والكون.png";
 import { sanabelImgs } from "../../data/SanabelDictionary";
+import { toFiniteNumber } from "../../utils/numericData";
 
 // Define types
 interface Task {
@@ -83,6 +84,7 @@ const AddMissionModal = ({
   const [availableTypes, setAvailableTypes] = useState<TaskType[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const sanabelTypeImg = [
     sanabelType1Img,
@@ -111,6 +113,7 @@ const AddMissionModal = ({
 
     try {
       setLoading(true);
+      setLoadError(null);
       const response = await axios.get(
         `${API_BASE_URL}/students/tasks-category`,
         {
@@ -121,10 +124,18 @@ const AddMissionModal = ({
       );
 
       if (response.status === 200) {
-        setCategories(response.data.data);
+        const categoryData = Array.isArray(response.data.data)
+          ? response.data.data
+          : [];
+        setCategories(categoryData);
+        if (categoryData.length === 0) {
+          setLoadError(t("لا توجد فئات مهام متاحة حاليًا"));
+        }
       }
     } catch (error) {
       console.error("Error fetching categories:", error);
+      setCategories([]);
+      setLoadError(t("تعذر تحميل فئات المهام. حاول مرة أخرى."));
     } finally {
       setLoading(false);
     }
@@ -143,6 +154,7 @@ const AddMissionModal = ({
 
     try {
       setLoading(true);
+      setLoadError(null);
       const response = await axios.get(
         `${API_BASE_URL}/students/appear-Taskes-Type/${categoryId}`,
         {
@@ -155,8 +167,11 @@ const AddMissionModal = ({
       if (response.status === 200) {
         // Extract unique types
         const uniqueTypes: string[] = [];
-        response.data.data.forEach((task: { type: string }) => {
-          if (!uniqueTypes.includes(task.type)) {
+        const taskTypes = Array.isArray(response.data.data)
+          ? response.data.data
+          : [];
+        taskTypes.forEach((task: { type?: string }) => {
+          if (task.type && !uniqueTypes.includes(task.type)) {
             uniqueTypes.push(task.type);
           }
         });
@@ -170,9 +185,14 @@ const AddMissionModal = ({
         setSelectedType(null);
         setFilteredTasks([]);
         setSelectedTaskId(null);
+        if (typesWithCategory.length === 0) {
+          setLoadError(t("لا توجد أنواع مهام متاحة في هذه الفئة"));
+        }
       }
     } catch (error) {
       console.error("Error fetching types:", error);
+      setAvailableTypes([]);
+      setLoadError(t("تعذر تحميل أنواع المهام. حاول مرة أخرى."));
     } finally {
       setLoading(false);
     }
@@ -191,6 +211,7 @@ const AddMissionModal = ({
 
     try {
       setLoading(true);
+      setLoadError(null);
       const response = await axios.get(
         `${API_BASE_URL}/students/appear-Taskes-Type-Category/${categoryId}/${type}`,
         {
@@ -201,11 +222,29 @@ const AddMissionModal = ({
       );
 
       if (response.status === 200) {
-        setFilteredTasks(response.data.tasks);
+        const tasks = Array.isArray(response.data.tasks)
+          ? response.data.tasks
+              .map((task: Task) => ({
+                ...task,
+                id: toFiniteNumber(task.id, -1),
+                categoryId: toFiniteNumber(task.categoryId),
+                xp: toFiniteNumber(task.xp),
+                snabelRed: toFiniteNumber(task.snabelRed),
+                snabelYellow: toFiniteNumber(task.snabelYellow),
+                snabelBlue: toFiniteNumber(task.snabelBlue),
+              }))
+              .filter((task: Task) => task.id > 0)
+          : [];
+        setFilteredTasks(tasks);
         setSelectedTaskId(null);
+        if (tasks.length === 0) {
+          setLoadError(t("لا توجد مهام متاحة لهذا النوع"));
+        }
       }
     } catch (error) {
       console.error("Error fetching tasks:", error);
+      setFilteredTasks([]);
+      setLoadError(t("تعذر تحميل المهام. حاول مرة أخرى."));
     } finally {
       setLoading(false);
     }
@@ -261,6 +300,7 @@ const AddMissionModal = ({
     setSelectedTaskId(null);
     setAvailableTypes([]);
     setFilteredTasks([]);
+    setLoadError(null);
   };
 
   const handleClose = () => {
@@ -285,8 +325,35 @@ const AddMissionModal = ({
           </div>
         )}
 
+        {!loading && loadError && (
+          <div className="flex flex-col items-center gap-3 py-6 text-center">
+            <p className="text-sm text-gray-600">{loadError}</p>
+            {selectedCategoryId === null ? (
+              <button
+                type="button"
+                onClick={fetchCategories}
+                className="px-4 py-2 text-sm text-white rounded-lg bg-blueprimary"
+              >
+                {t("إعادة المحاولة")}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCategoryId(null);
+                  setSelectedType(null);
+                  setLoadError(null);
+                }}
+                className="px-4 py-2 text-sm border rounded-lg text-blueprimary border-blueprimary"
+              >
+                {t("العودة للفئات")}
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Category Selection */}
-        {!loading && selectedCategoryId === null && (
+        {!loading && !loadError && selectedCategoryId === null && (
           <div className="mb-4">
             <h3 className="mb-3 text-lg font-semibold text-right text-black">
               {t("اختر الفئة")}
@@ -315,7 +382,7 @@ const AddMissionModal = ({
         )}
 
         {/* Type Selection */}
-        {!loading && selectedCategoryId !== null && selectedType === null && (
+        {!loading && !loadError && selectedCategoryId !== null && selectedType === null && (
           <div className="mb-4">
             <h3 className="mb-3 text-lg font-semibold text-right text-black">
               {t("اختر النوع")}
@@ -342,7 +409,7 @@ const AddMissionModal = ({
         )}
 
         {/* Task Selection */}
-        {!loading && selectedType !== null && (
+        {!loading && !loadError && selectedType !== null && (
           <div className="mb-4">
             <h3 className="mb-3 text-lg font-semibold text-black">
               {t("اختر المهمة")}
@@ -474,9 +541,15 @@ const TodoList = () => {
       addedDate: new Date().toISOString(),
     };
     setTodoItems((prev) => {
-      const updated = [...prev, newTodoItem];
-      return updated;
+      if (prev.some((item) => item.task.id === task.id)) {
+        return prev;
+      }
+      return [...prev, newTodoItem];
     });
+    // A newly added pending mission must be visible even if the user was
+    // previously viewing the completed filter or had an active search.
+    setFilter("all");
+    setSearchQuery("");
   };
 
   const handleToggleCompleteClick = (todoItemId: number) => {

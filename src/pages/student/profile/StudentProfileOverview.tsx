@@ -17,6 +17,11 @@ import { calculateLevel } from "../../../utils/LevelCalculator";
 // Define the data structure for the chart
 import { useEffect, useState } from "react";
 import axios from "axios";
+import {
+  normalizeCategoryCounts,
+  TASK_CATEGORY_TITLES,
+  toFiniteNumber,
+} from "../../../utils/numericData";
 
 const containerVariants = {
   hidden: { opacity: 0, scale: 0.9 },
@@ -48,7 +53,7 @@ const Profile: React.FC = () => {
   const history = useHistory();
   const { t } = useTranslation();
   const { user } = useUserContext();
-  const xp = Number(user?.xp);
+  const xp = toFiniteNumber(user?.xp);
 
   const { level, remainingXp, xpForNextLevel } = calculateLevel(xp);
 
@@ -69,8 +74,8 @@ const Profile: React.FC = () => {
       );
 
       if (response.status === 200) {
-        setCompletedTasks(response.data.totalCompletedTasks);
-        setCategoryCounts(response.data.categoryCounts);
+        setCompletedTasks(toFiniteNumber(response.data.totalCompletedTasks));
+        setCategoryCounts(normalizeCategoryCounts(response.data.categoryCounts));
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -87,34 +92,31 @@ const Profile: React.FC = () => {
     value: number;
   }
 
-  const [categoryCounts, setCategoryCounts] = useState({
-    "سنابل الإحسان في العلاقة مع الله": 0,
-    "سنابل الإحسان في العلاقة مع النفس": 0,
-    "سنابل الإحسان في العلاقة مع الأسرة والمجتمع": 0,
-    "سنابل الإحسان في العلاقة مع الأرض والكون": 0,
-  });
+  const [categoryCounts, setCategoryCounts] = useState(() =>
+    normalizeCategoryCounts(null),
+  );
   // Dynamic chart data
 
   const sanabelType = [
     {
       name: "العلاقة مع الله",
       img: sanabelType4Img,
-      value: Object.values(categoryCounts)[0],
+      value: categoryCounts[TASK_CATEGORY_TITLES[0]],
     },
     {
       name: "العلاقة مع النفس",
       img: sanabelType2Img,
-      value: Object.values(categoryCounts)[1],
+      value: categoryCounts[TASK_CATEGORY_TITLES[1]],
     },
     {
       name: "العلاقة مع الأسرة والمجتمع",
       img: sanabelType1Img,
-      value: Object.values(categoryCounts)[2],
+      value: categoryCounts[TASK_CATEGORY_TITLES[2]],
     },
     {
       name: "العلاقة مع الأرض والكون",
       img: sanabelType3Img,
-      value: Object.values(categoryCounts)[3],
+      value: categoryCounts[TASK_CATEGORY_TITLES[3]],
     },
   ];
 
