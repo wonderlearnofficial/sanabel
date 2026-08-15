@@ -44,7 +44,11 @@ const itemVariants = {
 const StudentHome: React.FC = () => {
   const history = useHistory();
   const { t } = useTranslation();
-  const { user } = useUserContext();
+  const {
+    user,
+    isLoading: isUserLoading,
+    refreshUserData,
+  } = useUserContext();
   const xp = Number(user?.xp);
 
   const [missionsDoneToday, setMissionsDoneToday] = useState(0);
@@ -104,10 +108,50 @@ const StudentHome: React.FC = () => {
     else setMedalImgTracker(8);
   }, [xp]);
 
-  const isLoading = !user;
+  const isLoading = isUserLoading;
   const safemedal = Math.min(medalImgTracker, medalsData.length - 1);
 
-  useAutoStartGuide("student-home", !isLoading);
+  useAutoStartGuide("student-home", !isLoading && Boolean(user));
+
+  useEffect(() => {
+    if (
+      !isUserLoading &&
+      !user &&
+      !localStorage.getItem("token") &&
+      !localStorage.getItem("refreshToken")
+    ) {
+      history.replace("/login");
+    }
+  }, [history, isUserLoading, user]);
+
+  // A temporary API/network error should never look like an endless loading
+  // operation. Keep the saved session and offer a retry instead of logging the
+  // user out.
+  if (!isLoading && !user) {
+    return (
+      <div
+        className="flex flex-col items-center justify-between w-full h-full p-4"
+        id="page-height"
+      >
+        <div className="flex flex-col items-center justify-center flex-1 gap-3 text-center">
+          <h2 className="text-xl font-bold text-gray-800">
+            {t("تعذر تحميل بيانات الحساب")}
+          </h2>
+          <p className="text-sm text-gray-500">
+            {t("تحقق من اتصالك ثم حاول مرة أخرى")}
+          </p>
+          <button
+            type="button"
+            className="px-5 py-2 font-bold text-white rounded-xl bg-blueprimary"
+            onClick={() => void refreshUserData()}
+          >
+            {t("إعادة المحاولة")}
+          </button>
+        </div>
+        <StudentNavbar />
+      </div>
+    );
+  }
 
   return (
     <div

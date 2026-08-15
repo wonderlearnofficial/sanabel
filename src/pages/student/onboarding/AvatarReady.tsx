@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { useUserContext } from "../../../context/StudentUserProvider";
-import splashgif from "../../../assets/splashscreen/Snabl-El-Ehsan Animation-Vertical.mp4";
+import sanabelLogo from "../../../assets/splash.png";
 
 const AvatarReady: React.FC = () => {
   const { t } = useTranslation();
@@ -25,14 +25,10 @@ const AvatarReady: React.FC = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 1 }}
     >
-      <video
-        src={splashgif}
-        className="object-contain h-auto w-full max-w-sm"
-        autoPlay
-        loop
-        muted
-        preload="auto"
-        aria-label="Intro animation"
+      <img
+        src={sanabelLogo}
+        className="object-contain w-full h-auto max-w-[280px]"
+        alt={t("سنابل الإحسان")}
       />
       <div className="z-10 flex flex-col items-center gap-2 -mt-8 text-center">
         <span className="text-4xl">🎉</span>

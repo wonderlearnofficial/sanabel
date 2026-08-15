@@ -130,6 +130,7 @@ const Challenges: React.FC = () => {
                 autoPlay
                 loop
                 muted
+                playsInline
                 preload="metadata"
               />
             </div>

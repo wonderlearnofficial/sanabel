@@ -30,6 +30,42 @@
   font-family: "DGAgnadeen" !important;
 }
 
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+/*
+ * Use the visible iPhone viewport instead of Tailwind's 100vh utility, which
+ * can extend underneath Safari's collapsing toolbar. In standalone/Capacitor
+ * mode the safe-area padding keeps controls clear of the notch and Home bar.
+ */
+.app-viewport {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: -webkit-fill-available;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
 option {
   font-family: "DGAgnadeen" !important;
   border: 2px white solid;
@@ -39,8 +75,14 @@ option {
 }
 
 #page-height {
-  height: calc(100vh - 80px);
-  height: calc(100dvh - 80px);
+  height: calc(
+    100vh - 80px - env(safe-area-inset-top, 0px) -
+      env(safe-area-inset-bottom, 0px)
+  );
+  height: calc(
+    100dvh - 80px - env(safe-area-inset-top, 0px) -
+      env(safe-area-inset-bottom, 0px)
+  );
 }
 
 /* Tailwind CSS file or global styles */

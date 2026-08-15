@@ -228,7 +228,7 @@ const App: React.FC = () => {
             <DevLogin />
           ) : (
           /* Outer container that fills the entire viewport */
-          <div className="flex items-center justify-center w-screen h-screen bg-white md:bg-gray-100">
+          <div className="app-viewport flex items-center justify-center bg-white md:bg-gray-100">
             {/* Phone frame: full-screen on mobile, centered 430px card on desktop */}
             <div className="relative w-full h-full md:max-w-[430px] md:shadow-2xl overflow-hidden bg-white">
             <IonReactRouter>

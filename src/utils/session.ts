@@ -1,6 +1,13 @@
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
 
+export function clearClientSession(): void {
+  localStorage.removeItem("token");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("role");
+  localStorage.setItem("keepLoggedIn", "false");
+}
+
 // Best-effort server-side session invalidation (rotates the user's tokenVersion
 // so all refresh tokens stop working), then clears all client auth state. Safe
 // to call even when offline — local state is cleared regardless.
@@ -17,8 +24,5 @@ export async function logoutSession(): Promise<void> {
       // ignore — clearing local state is what matters for the user
     }
   }
-  localStorage.removeItem("token");
-  localStorage.removeItem("refreshToken");
-  localStorage.removeItem("role");
-  localStorage.setItem("keepLoggedIn", "false");
+  clearClientSession();
 }

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   FaEdit,
   FaTrash,
@@ -57,6 +58,13 @@ const GRADE_COLORS: Record<string, string> = {
   preparatory: "#8b5cf6",
   secondary: "#f59e0b",
 };
+
+interface ActionMenuPosition {
+  left: number;
+  top?: number;
+  bottom?: number;
+  opensUp: boolean;
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const getUserId = (tab: Tab, row: any): number =>
@@ -172,6 +180,8 @@ export const DataTable: React.FC<DataTableProps> = ({
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
+  const [actionMenuPosition, setActionMenuPosition] =
+    useState<ActionMenuPosition | null>(null);
 
   const getSelId = (row: any) => {
     return activeTab === "users" || activeTab === "admins"
@@ -623,7 +633,38 @@ export const DataTable: React.FC<DataTableProps> = ({
 
   const toggleActionMenu = (e: React.MouseEvent, rowId: number) => {
     e.stopPropagation();
-    setActiveMenuId((prev) => (prev === rowId ? null : rowId));
+    if (activeMenuId === rowId) {
+      setActiveMenuId(null);
+      setActionMenuPosition(null);
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const menuWidth = 176; // Tailwind w-44
+    const estimatedMenuHeight = 230;
+    const viewportPadding = 8;
+    const preferredLeft = isRTL ? rect.left : rect.right - menuWidth;
+    const left = Math.min(
+      Math.max(viewportPadding, preferredLeft),
+      window.innerWidth - menuWidth - viewportPadding,
+    );
+    const opensUp =
+      rect.bottom + estimatedMenuHeight > window.innerHeight &&
+      rect.top > estimatedMenuHeight;
+
+    setActionMenuPosition({
+      left,
+      opensUp,
+      ...(opensUp
+        ? { bottom: window.innerHeight - rect.top + 6 }
+        : { top: rect.bottom + 6 }),
+    });
+    setActiveMenuId(rowId);
+  };
+
+  const closeActionMenu = () => {
+    setActiveMenuId(null);
+    setActionMenuPosition(null);
   };
 
   return (
@@ -740,26 +781,39 @@ export const DataTable: React.FC<DataTableProps> = ({
                           <FaEllipsisV size={12} />
                         </button>
 
-                        <AnimatePresence>
-                          {activeMenuId === row.id && (
+                        {activeMenuId === row.id &&
+                          actionMenuPosition &&
+                          createPortal(
                             <>
                               {/* Backdrop to close dropdown */}
                               <div
-                                className="fixed inset-0 z-20"
-                                onClick={() => setActiveMenuId(null)}
+                                className="fixed inset-0 z-[90]"
+                                onClick={closeActionMenu}
                               />
                               <motion.div
-                                initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                initial={{
+                                  opacity: 0,
+                                  scale: 0.96,
+                                  y: actionMenuPosition.opensUp ? 8 : -8,
+                                }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                className={`absolute z-30 w-44 bg-white border border-slate-100 rounded-xl shadow-xl p-1.5 flex flex-col gap-0.5 mt-7 ${
-                                  isRTL ? "left-0 origin-top-left" : "right-0 origin-top-right"
+                                transition={{ duration: 0.14 }}
+                                style={{
+                                  left: actionMenuPosition.left,
+                                  top: actionMenuPosition.top,
+                                  bottom: actionMenuPosition.bottom,
+                                  backgroundColor: "#ffffff",
+                                }}
+                                className={`fixed z-[100] isolate w-44 bg-white opacity-100 border border-slate-200 rounded-xl shadow-2xl p-1.5 flex flex-col gap-0.5 ${
+                                  actionMenuPosition.opensUp
+                                    ? "origin-bottom"
+                                    : "origin-top"
                                 }`}
                               >
                                 <button
                                   onClick={() => {
                                     onEditClick(row);
-                                    setActiveMenuId(null);
+                                    closeActionMenu();
                                   }}
                                   className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg transition-colors text-right w-full"
                                 >
@@ -771,7 +825,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                                   <button
                                     onClick={() => {
                                       onResetPasswordClick(row);
-                                      setActiveMenuId(null);
+                                      closeActionMenu();
                                     }}
                                     className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-amber-600 hover:bg-amber-50 hover:text-amber-700 rounded-lg transition-colors text-right w-full"
                                   >
@@ -785,7 +839,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                                     onClick={() => {
                                       navigator.clipboard.writeText(email);
                                       toast.success(t("admin.action.copied"));
-                                      setActiveMenuId(null);
+                                      closeActionMenu();
                                     }}
                                     className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-lg transition-colors text-right w-full"
                                   >
@@ -799,7 +853,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                                     onClick={() => {
                                       navigator.clipboard.writeText(row.connectCode);
                                       toast.success(t("admin.action.copied"));
-                                      setActiveMenuId(null);
+                                      closeActionMenu();
                                     }}
                                     className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-violet-600 hover:bg-violet-50 hover:text-violet-700 rounded-lg transition-colors text-right w-full"
                                   >
@@ -813,7 +867,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                                 <button
                                   onClick={() => {
                                     onDeleteClick(row);
-                                    setActiveMenuId(null);
+                                    closeActionMenu();
                                   }}
                                   className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors text-right w-full"
                                 >
@@ -821,9 +875,9 @@ export const DataTable: React.FC<DataTableProps> = ({
                                   <span>{t("admin.delete.confirm")}</span>
                                 </button>
                               </motion.div>
-                            </>
+                            </>,
+                            document.body,
                           )}
-                        </AnimatePresence>
                       </div>
                     </td>
                   </motion.tr>

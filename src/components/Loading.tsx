@@ -10,6 +10,7 @@ function Loading() {
         autoPlay
         loop
         muted
+        playsInline
         preload="auto"
       />
       <div className="flex">

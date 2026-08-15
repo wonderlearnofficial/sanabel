@@ -94,14 +94,20 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  // Start in loading state so protected pages do not interpret the first render
+  // (before this provider's effect runs) as a missing session.
+  const [isLoading, setIsLoading] = useState(true);
 
   // Function to fetch user data based on role
   const fetchUserData = async (token?: string) => {
     const authToken = token || localStorage.getItem("token");
     const role = localStorage.getItem("role");
 
-    if (!authToken || !role) return;
+    if (!authToken || !role) {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
 

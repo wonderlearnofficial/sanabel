@@ -95,57 +95,32 @@ const Login: React.FC = () => {
           localStorage.setItem("firstTimer", "false");
         }
 
-        // Fetch user data immediately after login
-        try {
-          const userDataResponse = await axios.get(
-            `${API_BASE_URL}/students/data`,
-            {
-              headers: {
-                Authorization: `Bearer ${response.data.data.user.token}`,
-              },
-            },
-          );
-
-          // Now set the user data directly before redirecting
-          if (userDataResponse.status === 200) {
-            // Get the data
-            const userData = userDataResponse.data.data.student;
-
-            // Set user in context
-            const { setUser } = useUserContext();
-            setUser({
-              id: userData.id,
-              firstName: userData.user.firstName,
-              lastName: userData.user.lastName,
-              email: userData.user.email,
-              role: response.data.data.user.role,
-              grade: userData.grade,
-              snabelRed: userData.snabelRed,
-              snabelBlue: userData.snabelBlue,
-              snabelYellow: userData.snabelYellow,
-              xp: userData.xp,
-              water: userData.water,
-              fertilizer: userData.seeders,
-              waterNeeded: userData.waterNeeded,
-              fertilizerNeeded: response.data.data.treePoint.seeders,
-              treeStage: response.data.data.treePoint.stage,
-              treeProgress: response.data.data.treePoint.treeProgress,
-              connectCode: userData.connectCode,
-              profileImg: userData.user.profileImg || "", // Add this line
-              canAssignTask: userData.canAssignTask,
-              seenGuides: userData.user.seenGuides || [],
-            });
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-        }
-
+        // Load the role-specific account data into the shared context before
+        // navigating. This also avoids calling a React hook inside an event
+        // handler, which the previous student-only shortcut did.
         await refreshUserData(response.data.data.user.token);
 
         // Show success message
         toast.success(t("login_successful"));
 
-        history.push("/");
+        // Do not replay the splash animation after every login. Route directly
+        // to the correct experience; new students still complete avatar setup.
+        const role = response.data.data.user.role;
+        if (role === "Student") {
+          history.replace(
+            hasCompletedTutorial
+              ? "/student/home"
+              : "/student/create-avatar",
+          );
+        } else if (role === "Teacher") {
+          history.replace("/teacher/home");
+        } else if (role === "Parent") {
+          history.replace("/parent/home");
+        } else if (role === "Admin") {
+          window.location.replace("/admin/userdata");
+        } else {
+          history.replace("/");
+        }
       }
     } catch (error) {
       toast.error(t(getErrorMessage(error, "login_failed")));
@@ -178,6 +153,7 @@ const Login: React.FC = () => {
           src={sanabelVideo}
           autoPlay
           muted
+          playsInline
           preload="metadata"
         />
       </div>

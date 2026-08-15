@@ -13,10 +13,13 @@ const SplashScreen: React.FC = () => {
     const hasVisited = localStorage.getItem("hasVisited") === "true";
     const keepLoggedIn = localStorage.getItem("keepLoggedIn") === "true";
     const role = localStorage.getItem("role");
+    const hasAuthToken = Boolean(
+      localStorage.getItem("token") || localStorage.getItem("refreshToken"),
+    );
     const firstTimer = localStorage.getItem("firstTimer");
 
     const timer = setTimeout(() => {
-      if (keepLoggedIn) {
+      if (keepLoggedIn && role && hasAuthToken) {
         // Logged-in user redirects to home based on role
         if (role === "Student") {
           // Check if this is their first time (they need to create an avatar)
@@ -33,7 +36,17 @@ const SplashScreen: React.FC = () => {
         } else if (role === "Admin") {
           window.location.href = "/admin/userdata";
         }
-      } else if (!hasVisited) {
+        return;
+      }
+
+      // Do not route a stale keepLoggedIn flag to a protected page when its
+      // tokens were cleared or lost.
+      if (keepLoggedIn || role) {
+        localStorage.setItem("keepLoggedIn", "false");
+        localStorage.removeItem("role");
+      }
+
+      if (!hasVisited) {
         // First-time visitor to app redirects to onboarding
         localStorage.setItem("hasVisited", "true");
         history.replace("/onboarding");
@@ -69,8 +82,8 @@ const SplashScreen: React.FC = () => {
         src={splashgif}
         className="object-fill w-auto h-full mt-4"
         autoPlay
-        loop
         muted
+        playsInline
         preload="auto"
       />
       <motion.div

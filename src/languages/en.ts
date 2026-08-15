@@ -9,6 +9,10 @@ const en = {
     البروفايل: "Profile",
     سماد: "Fertilizer",
     ماء: "Water",
+    "تعذر تحميل بيانات الحساب": "We couldn't load your account data",
+    "تحقق من اتصالك ثم حاول مرة أخرى":
+      "Check your connection, then try again",
+    "إعادة المحاولة": "Try again",
     تخطي: "Skip",
     "الموارد الخاصة بك": "Your Resources",
     "شجرة سنابل الإحسان": "Tree of Good Deeds",

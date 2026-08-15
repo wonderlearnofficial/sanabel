@@ -1,24 +1,56 @@
 import axios from "axios";
 import { API_BASE_URL } from "./api";
+import { clearClientSession } from "../utils/session";
 
 // Single-flight guard so a burst of concurrent 401s triggers only one refresh.
-let refreshing: Promise<string | null> | null = null;
+let refreshing: Promise<string> | null = null;
+let redirectingToLogin = false;
 
-async function doRefresh(): Promise<string | null> {
+class SessionExpiredError extends Error {
+  constructor() {
+    super("Session expired");
+    this.name = "SessionExpiredError";
+  }
+}
+
+function endExpiredSession(): void {
+  clearClientSession();
+  if (redirectingToLogin || window.location.pathname === "/login") return;
+
+  redirectingToLogin = true;
+  sessionStorage.setItem("sessionExpired", "true");
+  window.location.replace("/login");
+}
+
+async function doRefresh(): Promise<string> {
   const refreshToken = localStorage.getItem("refreshToken");
-  if (!refreshToken) return null;
+  if (!refreshToken) throw new SessionExpiredError();
+
   try {
     const resp = await axios.post(`${API_BASE_URL}/users/refresh`, {
       refreshToken,
     });
     const newToken = resp?.data?.data?.token;
-    if (newToken) {
-      localStorage.setItem("token", newToken);
-      return newToken;
+    const nextRefreshToken = resp?.data?.data?.refreshToken;
+    if (!newToken) throw new SessionExpiredError();
+
+    localStorage.setItem("token", newToken);
+    if (nextRefreshToken) {
+      localStorage.setItem("refreshToken", nextRefreshToken);
     }
-    return null;
-  } catch {
-    return null;
+    return newToken;
+  } catch (error) {
+    if (error instanceof SessionExpiredError) throw error;
+
+    // Only end the session when the server confirms that the refresh token is
+    // unusable. Network/server outages must not sign the user out.
+    if (
+      axios.isAxiosError(error) &&
+      (error.response?.status === 401 || error.response?.status === 403)
+    ) {
+      throw new SessionExpiredError();
+    }
+    throw error;
   }
 }
 
@@ -36,10 +68,12 @@ export function setupAxiosAuth(): void {
       const url: string = original?.url || "";
       const isAuthCall =
         url.includes("/users/refresh") || url.includes("/users/login");
+      const canRefresh =
+        (status === 401 && code === "TOKEN_EXPIRED") ||
+        (status === 403 && code === "TOKEN_INVALID");
 
       if (
-        status === 401 &&
-        code === "TOKEN_EXPIRED" &&
+        canRefresh &&
         original &&
         !original._retry &&
         !isAuthCall
@@ -50,15 +84,17 @@ export function setupAxiosAuth(): void {
             refreshing = null;
           });
         }
-        const newToken = await refreshing;
-        if (newToken) {
+        try {
+          const newToken = await refreshing;
           original.headers = original.headers || {};
           original.headers.Authorization = `Bearer ${newToken}`;
           return axios(original);
+        } catch (refreshError) {
+          if (refreshError instanceof SessionExpiredError) {
+            endExpiredSession();
+          }
+          return Promise.reject(refreshError);
         }
-        // Refresh failed — the session is genuinely over.
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
       }
 
       return Promise.reject(error);
