@@ -117,7 +117,7 @@ const ChooseSignMethod: React.FC = () => {
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5, delay: 0.8 }}
-                  className="w-20 h-20 mb-2 bg-blue-100 rounded-full shadow-md sm:w-24 sm:h-24 sm:mb-3 flex-center shrink-0"
+                  className="w-20 h-20 mx-auto mb-2 bg-blue-100 rounded-full shadow-md sm:w-24 sm:h-24 sm:mb-3 flex-center shrink-0"
                 >
                   <IonIcon
                     icon={personOutline}
@@ -141,7 +141,7 @@ const ChooseSignMethod: React.FC = () => {
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5, delay: 1.0 }}
-                  className="w-20 h-20 mb-2 bg-yellow-100 rounded-full shadow-md sm:w-24 sm:h-24 sm:mb-3 flex-center shrink-0"
+                  className="w-20 h-20 mx-auto mb-2 bg-yellow-100 rounded-full shadow-md sm:w-24 sm:h-24 sm:mb-3 flex-center shrink-0"
                 >
                   <IonIcon
                     icon={schoolOutline} // Changed icon to schoolOutline
