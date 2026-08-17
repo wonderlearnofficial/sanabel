@@ -29,6 +29,8 @@ interface FilterBarProps {
   gradesList: { id: number; name: string }[];
   organizations: { id: number; name: string }[];
   accentColor: string;
+  /** True for school-scoped admins, who only ever see one school. */
+  hideSchoolFilter?: boolean;
 }
 
 export const FilterBar: React.FC<FilterBarProps> = ({
@@ -46,6 +48,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   gradesList,
   organizations,
   accentColor,
+  hideSchoolFilter = false,
 }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
@@ -55,13 +58,15 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     activeTab === "classes" ||
     activeTab === "scores" ||
     activeTab === "history";
+  // School-scoped admins see exactly one school, so a school filter is noise
   const showOrg =
-    activeTab === "students" ||
-    activeTab === "teachers" ||
-    activeTab === "classes" ||
-    activeTab === "grades" ||
-    activeTab === "scores" ||
-    activeTab === "history";
+    !hideSchoolFilter &&
+    (activeTab === "students" ||
+      activeTab === "teachers" ||
+      activeTab === "classes" ||
+      activeTab === "grades" ||
+      activeTab === "scores" ||
+      activeTab === "history");
   const showRole = activeTab === "users";
   const showVerified = activeTab === "users";
 

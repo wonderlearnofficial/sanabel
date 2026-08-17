@@ -36,6 +36,8 @@ interface SidebarProps {
   onLogout: () => void;
   totalCounts: Record<Tab, number>;
   accentColor: string;
+  /** Tabs to omit entirely (e.g. organizations/admins for school-scoped admins). */
+  hiddenTabs?: Tab[];
 }
 
 const TAB_ICONS: Record<Tab, React.ReactNode> = {
@@ -70,6 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onLogout,
   totalCounts,
   accentColor,
+  hiddenTabs = [],
 }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
@@ -77,6 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   useAutoStartGuide("admin-home", true);
 
   const renderTabButton = (tabKey: Tab) => {
+    if (hiddenTabs.includes(tabKey)) return null;
     const isActive = activeTab === tabKey;
     return (
       <button

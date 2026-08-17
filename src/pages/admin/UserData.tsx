@@ -241,6 +241,15 @@ const UserData: React.FC = () => {
   // Stats
   const [stats, setStats] = useState<Record<string, number>>({});
   const [statsLoading, setStatsLoading] = useState(false);
+
+  // Admin scope: a number = school admin locked to that organization,
+  // null = super admin. Drives which tabs/filters/actions are offered.
+  const [scopedOrganizationId, setScopedOrganizationId] = useState<number | null>(null);
+  const isScopedAdmin = scopedOrganizationId !== null;
+  const hiddenTabs = useMemo<Tab[]>(
+    () => (isScopedAdmin ? ["organizations", "admins"] : []),
+    [isScopedAdmin],
+  );
   const [gradesList, setGradesList] = useState<{ id: number; name: string; organizationId?: number | null }[]>([]);
   const [createOrganizations, setCreateOrganizations] = useState<{ id: number; name: string }[]>([]);
   const [createClasses, setCreateClasses] = useState<{ id: number; classname: string; grade: string; organizationId?: number; gradeId?: number | null }[]>([]);
@@ -369,6 +378,25 @@ const UserData: React.FC = () => {
   useEffect(() => {
     if (authorized) fetchStats();
   }, [authorized, fetchStats]);
+
+  // Resolve this admin's own scope once, so the UI shows only what applies.
+  useEffect(() => {
+    if (!authorized || !token) return;
+    axios
+      .get(`${API_BASE_URL}/admin/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((r) => setScopedOrganizationId(r.data.data?.organizationId ?? null))
+      .catch((err) => {
+        console.error("[Admin UserData] failed to resolve admin scope:", err);
+      });
+  }, [authorized, token]);
+
+  // A scoped admin must never sit on a tab that doesn't apply to them
+  // (e.g. after their scope is assigned while the panel is open).
+  useEffect(() => {
+    if (hiddenTabs.includes(activeTab)) setActiveTab("students");
+  }, [hiddenTabs, activeTab]);
 
   useEffect(() => {
     if (authorized) fetchGradesList();
@@ -922,6 +950,7 @@ const UserData: React.FC = () => {
           }
         }
         accentColor={accent.from}
+        hiddenTabs={hiddenTabs}
       />
 
       {/* ══════════════════ MAIN CONTENT ══════════════════ */}
@@ -984,6 +1013,7 @@ const UserData: React.FC = () => {
             gradesList={gradesList}
             organizations={createOrganizations}
             accentColor={accent.from}
+            hideSchoolFilter={isScopedAdmin}
           />
 
           {/* Core Management Table */}
@@ -1072,6 +1102,7 @@ const UserData: React.FC = () => {
             organizations={createOrganizations}
             classes={createClasses}
             fetchClassesForOrg={fetchClassesForOrg}
+            scopedOrganizationId={scopedOrganizationId}
           />
         )}
       </AnimatePresence>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaTimes, FaCopy, FaCheck } from "react-icons/fa";
@@ -17,6 +17,8 @@ interface CreateWizardProps {
   organizations: { id: number; name: string }[];
   classes: { id: number; classname: string; grade: string; organizationId?: number; gradeId?: number | null }[];
   fetchClassesForOrg: (orgId: string) => Promise<void>;
+  /** School id a scoped admin is locked to; null for super admins. */
+  scopedOrganizationId?: number | null;
 }
 
 export const CreateWizard: React.FC<CreateWizardProps> = ({
@@ -31,9 +33,16 @@ export const CreateWizard: React.FC<CreateWizardProps> = ({
   organizations,
   classes,
   fetchClassesForOrg,
+  scopedOrganizationId = null,
 }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
+
+  // School admins cannot create admin accounts (the server rejects it too)
+  const availableRoles =
+    scopedOrganizationId !== null
+      ? (["Student", "Teacher", "Parent"] as const)
+      : (["Student", "Teacher", "Parent", "Admin"] as const);
 
   const [step, setStep] = useState(1);
   const [role, setRole] = useState<"Student" | "Teacher" | "Parent" | "Admin">("Student");
@@ -41,11 +50,22 @@ export const CreateWizard: React.FC<CreateWizardProps> = ({
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [gradeId, setGradeId] = useState("");
-  const [orgId, setOrgId] = useState("");
+  const [orgId, setOrgId] = useState(
+    scopedOrganizationId !== null ? String(scopedOrganizationId) : "",
+  );
   const [classId, setClassId] = useState("");
   const [classIds, setClassIds] = useState<string[]>([]);
   const [addTeacherClassGradeFilter, setAddTeacherClassGradeFilter] = useState("");
   const [teacherClassToAdd, setTeacherClassToAdd] = useState("");
+
+  // A scoped admin's school is fixed: preselect it and load its classes so
+  // the school step needs no interaction.
+  useEffect(() => {
+    if (!open || scopedOrganizationId === null) return;
+    const locked = String(scopedOrganizationId);
+    setOrgId(locked);
+    fetchClassesForOrg(locked);
+  }, [open, scopedOrganizationId, fetchClassesForOrg]);
 
   if (!open) return null;
 
@@ -221,7 +241,7 @@ export const CreateWizard: React.FC<CreateWizardProps> = ({
                 <div className="flex flex-col gap-4">
                   <label className={labelCls}>{t("admin.modal.accountType")}</label>
                   <div className="grid grid-cols-2 gap-2.5">
-                    {(["Student", "Teacher", "Parent", "Admin"] as const).map((roleVal) => (
+                    {availableRoles.map((roleVal) => (
                       <button
                         key={roleVal}
                         onClick={() => setRole(roleVal)}
@@ -285,6 +305,7 @@ export const CreateWizard: React.FC<CreateWizardProps> = ({
                       value={orgId}
                       onChange={(e) => handleOrgChange(e.target.value)}
                       className={selectCls}
+                      disabled={scopedOrganizationId !== null}
                     >
                       <option value="">{t("admin.modal.selectOrg")}</option>
                       {organizations.map((o) => (
