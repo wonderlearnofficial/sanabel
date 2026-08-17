@@ -13,10 +13,10 @@ import sanabel03 from "../assets/trophies/Other Trophies/سنابل الإحسا
 import sanabel04 from "../assets/trophies/Other Trophies/سنابل الإحسان في العلاقة مع الأرض والكون.png";
 
 import treestage1 from "../assets/trophies/Other Trophies/مرحلة - 1.png";
-import treestage2 from "../assets/trophies/Other Trophies/مرحلة - 1.png";
-import treestage3 from "../assets/trophies/Other Trophies/مرحلة - 1.png";
-import treestage4 from "../assets/trophies/Other Trophies/مرحلة - 1.png";
-import treestage5 from "../assets/trophies/Other Trophies/مرحلة - 1.png";
+import treestage2 from "../assets/trophies/Other Trophies/مرحلة - 2.png";
+import treestage3 from "../assets/trophies/Other Trophies/مرحلة - 3.png";
+import treestage4 from "../assets/trophies/Other Trophies/مرحلة - 4.png";
+import treestage5 from "../assets/trophies/Other Trophies/مرحلة - 5.png";
 
 import progressTree from "../assets/trophies/Other Trophies/التقدم.png";
 
