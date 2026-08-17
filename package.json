@@ -1,7 +1,7 @@
 {
   "name": "Sanabel_Al-Ehsan",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.2.6",
   "type": "module",
   "scripts": {
     "dev": "vite",

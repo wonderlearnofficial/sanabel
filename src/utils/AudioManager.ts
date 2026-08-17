@@ -1,4 +1,5 @@
 import { Howl, Howler } from "howler";
+import { HapticsManager } from "./HapticsManager";
 
 export const SOUND_EFFECTS_STORAGE_KEY = "sanabel:sound-effects";
 
@@ -155,6 +156,22 @@ export class AudioManagerClass {
     const id = sound.play();
     this.activePlayback = { id, key, priority: profile.priority, sound };
     this.lastPlayed.set(key, now);
+
+    // Trigger complementary tactile vibration
+    switch (key) {
+      case "tap":
+        HapticsManager.impactLight();
+        break;
+      case "success":
+        HapticsManager.notificationSuccess();
+        break;
+      case "error":
+        HapticsManager.notificationError();
+        break;
+      case "reward":
+        HapticsManager.celebration();
+        break;
+    }
 
     this.stopTimer = setTimeout(() => {
       if (sound.playing(id)) sound.stop(id);

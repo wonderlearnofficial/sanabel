@@ -14,6 +14,7 @@ import {
   FaQuestionCircle,
   FaTrophy,
   FaHistory,
+  FaMobileAlt,
 } from "react-icons/fa";
 import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
 import { useGuide } from "../../../guides/GuideProvider";
@@ -28,7 +29,8 @@ type Tab =
   | "organizations"
   | "grades"
   | "scores"
-  | "history";
+  | "history"
+  | "app_version";
 
 interface SidebarProps {
   activeTab: Tab;
@@ -51,6 +53,7 @@ const TAB_ICONS: Record<Tab, React.ReactNode> = {
   grades: <FaGraduationCap size={16} />,
   scores: <FaTrophy size={16} />,
   history: <FaHistory size={16} />,
+  app_version: <FaMobileAlt size={16} />,
 };
 
 const TAB_I18N: Record<Tab, string> = {
@@ -64,6 +67,7 @@ const TAB_I18N: Record<Tab, string> = {
   grades: "admin.tab.grades",
   scores: "admin.tab.scores",
   history: "admin.tab.history",
+  app_version: "admin.tab.app_version",
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({

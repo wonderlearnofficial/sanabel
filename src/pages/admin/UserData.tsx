@@ -25,6 +25,7 @@ import { DataTable } from "./components/DataTable";
 import { EditDrawer } from "./components/EditDrawer";
 import { CreateWizard } from "./components/CreateWizard";
 import { Pagination } from "./components/Pagination";
+import { AppVersionControl } from "./components/AppVersionControl";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Tab =
@@ -37,7 +38,8 @@ type Tab =
   | "organizations"
   | "grades"
   | "scores"
-  | "history";
+  | "history"
+  | "app_version";
 type UserLikeTab = "users" | "students" | "teachers" | "parents" | "admins";
 type SortDir = "asc" | "desc" | null;
 
@@ -62,6 +64,7 @@ const TAB_ACCENT: Record<Tab, { from: string; to: string; glow: string; light: s
   grades: { from: "#8b5cf6", to: "#7c3aed", glow: "rgba(139,92,246,0.35)", light: "#ede9fe" },
   scores: { from: "#f59e0b", to: "#d97706", glow: "rgba(245,158,11,0.35)", light: "#fef3c7" },
   history: { from: "#10b981", to: "#059669", glow: "rgba(16,185,129,0.35)", light: "#d1fae5" },
+  app_version: { from: "#6366f1", to: "#4f46e5", glow: "rgba(99,102,241,0.35)", light: "#e0e7ff" },
 };
 
 const ENDPOINTS: Record<Tab, string> = {
@@ -75,6 +78,7 @@ const ENDPOINTS: Record<Tab, string> = {
   grades: `${API_BASE_URL}/admin/grades`,
   scores: `${API_BASE_URL}/admin/scores`,
   history: `${API_BASE_URL}/admin/history`,
+  app_version: `${API_BASE_URL}/admin/app-version`,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -295,6 +299,10 @@ const UserData: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     if (!token) return;
+    if (activeTab === "app_version") {
+      setLoading(false);
+      return;
+    }
     if (loadedTabRef.current !== activeTab) setLoading(true);
     try {
       const params: Record<string, string | number> = { page, limit };
@@ -947,6 +955,7 @@ const UserData: React.FC = () => {
             grades: 0,
             scores: 0,
             history: 0,
+            app_version: 0,
           }
         }
         accentColor={accent.from}
@@ -979,69 +988,75 @@ const UserData: React.FC = () => {
 
         {/* Dash Content */}
         <div className="flex-1 px-8 py-6 overflow-y-auto">
-          {/* Lightweight KPI Cards & Analytics drawer */}
-          <StatsCards stats={stats} rows={rows} activeTab={activeTab} accentColor={accent.from} loading={statsLoading} />
+          {activeTab === "app_version" ? (
+            <AppVersionControl />
+          ) : (
+            <>
+              {/* Lightweight KPI Cards & Analytics drawer */}
+              <StatsCards stats={stats} rows={rows} activeTab={activeTab} accentColor={accent.from} loading={statsLoading} />
 
-          {/* Filter, Search bar */}
-          <FilterBar
-            search={search}
-            onSearchChange={(val) => {
-              setPage(1);
-              setSearch(val);
-            }}
-            activeTab={activeTab}
-            filterGradeId={filterGradeId}
-            setFilterGradeId={(v) => {
-              setPage(1);
-              setFilterGradeId(v);
-            }}
-            filterOrgId={filterOrgId}
-            setFilterOrgId={(v) => {
-              setPage(1);
-              setFilterOrgId(v);
-            }}
-            filterRole={filterRole}
-            setFilterRole={(v) => {
-              setPage(1);
-              setFilterRole(v);
-            }}
-            filterVerified={filterVerified}
-            setFilterVerified={(v) => {
-              setPage(1);
-              setFilterVerified(v);
-            }}
-            gradesList={gradesList}
-            organizations={createOrganizations}
-            accentColor={accent.from}
-            hideSchoolFilter={isScopedAdmin}
-          />
+              {/* Filter, Search bar */}
+              <FilterBar
+                search={search}
+                onSearchChange={(val) => {
+                  setPage(1);
+                  setSearch(val);
+                }}
+                activeTab={activeTab}
+                filterGradeId={filterGradeId}
+                setFilterGradeId={(v) => {
+                  setPage(1);
+                  setFilterGradeId(v);
+                }}
+                filterOrgId={filterOrgId}
+                setFilterOrgId={(v) => {
+                  setPage(1);
+                  setFilterOrgId(v);
+                }}
+                filterRole={filterRole}
+                setFilterRole={(v) => {
+                  setPage(1);
+                  setFilterRole(v);
+                }}
+                filterVerified={filterVerified}
+                setFilterVerified={(v) => {
+                  setPage(1);
+                  setFilterVerified(v);
+                }}
+                gradesList={gradesList}
+                organizations={createOrganizations}
+                accentColor={accent.from}
+                hideSchoolFilter={isScopedAdmin}
+              />
 
-          {/* Core Management Table */}
-          <DataTable
-            activeTab={activeTab}
-            rows={sortedRows}
-            loading={loading}
-            selectedIds={selectedIds}
-            setSelectedIds={setSelectedIds}
-            onEditClick={openEditDrawer}
-            onDeleteClick={(row) =>
-              setConfirmDelete({ id: getDeleteId(activeTab, row), name: getName(activeTab, row), tab: activeTab, row })
-            }
-            onResetPasswordClick={(row) =>
-              setConfirmReset({ userId: getUserId(activeTab as UserLikeTab, row), name: getName(activeTab, row) })
-            }
-            accentColor={accent.from}
-            sortField={sortField}
-            sortDir={sortDir}
-            onSort={handleSort}
-            search={search}
-            gradesList={gradesList}
-            organizations={createOrganizations}
-          />
+              {/* Core Management Table */}
+              <DataTable
+                activeTab={activeTab}
+                rows={sortedRows}
+                loading={loading}
+                selectedIds={selectedIds}
+                setSelectedIds={setSelectedIds}
+                onEditClick={openEditDrawer}
+                onDeleteClick={(row) =>
+                  setConfirmDelete({ id: getDeleteId(activeTab, row), name: getName(activeTab, row), tab: activeTab, row })
+                }
+                onResetPasswordClick={(row) =>
+                  setConfirmReset({ userId: getUserId(activeTab as UserLikeTab, row), name: getName(activeTab, row) })
+                }
+                accentColor={accent.from}
+                sortField={sortField}
+                sortDir={sortDir}
+                onSort={handleSort}
+                search={search}
+                gradesList={gradesList}
+                organizations={createOrganizations}
+              />
 
-          {/* Styled SaaS Pagination */}
-          {total > limit && (
-            <Pagination page={page} setPage={setPage} total={total} limit={limit} accentColor={accent.from} />
+              {/* Styled SaaS Pagination */}
+              {total > limit && (
+                <Pagination page={page} setPage={setPage} total={total} limit={limit} accentColor={accent.from} />
+              )}
+            </>
           )}
         </div>
       </main>

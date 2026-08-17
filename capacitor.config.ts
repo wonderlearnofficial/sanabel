@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "io.ionic.starter",
-  appName: "Sanabel_Al-Ehsan",
+  appId: "com.wonderlearn.sanabel",
+  appName: "Sanabel Al Ehsan",
   webDir: "dist",
   backgroundColor: "#ffffff",
   ios: {

@@ -23,6 +23,8 @@ import axios from "axios";
 import { toFiniteNumber } from "../../utils/numericData";
 import { computeMissingByColor } from "../../utils/shopMath";
 import { describeApiError } from "../../utils/apiError";
+import { AudioManager } from "../../utils/AudioManager";
+import { HapticsManager } from "../../utils/HapticsManager";
 
 const Toaster = () => (
   <ToastContainer
@@ -190,6 +192,7 @@ const Shop: React.FC = () => {
       );
 
       if (response.status === 200) {
+        AudioManager.play("success");
         setBuyWaterCount(0);
         setBuyFertilizerCount(0);
         setIsPopupVisible(false);
@@ -207,6 +210,7 @@ const Shop: React.FC = () => {
         }, 2000);
       }
     } catch (error: any) {
+      AudioManager.play("error");
       console.error("Error purchasing items:", error);
 
       // Only a real insufficient-balance rejection opens the "you need more
@@ -261,10 +265,12 @@ const Shop: React.FC = () => {
       );
 
       if (response.status === 200) {
+        AudioManager.play("reward");
         setIsCelebrationVisible(true);
         // Refresh user data to show updated tree stage
       }
     } catch (error) {
+      AudioManager.play("error");
       console.error("Error progress tree:", error);
       toast.error(t(describeApiError(error)));
       // The resource counts on screen may be stale — resync with the server.

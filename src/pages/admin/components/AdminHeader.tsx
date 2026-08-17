@@ -18,7 +18,8 @@ type Tab =
   | "organizations"
   | "grades"
   | "scores"
-  | "history";
+  | "history"
+  | "app_version";
 
 interface AdminHeaderProps {
   activeTab: Tab;
@@ -44,6 +45,7 @@ const TAB_I18N: Record<Tab, string> = {
   grades: "admin.tab.grades",
   scores: "admin.tab.scores",
   history: "admin.tab.history",
+  app_version: "admin.tab.app_version",
 };
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({

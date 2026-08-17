@@ -21,10 +21,13 @@ import {
   MdNotificationsOff,
   MdVolumeOff,
   MdVolumeUp,
+  MdVibration,
 } from "react-icons/md";
 import { API_BASE_URL } from "../../../config/api";
 import axios from "axios";
 import { AudioManager } from "../../../utils/AudioManager";
+import { HapticsManager } from "../../../utils/HapticsManager";
+import SettingToggle from "../../../components/common/SettingToggle";
 
 import { useState, useEffect } from "react";
 import i18n from "../../../i18n";
@@ -54,12 +57,24 @@ const Profile: React.FC = () => {
   const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(
     AudioManager.effectsEnabled,
   );
+  const [vibrationEnabled, setVibrationEnabled] = useState(
+    HapticsManager.vibrationEnabled,
+  );
 
   const handleSoundEffectsToggle = () => {
     const enabled = !soundEffectsEnabled;
     AudioManager.setEffectsEnabled(enabled);
     setSoundEffectsEnabled(enabled);
     if (enabled) AudioManager.play("tap", true);
+  };
+
+  const handleVibrationToggle = () => {
+    const enabled = !vibrationEnabled;
+    HapticsManager.setVibrationEnabled(enabled);
+    setVibrationEnabled(enabled);
+    if (enabled) {
+      HapticsManager.impactMedium();
+    }
   };
 
   const [isTogglingPrayer, setIsTogglingPrayer] = useState(false);
@@ -182,6 +197,13 @@ const Profile: React.FC = () => {
       type: "soundToggle",
     },
     {
+      title: "الاهتزاز والتفاعل اللمسي",
+      icon: <MdVibration size={25} color={vibrationEnabled ? "#4AAAD6" : "#94a3b8"} />,
+      to: "",
+      function: handleVibrationToggle,
+      type: "vibrationToggle",
+    },
+    {
       title: "تفعيل الوضع الداكن",
       icon: darkMode ? (
         <MdLightMode size={25} color="#4AAAD6" />
@@ -241,63 +263,30 @@ const Profile: React.FC = () => {
               }
             >
               {item.type === "soundToggle" ? (
-                <label
-                  className="inline-flex items-center cursor-pointer"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <input
-                    type="checkbox"
-                    checked={soundEffectsEnabled}
-                    onChange={handleSoundEffectsToggle}
-                    className="sr-only peer"
-                  />
-                  <div
-                    className="relative w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blueprimary"
-                  />
-                </label>
+                <SettingToggle
+                  checked={soundEffectsEnabled}
+                  onChange={handleSoundEffectsToggle}
+                  ariaLabel="تبديل المؤثرات الصوتية"
+                />
+              ) : item.type === "vibrationToggle" ? (
+                <SettingToggle
+                  checked={vibrationEnabled}
+                  onChange={handleVibrationToggle}
+                  ariaLabel="تبديل الاهتزاز والتفاعل اللمسي"
+                />
               ) : item.type === "darkModeToggle" ? (
-                <label className="inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={darkMode}
-                    onChange={handleDarkModeClick}
-                    onClick={handleDarkModeClick}
-                    className="sr-only peer"
-                  />
-                  <div
-                    className="relative w-14 h-7
-                 bg-blueprimary peer-focus:outline-none peer-focus:ring-4
-                  peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800
-                   rounded-full peer dark:bg-gray-700 
-                   peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full
-                    peer-checked:after:border-white after:content-['']
-                     after:absolute after:top-0.5 after:start-[4px] 
-                     after:bg-white -300 after:border
-                      after:rounded-full after:h-6 after:w-6 after:transition-all
-                       dark:border-gray-600 peer-checked:bg-blueprimary"
-                  ></div>
-                </label>
+                <SettingToggle
+                  checked={darkMode}
+                  onChange={() => setShowDarkModePopup(true)}
+                  ariaLabel="تبديل الوضع الداكن"
+                />
               ) : item.type === "prayerToggle" ? (
-                <label className="inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={prayerNotifications}
-                    onChange={item.function}
-                    className="sr-only peer"
-                  />
-                  <div
-                    className="relative w-14 h-7
-                  bg-blueprimary peer-focus:outline-none peer-focus:ring-4
-                   peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800
-                    rounded-full peer dark:bg-gray-700 
-                    peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full
-                     peer-checked:after:border-white after:content-['']
-                      after:absolute after:top-0.5 after:start-[4px] 
-                      after:bg-white -300 after:border
-                       after:rounded-full after:h-6 after:w-6 after:transition-all
-                        dark:border-gray-600 peer-checked:bg-blueprimary"
-                  ></div>
-                </label>
+                <SettingToggle
+                  checked={prayerNotifications}
+                  onChange={item.function || handlePrayerNotificationsToggle}
+                  disabled={isTogglingPrayer}
+                  ariaLabel="تبديل إشعارات الصلاة"
+                />
               ) : (
                 <ProfileArrow size={25} />
               )}

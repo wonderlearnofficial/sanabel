@@ -108,6 +108,7 @@ import UserData from "./pages/admin/UserData";
 
 // Dev-only quick-login tool
 import DevLogin from "./pages/dev/DevLogin";
+import { AppUpdateChecker } from "./components/updates/AppUpdateChecker";
 
 setupIonicReact();
 
@@ -460,6 +461,7 @@ const App: React.FC = () => {
           </div>
           )}
           <GuideOverlay />
+          <AppUpdateChecker />
         </GuideProvider>
         </NotificationProvider>
       </ThemeProvider>

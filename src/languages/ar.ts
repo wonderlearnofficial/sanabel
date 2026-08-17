@@ -74,10 +74,8 @@ const ar = {
     email_example: "مثال: amrahmed@gmail.com",
 
     // Login component translations
-
     "سجل الآن واستمتع بتجربة تفاعلية تبني العطاء والانتماء":
       "سجل الآن واستمتع بتجربة تفاعلية تبني العطاء والانتماء",
-
     "حفظ الحساب": "حفظ الحساب",
 
     // Signup process
@@ -133,7 +131,7 @@ const ar = {
     networkError:
       "تعذر الوصول إلى السيرفر. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.",
 
-    // Known server error messages (translated when surfaced from the API)
+    // Known server error messages
     "Incorrect email or password": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
     "Email already in use": "البريد الإلكتروني مستخدم بالفعل",
     "User not found": "المستخدم غير موجود",
@@ -156,7 +154,6 @@ const ar = {
     "Secure your account with a strong password": "أمّن حسابك بكلمة مرور قوية",
 
     // FIRST AND LAST NAME ERRORS
-
     enterFirstNameAndParentName: "يرجى إدخال اسمك واسم والدك",
     noNumbersOrSymbols: "يرجى إدخال أحرف فقط دون أرقام أو رموز",
     emptyFieldError: "هذا الحقل مطلوب",
@@ -177,11 +174,9 @@ const ar = {
     "ولي أمر أو معلم": "ولي أمر أو معلم",
     طالب: "طالب",
 
-    //signup parent or teacher
+    // signup parent or teacher
     "اختر نوع التسجيل": "اختر نوع التسجيل",
-
     ERROR: "خطأ",
-
     pleaseSelectRole: "يرجى اختيار دور",
     pleaseSelectAvatar: "يرجى اختيار صورة رمزية",
     Parent: "ولي أمر",
@@ -259,7 +254,6 @@ const ar = {
     "دليل الصفحات": "دليل الصفحات",
 
     // Other Trophies
-
     "Tree Stage": "مرحلة الشجرة",
     "Progress Tree": "شجرة التقدم",
     "Missions Finished": "المهام المكتملة",
@@ -295,6 +289,51 @@ const ar = {
     "admin.tab.grades": "المراحل الدراسية",
     "admin.tab.scores": "النقاط والتقدم",
     "admin.tab.history": "سجل إنجاز المهام",
+    "admin.tab.app_version": "إصدارات التطبيق",
+
+    // App Version & Update Prompts
+    "appUpdate.newVersionTitle": "تحديث جديد متوفر!",
+    "appUpdate.whatsNew": "ما الجديد في هذا الإصدار:",
+    "appUpdate.defaultNotes": "تحسينات في الأداء وإصلاحات لمختلف المزايا.",
+    "appUpdate.remindLater": "لاحقاً",
+    "appUpdate.updateNow": "تحديث الآن",
+    "appUpdate.forceUpdateTitle": "تحديث إلزامي مطلوب",
+    "appUpdate.forceUpdateSubtitle": "يتطلب الاستمرار في استخدام التطبيق التحديث إلى أحدث إصدار متاح.",
+    "appUpdate.requiredVersion": "الحد الأدنى:",
+    "appUpdate.targetVersion": "الإصدار المتاح:",
+    "appUpdate.defaultForceNotes": "يتضمن هذا التحديث تغييرات مهمة لضمان أمان واستقرار الخدمة وتوافقها مع خوادمنا.",
+    "appUpdate.updateGooglePlay": "تحديث من متجر Google Play",
+    "appUpdate.updateAppStore": "تحديث من متجر App Store",
+    "appUpdate.maintenanceTitle": "صيانة مجدولة للنظام",
+    "appUpdate.maintenanceMessage": "نقوم حالياً بإجراء بعض التحسينات لتقديم تجربة أفضل. سنعود للعمل قريباً جداً، نشكركم على صبركم.",
+    "appUpdate.tryAgain": "إعادة المحاولة",
+
+    // Admin App Version Control
+    "admin.versionControl.title": "إدارة إصدارات التطبيق والتحديثات",
+    "admin.versionControl.subtitle": "التحكم في التحديثات الإلزامية والاختيارية لتطبيقات Android و iOS ورسائل الصيانة.",
+    "admin.versionControl.refresh": "تحديث البيانات",
+    "admin.versionControl.saveSuccess": "تم حفظ إعدادات الإصدارات بنجاح!",
+    "admin.versionControl.saveError": "فشل حفظ إعدادات الإصدارات",
+    "admin.versionControl.fetchError": "فشل تحميل إعدادات إصدارات التطبيق",
+    "admin.versionControl.maintenanceMode": "وضع الصيانة الشامل",
+    "admin.versionControl.maintenanceDesc": "عند تفعيل وضع الصيانة، سيتم قفل الوصول لجميع مستخدمي الهواتف وعرض شاشة الصيانة.",
+    "admin.versionControl.androidApp": "تطبيق Android",
+    "admin.versionControl.iosApp": "تطبيق iOS",
+    "admin.versionControl.forceUpdateOn": "تحديث إلزامي مفعل",
+    "admin.versionControl.softUpdateOn": "تحديث اختياري",
+    "admin.versionControl.latestVersion": "أحدث إصدار (Latest)",
+    "admin.versionControl.minRequiredVersion": "الحد الأدنى المطلوب (Min)",
+    "admin.versionControl.forceUpdateSwitch": "فرض التحديث الإلزامي (Force Update)",
+    "admin.versionControl.forceUpdateHelp": "عند تفعيله، سيتم منع فتح التطبيق لمن يملك إصداراً أقل من أحدث إصدار.",
+    "admin.versionControl.storeUrl": "رابط متجر Google Play",
+    "admin.versionControl.storeUrlIos": "رابط متجر Apple App Store",
+    "admin.versionControl.notesAr": "ملاحظات الإصدار (العربية)",
+    "admin.versionControl.notesEn": "ملاحظات الإصدار (الإنجليزية)",
+    "admin.versionControl.guideTitle": "كيف تعمل التحديثات على الهواتف؟",
+    "admin.versionControl.softUpdate": "تحديث اختياري (Soft):",
+    "admin.versionControl.softUpdateExpl": "يظهر للمستخدم نافذة منبثقة تفيده بوجود إصدار أحدث مع إمكانية التخطي والمتابعة.",
+    "admin.versionControl.hardUpdate": "تحديث إلزامي (Force):",
+    "admin.versionControl.hardUpdateExpl": "يقفل التطبيق تماماً بشاشة تلزم المستخدم بالدخول للمتجر لتحديث التطبيق للاستمرار.",
 
     // Stats cards
     "admin.stats.totalUsers": "إجمالي المستخدمين",
