@@ -34,6 +34,12 @@ import DeleteAccountPopup from "./StudentDeleteAccountPopup";
 
 import GoBackButton from "../../../components/GoBackButton";
 import { logoutSession } from "../../../utils/session";
+import {
+  enablePrayerNotifications,
+  disablePrayerNotifications,
+  EGYPT_CITIES,
+  PrayerCity,
+} from "../../../services/prayerNotifications";
 
 import DarkModeComingSoon from "../../common/DarkModeComingSoon";
 
@@ -56,57 +62,49 @@ const Profile: React.FC = () => {
     if (enabled) AudioManager.play("tap", true);
   };
 
+  const [isTogglingPrayer, setIsTogglingPrayer] = useState(false);
+  const [showCityPicker, setShowCityPicker] = useState(false);
+
   const handlePrayerNotificationsToggle = async () => {
-    const newValue = !prayerNotifications;
-    
-    if (newValue) {
-      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-        alert(t("متصفحك لا يدعم الإشعارات."));
-        return;
-      }
-      
-      try {
-        const permission = await Notification.requestPermission();
-        if (permission !== "granted") {
-          alert(t("يجب الموافقة على الإشعارات لتفعيل هذه الخاصية."));
-          return;
+    if (isTogglingPrayer) return;
+    setIsTogglingPrayer(true);
+
+    try {
+      if (!prayerNotifications) {
+        // Handles every platform: local notifications on Android/iOS,
+        // server-scheduled web push in the browser. Device location is used
+        // automatically; the city picker only appears when that fails.
+        const result = await enablePrayerNotifications();
+        if (result.ok) {
+          setPrayerNotifications(true);
+          alert(t("تم تفعيل إشعارات الصلاة بنجاح!"));
+        } else if (result.needsCity) {
+          setShowCityPicker(true);
+        } else {
+          alert(t(result.message));
         }
-
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-          try {
-            const reg = await navigator.serviceWorker.register("/sw.js");
-            const subscription = await reg.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY
-            });
-
-            const token = localStorage.getItem("token");
-            await axios.post(`${API_BASE_URL}/users/subscribe-push`, {
-              subscription,
-              location: {
-                latitude: pos.coords.latitude,
-                longitude: pos.coords.longitude
-              }
-            }, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-
-            setPrayerNotifications(true);
-            localStorage.setItem("prayerNotifications", "true");
-            alert(t("تم تفعيل إشعارات الصلاة بنجاح!"));
-          } catch (error) {
-            console.error("Push Error:", error);
-            alert(t("حدث خطأ أثناء تفعيل الإشعارات."));
-          }
-        }, () => {
-          alert(t("يجب السماح بالوصول للموقع لتحديد أوقات الصلاة بدقة."));
-        });
-      } catch (error) {
-        console.error(error);
+      } else {
+        await disablePrayerNotifications();
+        setPrayerNotifications(false);
       }
-    } else {
-      setPrayerNotifications(false);
-      localStorage.setItem("prayerNotifications", "false");
+    } finally {
+      setIsTogglingPrayer(false);
+    }
+  };
+
+  const handleCitySelected = async (city: PrayerCity) => {
+    setShowCityPicker(false);
+    setIsTogglingPrayer(true);
+    try {
+      const result = await enablePrayerNotifications(city);
+      if (result.ok) {
+        setPrayerNotifications(true);
+        alert(t("تم تفعيل إشعارات الصلاة بنجاح!"));
+      } else {
+        alert(t(result.message));
+      }
+    } finally {
+      setIsTogglingPrayer(false);
     }
   };
 
@@ -337,6 +335,41 @@ const Profile: React.FC = () => {
           {/* {t("حذف الحساب")} */}
         </h1>
       </div>
+
+      {/* City fallback picker — only shown when automatic location fails */}
+      {showCityPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="flex flex-col w-full max-w-sm max-h-[80vh] p-5 bg-white rounded-xl">
+            <h2 className="mb-1 text-lg font-bold text-center text-black">
+              {t("اختر مدينتك")}
+            </h2>
+            <p className="mb-3 text-sm text-center text-gray-600">
+              {t("لم نتمكن من تحديد موقعك تلقائيًا. اختر أقرب مدينة لك.")}
+            </p>
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-2">
+                {EGYPT_CITIES.map((city) => (
+                  <button
+                    key={city.key}
+                    type="button"
+                    onClick={() => handleCitySelected(city)}
+                    className="px-3 py-3 text-sm font-medium text-black border-2 border-gray-200 rounded-xl hover:border-blueprimary"
+                  >
+                    {t(city.arabicName)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowCityPicker(false)}
+              className="w-full py-2 mt-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl"
+            >
+              {t("إلغاء")}
+            </button>
+          </div>
+        </div>
+      )}
 
       <DarkModeComingSoon
         isOpen={showDarkModePopup}

@@ -120,6 +120,7 @@ const AddMissionModal = ({
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
+          timeout: 15000,
         },
       );
 
@@ -161,6 +162,7 @@ const AddMissionModal = ({
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
+          timeout: 15000,
         },
       );
 
@@ -218,6 +220,7 @@ const AddMissionModal = ({
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
+          timeout: 15000,
         },
       );
 

@@ -282,11 +282,11 @@ const ProgressMissions: React.FC = () => {
 
       <div className="w-full bg-[#495638] flex-center justify-between items-center p-2 gap-2 rounded-xl text-md">
         <img src={blueSanabel} className="h-6" alt="" />
-        <h1>x{sanabelColor[0].value}</h1>
+        <h1 className="text-white">x{sanabelColor[0].value}</h1>
         <img src={yellowSanabel} className="h-6" alt="" />
-        <h1>x{sanabelColor[1].value}</h1>
+        <h1 className="text-white">x{sanabelColor[1].value}</h1>
         <img src={redSanabel} className="h-6" alt="" />
-        <h1>x{sanabelColor[2].value}</h1>
+        <h1 className="text-white">x{sanabelColor[2].value}</h1>
         <h1 className="font-bold text-white text-md" dir="ltr">
           {t("إجمالي السنابل")}
         </h1>

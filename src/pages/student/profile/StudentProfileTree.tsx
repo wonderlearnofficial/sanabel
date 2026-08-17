@@ -41,7 +41,7 @@ const Profile: React.FC = () => {
         transition={{ delay: currentStage * 0.05, duration: 0.5 }} // Delay the text animation until the tree animation finishes
         className="text-[#495638] text-xl "
       >
-        {treeStage} {t("المرحلة")}
+        {t("المرحلة")} {treeStage}
       </motion.h1>
       <motion.img
         initial={{ opacity: 0 }}

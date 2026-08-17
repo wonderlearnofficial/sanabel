@@ -21,6 +21,8 @@ import CheckmarkAnimation from "../../assets/checkmarkAnimation";
 import { treeStages } from "../../data/Tree";
 import axios from "axios";
 import { toFiniteNumber } from "../../utils/numericData";
+import { computeMissingByColor } from "../../utils/shopMath";
+import { describeApiError } from "../../utils/apiError";
 
 const Toaster = () => (
   <ToastContainer
@@ -118,63 +120,50 @@ const Shop: React.FC = () => {
   const [missingSanabel, setMissingSanabel] = useState<any[]>([]);
   const [isBuying, setIsBuying] = useState(false);
 
-  // Function to calculate missing sanabel
+  // The server charges the SAME total cost from EACH sanabel color, so the
+  // shortage must be computed per color — not by "spending" one pooled budget
+  // across the colors (the old logic returned an empty list whenever a single
+  // color could cover the total, leaving the insufficient-funds popup blank).
+  const buildMissingSanabelList = (missingByColor: {
+    snabelBlue: number;
+    snabelRed: number;
+    snabelYellow: number;
+  }) =>
+    [
+      {
+        type: "blue",
+        icon: blueSanabel,
+        name: t("سنبلة زرقاء"),
+        needed: toFiniteNumber(missingByColor.snabelBlue),
+        available: blueCount,
+      },
+      {
+        type: "red",
+        icon: redSanabel,
+        name: t("سنبلة حمراء"),
+        needed: toFiniteNumber(missingByColor.snabelRed),
+        available: redCount,
+      },
+      {
+        type: "yellow",
+        icon: yellowSanabel,
+        name: t("سنبلة صفراء"),
+        needed: toFiniteNumber(missingByColor.snabelYellow),
+        available: yellowCount,
+      },
+    ].filter((sanabel) => sanabel.needed > 0);
+
   const calculateMissingSanabel = (totalCost: number) => {
-    const missing = [];
-    let remainingCost = totalCost;
-
-    // Check blue sanabel first (most valuable)
-    if (remainingCost > 0) {
-      const blueNeeded = Math.min(Math.ceil(remainingCost / 1), blueCount); // Assuming 1 blue = 1 unit
-      const blueShortage = Math.ceil(remainingCost / 1) - blueCount;
-      if (blueShortage > 0) {
-        missing.push({
-          type: "blue",
-          icon: blueSanabel,
-          name: t("سنبلة زرقاء"),
-          needed: blueShortage,
-          available: blueCount,
-        });
-        remainingCost -= blueCount * 1;
-      } else {
-        remainingCost = 0;
-      }
-    }
-
-    // Check red sanabel
-    if (remainingCost > 0) {
-      const redNeeded = Math.min(Math.ceil(remainingCost / 1), redCount);
-      const redShortage = Math.ceil(remainingCost / 1) - redCount;
-      if (redShortage > 0) {
-        missing.push({
-          type: "red",
-          icon: redSanabel,
-          name: t("سنبلة حمراء"),
-          needed: redShortage,
-          available: redCount,
-        });
-        remainingCost -= redCount * 1;
-      } else {
-        remainingCost = 0;
-      }
-    }
-
-    // Check yellow sanabel
-    if (remainingCost > 0) {
-      const yellowNeeded = Math.min(Math.ceil(remainingCost / 1), yellowCount);
-      const yellowShortage = Math.ceil(remainingCost / 1) - yellowCount;
-      if (yellowShortage > 0) {
-        missing.push({
-          type: "yellow",
-          icon: yellowSanabel,
-          name: t("سنبلة صفراء"),
-          needed: yellowShortage,
-          available: yellowCount,
-        });
-      }
-    }
-
-    return missing;
+    const missing = computeMissingByColor(totalCost, {
+      blue: blueCount,
+      red: redCount,
+      yellow: yellowCount,
+    });
+    return buildMissingSanabelList({
+      snabelBlue: missing.blue,
+      snabelRed: missing.red,
+      snabelYellow: missing.yellow,
+    });
   };
 
   // Buy Shop
@@ -196,6 +185,7 @@ const Shop: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          timeout: 15000,
         },
       );
 
@@ -216,16 +206,39 @@ const Shop: React.FC = () => {
           setBuyFertilizerCount(0);
         }, 2000);
       }
-    } catch (error) {
-      const totalCost =
-        buyFertilizerCount * fertilizerCost + buyWaterCount * waterCost;
-      const missing = calculateMissingSanabel(totalCost);
-
-      setMissingSanabel(missing);
-      setIsPopupVisible(false);
-      setIsInsufficientFundsVisible(true);
-
+    } catch (error: any) {
       console.error("Error purchasing items:", error);
+
+      // Only a real insufficient-balance rejection opens the "you need more
+      // sanabel" popup. Every other failure (network, timeout, server error)
+      // used to fall in here too and blame the student's balance for it.
+      const status = error?.response?.status;
+      const data = error?.response?.data;
+      const isInsufficientBalance =
+        status === 400 &&
+        (data?.missing || /insufficient/i.test(String(data?.error || "")));
+
+      if (isInsufficientBalance) {
+        const totalCost =
+          buyFertilizerCount * fertilizerCost + buyWaterCount * waterCost;
+        // Prefer the server's own numbers; fall back to the local estimate.
+        const missing = data?.missing
+          ? buildMissingSanabelList(data.missing)
+          : calculateMissingSanabel(totalCost);
+
+        setIsPopupVisible(false);
+        if (missing.length > 0) {
+          setMissingSanabel(missing);
+          setIsInsufficientFundsVisible(true);
+        } else {
+          toast.error(t(describeApiError(error)));
+        }
+      } else {
+        // Always tell the user exactly what went wrong (timeout, offline,
+        // expired session, server rejection...) — never a vague failure.
+        setIsPopupVisible(false);
+        toast.error(t(describeApiError(error)));
+      }
     } finally {
       setIsBuying(false);
     }
@@ -243,6 +256,7 @@ const Shop: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          timeout: 15000,
         },
       );
 
@@ -252,6 +266,9 @@ const Shop: React.FC = () => {
       }
     } catch (error) {
       console.error("Error progress tree:", error);
+      toast.error(t(describeApiError(error)));
+      // The resource counts on screen may be stale — resync with the server.
+      refreshUserData();
     }
   };
 

@@ -47,5 +47,7 @@
 	<true/>
 	<key>UIStatusBarStyle</key>
 	<string>UIStatusBarStyleDarkContent</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>يستخدم التطبيق موقعك لحساب أوقات الصلاة بدقة وإرسال تنبيهاتها. Your location is used to calculate accurate prayer times for notifications.</string>
 </dict>
 </plist>

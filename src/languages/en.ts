@@ -965,6 +965,59 @@ const en = {
     الإشعارات: "Notifications",
     "تحديد الكل كمقروء": "Mark all as read",
     "تحديد كمقروء": "Mark as read",
+    الأحدث: "Newest",
+    الأقدم: "Oldest",
+    إنجاز: "achievements",
+    "لا يوجد إشعارات بعد": "No notifications yet",
+    "أكمل التحديات لتحصل على كؤوس ومكافآت!":
+      "Complete challenges to earn trophies and rewards!",
+    "جرّب تغيير الفترة الزمنية للعثور على إشعاراتك":
+      "Try changing the time range to find your notifications",
+    "عرض الكل": "Show all",
+    "تفعيل إشعارات الصلاة": "Enable Prayer Notifications",
+    "تم تفعيل إشعارات الصلاة بنجاح!":
+      "Prayer notifications enabled successfully!",
+    "متصفحك لا يدعم الإشعارات.": "Your browser does not support notifications.",
+    "يجب الموافقة على الإشعارات لتفعيل هذه الخاصية.":
+      "You must allow notifications to enable this feature.",
+    "حدث خطأ أثناء تفعيل الإشعارات.":
+      "An error occurred while enabling notifications.",
+    "يجب السماح بالوصول للموقع لتحديد أوقات الصلاة بدقة.":
+      "Location access is required to determine accurate prayer times.",
+    "حدث خطأ أثناء الشراء. حاول مرة أخرى.":
+      "Something went wrong with the purchase. Please try again.",
+    "تعذر تكبير الشجرة. حاول مرة أخرى.":
+      "Could not grow the tree. Please try again.",
+    "أضف كمية من الماء أو السماد أولاً.": "Add some water or fertilizer first.",
+    "الكمية المطلوبة غير صحيحة.": "The requested quantity is not valid.",
+    "رصيد السنابل غير كافٍ.": "Your sanabel balance is not enough.",
+    "لم يتم العثور على حساب الطالب.": "Student account not found.",
+    "لا تملك ماءً أو سمادًا كافيًا لتكبير الشجرة.":
+      "You don't have enough water or fertilizer to grow the tree.",
+    "وصلت شجرتك إلى أعلى مستوى، تهانينا!":
+      "Your tree has reached the highest level — congratulations!",
+    "بيانات الشجرة غير متوفرة حاليًا.": "Tree data is currently unavailable.",
+    "انتهت مهلة الطلب. تحقق من سرعة الإنترنت وحاول مرة أخرى.":
+      "The request timed out. Check your internet speed and try again.",
+    "لا يمكن الوصول إلى الخادم. تحقق من اتصالك بالإنترنت.":
+      "Cannot reach the server. Check your internet connection.",
+    "انتهت صلاحية جلستك. سجل الدخول مرة أخرى.":
+      "Your session has expired. Please log in again.",
+    "حدث خطأ في الخادم. حاول مرة أخرى بعد قليل.":
+      "A server error occurred. Please try again shortly.",
+    "حدث خطأ غير متوقع. حاول مرة أخرى.":
+      "An unexpected error occurred. Please try again.",
+    "اختر مدينتك": "Choose your city",
+    "لم نتمكن من تحديد موقعك تلقائيًا. اختر أقرب مدينة لك.":
+      "We couldn't detect your location automatically. Choose the nearest city.",
+    الجيزة: "Giza",
+    المنصورة: "Mansoura",
+    طنطا: "Tanta",
+    بورسعيد: "Port Said",
+    السويس: "Suez",
+    أسيوط: "Asyut",
+    الأقصر: "Luxor",
+    أسوان: "Aswan",
     "منذ {{days}} أيام": "{{days}} days ago",
     الرمز: "Code",
     "مجموع الجوائز": "Total Trophies",
