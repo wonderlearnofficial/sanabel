@@ -8,6 +8,7 @@ import SearchIcon from "../../../icons/SearchIcon";
 import GetAvatar from "../../student/tutorial/GetAvatar";
 import { FaTrash, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
+import { describeApiError } from "../../../utils/apiError";
 
 interface StudentRow {
   id: number;
@@ -123,7 +124,7 @@ const StudentsManagement: React.FC = () => {
       setTotal(response.data.total);
     } catch (error) {
       console.error("Error fetching students:", error);
-      toast.error(t("تعذر تحميل قائمة الطلاب"));
+      toast.error(describeApiError(error, (key, options) => t(key, options)));
     } finally {
       setIsLoading(false);
     }
@@ -146,7 +147,7 @@ const StudentsManagement: React.FC = () => {
       fetchStudents();
     } catch (error) {
       console.error("Error deleting student:", error);
-      toast.error(t("حدث خطأ أثناء حذف الطالب"));
+      toast.error(describeApiError(error, (key, options) => t(key, options)));
       setConfirmDeleteId(null);
     }
   };

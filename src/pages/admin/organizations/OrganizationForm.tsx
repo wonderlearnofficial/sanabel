@@ -4,6 +4,7 @@ import { useHistory, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
+import { describeApiError } from "../../../utils/apiError";
 import GoBackButton from "../../../components/GoBackButton";
 import GenericInput from "../../../components/GenericInput";
 import PrimaryButton from "../../../components/PrimaryButton";
@@ -80,11 +81,7 @@ const OrganizationForm: React.FC = () => {
       }
       history.push("/admin/organizations");
     } catch (error: any) {
-      if (error?.response?.status === 409) {
-        toast.error(t("يوجد مدرسة بنفس هذا الاسم بالفعل"));
-      } else {
-        toast.error(t("حدث خطأ أثناء الحفظ"));
-      }
+      toast.error(describeApiError(error, (key, options) => t(key, options)));
     } finally {
       setIsLoading(false);
     }

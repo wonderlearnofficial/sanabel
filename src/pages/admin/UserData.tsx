@@ -13,7 +13,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaExclamationTriangle } from "react-icons/fa";
-import { getErrorMessage } from "../../config/getErrorMessage";
+import { describeApiError } from "../../utils/apiError";
 import i18n from "../../i18n";
 
 // ─── Sub-components Imports ───────────────────────────────────────────────────
@@ -240,6 +240,7 @@ const UserData: React.FC = () => {
 
   // Stats
   const [stats, setStats] = useState<Record<string, number>>({});
+  const [statsLoading, setStatsLoading] = useState(false);
   const [gradesList, setGradesList] = useState<{ id: number; name: string; organizationId?: number | null }[]>([]);
   const [createOrganizations, setCreateOrganizations] = useState<{ id: number; name: string }[]>([]);
   const [createClasses, setCreateClasses] = useState<{ id: number; classname: string; grade: string; organizationId?: number; gradeId?: number | null }[]>([]);
@@ -310,7 +311,7 @@ const UserData: React.FC = () => {
       loadedTabRef.current = activeTab;
     } catch (err: any) {
       console.error(`[Admin UserData] fetchData failed for tab ${activeTab}:`, err?.response?.data || err?.message || err);
-      toast.error(getErrorMessage(err, t("admin.toast.loadFailed")));
+      toast.error(describeApiError(err, (key, options) => t(key, options)));
     } finally {
       setLoading(false);
     }
@@ -330,35 +331,21 @@ const UserData: React.FC = () => {
 
   const fetchStats = useCallback(async () => {
     if (!token) return;
+    setStatsLoading(true);
     try {
-      const [u, s, tc, p] = await Promise.all([
-        axios.get(`${API_BASE_URL}/admin/users`, {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { limit: 1 },
-        }),
-        axios.get(`${API_BASE_URL}/admin/students`, {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { limit: 1 },
-        }),
-        axios.get(`${API_BASE_URL}/admin/teachers`, {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { limit: 1 },
-        }),
-        axios.get(`${API_BASE_URL}/admin/parents`, {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { limit: 1 },
-        }),
-      ]);
-      setStats({
-        users: u.data.total ?? 0,
-        students: s.data.total ?? 0,
-        teachers: tc.data.total ?? 0,
-        parents: p.data.total ?? 0,
+      // One round trip for all dashboard counters (GET /admin/stats) —
+      // previously four limit=1 list requests.
+      const res = await axios.get(`${API_BASE_URL}/admin/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-    } catch {
-      /* silent */
+      setStats((prev) => ({ ...prev, ...res.data.data }));
+    } catch (err) {
+      console.error("[Admin UserData] fetchStats failed:", err);
+      toast.error(describeApiError(err, (key, options) => t(key, options)));
+    } finally {
+      setStatsLoading(false);
     }
-  }, [token]);
+  }, [token, t]);
 
   const fetchGradesList = useCallback(async () => {
     if (!token) return;
@@ -605,7 +592,7 @@ const UserData: React.FC = () => {
       fetchData();
       fetchStats();
     } catch (error) {
-      toast.error(getErrorMessage(error, t("admin.toast.saveFailed")));
+      toast.error(describeApiError(error, (key, options) => t(key, options)));
     } finally {
       setIsSavingEdit(false);
     }
@@ -635,7 +622,7 @@ const UserData: React.FC = () => {
           } ${t("admin.toast.teachers")}, ${data.classCount ?? 0} ${t("admin.toast.classes")}`,
         );
       } else {
-        toast.error(getErrorMessage(error, t("admin.toast.deleteFailed")));
+        toast.error(describeApiError(error, (key, options) => t(key, options)));
       }
     } finally {
       setConfirmDelete(null);
@@ -705,7 +692,7 @@ const UserData: React.FC = () => {
       fetchData();
       fetchStats();
     } catch (error) {
-      toast.error(getErrorMessage(error, t("admin.toast.saveFailed")));
+      toast.error(describeApiError(error, (key, options) => t(key, options)));
     } finally {
       setIsCreating(false);
     }
@@ -719,8 +706,8 @@ const UserData: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } },
       );
       toast.success(`${t("admin.toast.resetSuccess")} \u200E${res.data.newPassword}\u200E`);
-    } catch {
-      toast.error(t("admin.toast.resetFailed"));
+    } catch (error) {
+      toast.error(describeApiError(error, (key, options) => t(key, options)));
     } finally {
       setConfirmReset(null);
     }
@@ -964,7 +951,7 @@ const UserData: React.FC = () => {
         {/* Dash Content */}
         <div className="flex-1 px-8 py-6 overflow-y-auto">
           {/* Lightweight KPI Cards & Analytics drawer */}
-          <StatsCards stats={stats} rows={rows} activeTab={activeTab} accentColor={accent.from} />
+          <StatsCards stats={stats} rows={rows} activeTab={activeTab} accentColor={accent.from} loading={statsLoading} />
 
           {/* Filter, Search bar */}
           <FilterBar

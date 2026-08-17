@@ -26,7 +26,7 @@ interface Props {
   classes: string[];
   grades: string[];
   token: string | null;
-  t: (k: string) => string;
+  t: (key: string, options?: Record<string, string>) => string;
 }
 
 const ImportWizard: React.FC<Props> = ({
@@ -34,7 +34,12 @@ const ImportWizard: React.FC<Props> = ({
 }) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const config = IMPORT_CONFIGS[activeTab];
-  const wizard = useImportWizard(config, { organizations, classes, grades }, token);
+  const wizard = useImportWizard(
+    config,
+    { organizations, classes, grades },
+    token,
+    t,
+  );
 
   if (!open || !config) return null;
 

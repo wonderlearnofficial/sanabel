@@ -4,6 +4,7 @@ import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
+import { describeApiError } from "../../../utils/apiError";
 import GoBackButton from "../../../components/GoBackButton";
 import SearchIcon from "../../../icons/SearchIcon";
 import { FaPlus, FaTrash, FaChevronLeft, FaChevronRight } from "react-icons/fa";
@@ -84,7 +85,7 @@ const OrganizationsList: React.FC = () => {
           `${t("لا يمكن حذف المدرسة، تحتوي على")} ${data.studentCount} ${t("طالب")}, ${data.teacherCount} ${t("معلم")}, ${data.classCount} ${t("فصل")}`
         );
       } else {
-        toast.error(t("حدث خطأ أثناء حذف المدرسة"));
+        toast.error(describeApiError(error, (key, options) => t(key, options)));
       }
       setConfirmDeleteId(null);
     }

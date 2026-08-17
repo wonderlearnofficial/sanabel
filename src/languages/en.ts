@@ -1007,6 +1007,62 @@ const en = {
       "A server error occurred. Please try again shortly.",
     "حدث خطأ غير متوقع. حاول مرة أخرى.":
       "An unexpected error occurred. Please try again.",
+    "بيانات المستخدم غير موجودة في الطلب.": "User data was not found in the request.",
+    "لم يتم العثور على حساب المسؤول.": "Admin account not found.",
+    "معرّف المدرسة غير صالح.": "The school ID is invalid.",
+    "لم يتم العثور على المدرسة.": "School not found.",
+    "الاسم مطلوب.": "Name is required.",
+    "توجد مدرسة بهذا الاسم بالفعل.": "A school with this name already exists.",
+    "لا يمكن حذف المدرسة لوجود بيانات مرتبطة بها. أعد تعيينها أو احذفها أولاً.":
+      "This school has related records. Reassign or remove them before deleting it.",
+    "معرّف الطالب مطلوب.": "Student ID is required.",
+    "معرّف الطالب غير صالح.": "The student ID is invalid.",
+    "المدرسة المحددة غير موجودة.": "The selected school does not exist.",
+    "الفصل المحدد غير موجود.": "The selected class does not exist.",
+    "الفصل المحدد لا يتبع مدرسة الطالب.":
+      "The selected class does not belong to the student's school.",
+    "الفصل المحدد لا يتبع المدرسة المختارة.":
+      "The selected class does not belong to the selected school.",
+    "المرحلة الدراسية المحددة غير موجودة.":
+      "The selected grade does not exist.",
+    "البريد الإلكتروني مستخدم بالفعل.": "This email address is already in use.",
+    "الاسم الأول والبريد الإلكتروني ونوع الحساب مطلوبة.":
+      "First name, email, and account type are required.",
+    "نوع الحساب يجب أن يكون طالبًا أو معلمًا أو ولي أمر أو مسؤولًا.":
+      "The account type must be Student, Teacher, Parent, or Admin.",
+    "اختيار المدرسة مطلوب لهذا النوع من الحسابات.":
+      "A school is required for this account type.",
+    "معرّف المستخدم غير صالح.": "The user ID is invalid.",
+    "لم يتم العثور على المستخدم.": "User not found.",
+    "لم يتم العثور على سجل طالب لهذا المستخدم.":
+      "No student record was found for this user.",
+    "لم يتم العثور على سجل معلم لهذا المستخدم.":
+      "No teacher record was found for this user.",
+    "قائمة معرّفات الفصول غير صالحة.": "The class ID list must be an array.",
+    "اسم الفصل والمرحلة الدراسية والمدرسة مطلوبة.":
+      "Class name, grade, and school are required.",
+    "معرّف الفصل غير صالح.": "The class ID is invalid.",
+    "لم يتم العثور على الفصل.": "Class not found.",
+    "لا يمكن حذف الفصل لوجود طلاب مسجلين فيه. أعد تعيينهم أو احذفهم أولاً.":
+      "This class has assigned students. Reassign or remove them before deleting it.",
+    "المرحلة الدراسية موجودة بالفعل في هذه المدرسة.":
+      "This grade already exists in this school.",
+    "معرّف المرحلة الدراسية غير صالح.": "The grade ID is invalid.",
+    "لم يتم العثور على المرحلة الدراسية.": "Grade not found.",
+    "يجب إدخال اسم غير فارغ.": "Name must not be empty.",
+    "اسم المرحلة الدراسية موجود بالفعل في هذه المدرسة.":
+      "This grade name already exists in this school.",
+    "لا يمكن حذف المرحلة الدراسية لوجود طلاب أو فصول مرتبطة بها. أعد تعيينها أو احذفها أولاً.":
+      "This grade has assigned students or classes. Reassign or remove them before deleting it.",
+    "الفصل رقم {{number}} غير موجود.": "Class {{number}} does not exist.",
+    "الفصل رقم {{number}} لا يتبع المدرسة المختارة.":
+      "Class {{number}} does not belong to the selected school.",
+    "قيمة {{field}} يجب أن تكون رقمًا صحيحًا موجبًا أو فارغة.":
+      "{{field}} must be a positive integer or empty.",
+    "لم يتم العثور على صفوف بيانات في الملف.":
+      "No data rows were found in this file.",
+    "تعذر قراءة هذا الملف.": "Could not read this file.",
+    "لا توجد صفوف صالحة للاستيراد.": "There are no valid rows to import.",
     "اختر مدينتك": "Choose your city",
     "لم نتمكن من تحديد موقعك تلقائيًا. اختر أقرب مدينة لك.":
       "We couldn't detect your location automatically. Choose the nearest city.",

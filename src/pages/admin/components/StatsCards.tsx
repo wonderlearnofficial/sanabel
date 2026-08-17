@@ -41,6 +41,8 @@ interface StatsCardsProps {
   rows: any[];
   activeTab: Tab;
   accentColor: string;
+  /** True while the dashboard counters are being fetched. */
+  loading?: boolean;
 }
 
 export const StatsCards: React.FC<StatsCardsProps> = ({
@@ -48,6 +50,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
   rows,
   activeTab,
   accentColor,
+  loading = false,
 }) => {
   const { t } = useTranslation();
   const [showCharts, setShowCharts] = React.useState(false);
@@ -198,9 +201,13 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
               <p className="text-xs text-slate-400 font-medium leading-none mb-1">
                 {item.label}
               </p>
-              <h3 className="text-xl font-bold text-slate-800 leading-none">
-                {item.value.toLocaleString()}
-              </h3>
+              {loading ? (
+                <div className="h-5 w-12 rounded bg-slate-100 animate-pulse" />
+              ) : (
+                <h3 className="text-xl font-bold text-slate-800 leading-none">
+                  {item.value.toLocaleString()}
+                </h3>
+              )}
             </div>
           </motion.div>
         ))}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { WizardStep, ImportRow, TabImportConfig, BatchResult } from "./importConfig";
 import { parseImportFile, validateRows, buildBatches, isOfficialTemplate } from "./importUtils";
+import { describeApiError } from "../../../utils/apiError";
 
 interface Refs {
   organizations: string[];
@@ -9,7 +10,12 @@ interface Refs {
   grades: string[];
 }
 
-export function useImportWizard(config: TabImportConfig, refs: Refs, token: string | null) {
+export function useImportWizard(
+  config: TabImportConfig,
+  refs: Refs,
+  token: string | null,
+  t: (key: string, options?: Record<string, string>) => string,
+) {
   const [step, setStep] = useState<WizardStep>("idle");
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [officialTemplateDetected, setOfficialTemplateDetected] = useState(false);
@@ -31,7 +37,7 @@ export function useImportWizard(config: TabImportConfig, refs: Refs, token: stri
     try {
       const { headers, rows: parsedRows } = await parseImportFile(file, config.officialHeaders);
       if (parsedRows.length === 0) {
-        setError("No data rows found in this file.");
+        setError(t("لم يتم العثور على صفوف بيانات في الملف."));
         setStep("idle");
         return;
       }
@@ -39,7 +45,7 @@ export function useImportWizard(config: TabImportConfig, refs: Refs, token: stri
       setRows(validateRows(parsedRows, config, refs));
       setStep("reviewing");
     } catch (e: any) {
-      setError(e?.message || "Could not read this file.");
+      setError(e?.message || t("تعذر قراءة هذا الملف."));
       setStep("idle");
     }
   };
@@ -57,7 +63,7 @@ export function useImportWizard(config: TabImportConfig, refs: Refs, token: stri
   const startImport = async () => {
     const batches = buildBatches(rows, config);
     if (batches.length === 0) {
-      setError("No valid rows to import.");
+      setError(t("لا توجد صفوف صالحة للاستيراد."));
       return;
     }
     setStep("importing");
@@ -77,7 +83,7 @@ export function useImportWizard(config: TabImportConfig, refs: Refs, token: stri
         aggregate.successfulEntries.push(...(data.successfulEntries || []));
         aggregate.failedEntries.push(...(data.failedEntries || []));
       } catch (e: any) {
-        const errorMsg = e?.response?.data?.message || "Batch upload failed";
+        const errorMsg = describeApiError(e, t);
         // Attribute the failure to every row in this batch, not just one,
         // so the reported failureCount/failedEntries reflect what was
         // actually lost (a batch can hold up to 50 rows).

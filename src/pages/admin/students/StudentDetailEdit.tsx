@@ -4,6 +4,7 @@ import { useHistory, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
+import { describeApiError } from "../../../utils/apiError";
 import GoBackButton from "../../../components/GoBackButton";
 import GenericInput from "../../../components/GenericInput";
 import PrimaryButton from "../../../components/PrimaryButton";
@@ -138,7 +139,7 @@ const StudentDetailEdit: React.FC = () => {
       toast.success(t("تم تحديث بيانات الطالب بنجاح"));
       history.push("/admin/students");
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || t("حدث خطأ أثناء الحفظ"));
+      toast.error(describeApiError(error, (key, options) => t(key, options)));
     } finally {
       setIsLoading(false);
     }
@@ -154,7 +155,7 @@ const StudentDetailEdit: React.FC = () => {
       history.push("/admin/students");
     } catch (error) {
       console.error("Error deleting student:", error);
-      toast.error(t("حدث خطأ أثناء حذف الطالب"));
+      toast.error(describeApiError(error, (key, options) => t(key, options)));
     }
   };
 

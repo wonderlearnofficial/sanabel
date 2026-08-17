@@ -46,4 +46,70 @@ describe("describeApiError", () => {
       }),
     ).toBe("Custom reason");
   });
+
+  it("maps admin controller rejections to specific Arabic message keys", () => {
+    expect(
+      describeApiError({
+        response: {
+          status: 400,
+          data: {
+            message:
+              "Target class does not belong to the selected organization",
+          },
+        },
+      }),
+    ).toBe("الفصل المحدد لا يتبع المدرسة المختارة.");
+
+    expect(
+      describeApiError({
+        response: { status: 409, data: { message: "Email already in use" } },
+      }),
+    ).toBe("البريد الإلكتروني مستخدم بالفعل.");
+
+    expect(
+      describeApiError({
+        response: {
+          status: 400,
+          data: { message: "organizationId is required for this role" },
+        },
+      }),
+    ).toBe("اختيار المدرسة مطلوب لهذا النوع من الحسابات.");
+  });
+
+  it("uses the active-language translator for admin errors", () => {
+    const english: Record<string, string> = {
+      "البريد الإلكتروني مستخدم بالفعل.":
+        "This email address is already in use.",
+      "الفصل رقم {{number}} غير موجود.": "Class {{number}} does not exist.",
+    };
+    const translate = (key: string, options?: Record<string, string>) =>
+      (english[key] || key).replace(
+        /{{(\w+)}}/g,
+        (_, name: string) => options?.[name] || "",
+      );
+
+    expect(
+      describeApiError(
+        {
+          response: {
+            status: 409,
+            data: { message: "Email already in use" },
+          },
+        },
+        translate,
+      ),
+    ).toBe("This email address is already in use.");
+
+    expect(
+      describeApiError(
+        {
+          response: {
+            status: 400,
+            data: { message: "Class 42 does not exist" },
+          },
+        },
+        translate,
+      ),
+    ).toBe("Class 42 does not exist.");
+  });
 });
