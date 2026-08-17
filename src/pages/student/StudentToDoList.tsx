@@ -68,10 +68,12 @@ const AddMissionModal = ({
   isOpen,
   onClose,
   onAddMission,
+  existingTaskIds = [],
 }: {
   isOpen: boolean;
   onClose: () => void;
   onAddMission: (task: Task) => void;
+  existingTaskIds?: number[];
 }) => {
   const { t } = useTranslation();
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
@@ -254,8 +256,6 @@ const AddMissionModal = ({
   };
 
   const getTaskTypeImage = (type: any) => {
-    // You'll need to implement this based on your sanabelImgs structure
-    // This is a placeholder - replace with your actual image mapping logic
     return sanabelImgs[type] || null;
   };
 
@@ -273,9 +273,11 @@ const AddMissionModal = ({
           className="w-auto h-4"
           loading="lazy"
         />
-        <h1 className="text-xs text-black">{resource.value}</h1>
+        <h1 className="text-xs text-black font-semibold">{resource.value}</h1>
       </div>
     ));
+
+  const isTaskAlreadyAdded = (taskId: number) => existingTaskIds.includes(taskId);
 
   const handleAddMission = () => {
     const selectedTask = filteredTasks.find(
@@ -283,9 +285,13 @@ const AddMissionModal = ({
     );
 
     if (selectedTask) {
-      if (typeof selectedTask.id !== "number") {
+      if (typeof selectedTask.id !== "number" || selectedTask.id <= 0) {
         console.error("Task missing valid ID:", selectedTask);
         alert(t("خطأ: المهمة لا تحتوي على معرف صحيح"));
+        return;
+      }
+      if (isTaskAlreadyAdded(selectedTask.id)) {
+        alert(t("هذه المهمة مضافة بالفعل إلى قائمتك اليومية"));
         return;
       }
       onAddMission(selectedTask);
@@ -313,139 +319,233 @@ const AddMissionModal = ({
 
   if (!isOpen) return null;
 
+  // Separate tasks into unadded and already-added
+  const unaddedTasks = filteredTasks.filter((t) => !isTaskAlreadyAdded(t.id));
+  const alreadyAddedTasks = filteredTasks.filter((t) => isTaskAlreadyAdded(t.id));
+  const allTasksAdded = filteredTasks.length > 0 && unaddedTasks.length === 0;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="flex flex-col w-11/12 max-w-2xl max-h-[90vh] bg-white rounded-xl p-5">
-        <h2 className="flex-shrink-0 mb-4 text-xl font-bold text-center text-black">
+      <div className="flex flex-col w-11/12 max-w-2xl max-h-[90vh] bg-white rounded-xl p-5 shadow-xl">
+        <h2 className="flex-shrink-0 mb-3 text-xl font-bold text-center text-black">
           {t("إضافة مهمة جديدة")}
         </h2>
 
         <div className="flex-1 overflow-y-auto pr-2 min-h-0">
+          {loading && (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-lg font-medium text-gray-600">{t("جاري التحميل...")}</div>
+            </div>
+          )}
 
-        {loading && (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-lg">{t("جاري التحميل...")}</div>
-          </div>
-        )}
-
-        {!loading && loadError && (
-          <div className="flex flex-col items-center gap-3 py-6 text-center">
-            <p className="text-sm text-gray-600">{loadError}</p>
-            {selectedCategoryId === null ? (
-              <button
-                type="button"
-                onClick={fetchCategories}
-                className="px-4 py-2 text-sm text-white rounded-lg bg-blueprimary"
-              >
-                {t("إعادة المحاولة")}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedCategoryId(null);
-                  setSelectedType(null);
-                  setLoadError(null);
-                }}
-                className="px-4 py-2 text-sm border rounded-lg text-blueprimary border-blueprimary"
-              >
-                {t("العودة للفئات")}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Category Selection */}
-        {!loading && !loadError && selectedCategoryId === null && (
-          <div className="mb-4">
-            <h3 className="mb-3 text-lg font-semibold text-right text-black">
-              {t("اختر الفئة")}
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              {categories.map((category, index) => (
-                <div
-                  key={category.id}
-                  className="flex flex-col items-center p-3 overflow-y-auto border-2 cursor-pointer rounded-xl hover:border-blueprimary"
-                  onClick={() => setSelectedCategoryId(category.id)}
+          {!loading && loadError && (
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+              <p className="text-sm text-gray-600">{loadError}</p>
+              {selectedCategoryId === null ? (
+                <button
+                  type="button"
+                  onClick={fetchCategories}
+                  className="px-4 py-2 text-sm text-white rounded-lg bg-blueprimary hover:bg-blue-600 transition-colors"
                 >
-                  <img
-                    src={sanabelTypeImg[index]}
-                    alt={category.category}
-                    className="object-contain w-16 h-16"
-                  />
-                  <h3
-                    className={`${colors[index]} text-black font-bold text-center mt-2 text-sm`}
+                  {t("إعادة المحاولة")}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategoryId(null);
+                    setSelectedType(null);
+                    setLoadError(null);
+                  }}
+                  className="px-4 py-2 text-sm border rounded-lg text-blueprimary border-blueprimary hover:bg-blue-50 transition-colors"
+                >
+                  {t("العودة للفئات")}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Category Selection */}
+          {!loading && !loadError && selectedCategoryId === null && (
+            <div className="mb-4">
+              <h3 className="mb-3 text-lg font-semibold text-right text-black">
+                {t("اختر الفئة")}
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {categories.map((category, index) => (
+                  <div
+                    key={category.id}
+                    className="flex flex-col items-center p-3 border-2 cursor-pointer rounded-xl hover:border-blueprimary hover:shadow-sm transition-all"
+                    onClick={() => setSelectedCategoryId(category.id)}
                   >
-                    {t(category.title)}
-                  </h3>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Type Selection */}
-        {!loading && !loadError && selectedCategoryId !== null && selectedType === null && (
-          <div className="mb-4">
-            <h3 className="mb-3 text-lg font-semibold text-right text-black">
-              {t("اختر النوع")}
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              {availableTypes.map((typeObj, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col items-center p-3 border-2 cursor-pointer rounded-xl hover:border-blueprimary"
-                  onClick={() => setSelectedType(typeObj.type)}
-                >
-                  <img
-                    src={getTaskTypeImage(typeObj.type)}
-                    alt={typeObj.type}
-                    className="object-contain w-16 h-16"
-                  />
-                  <h3 className="mt-2 text-sm font-bold text-center text-black">
-                    {t(typeObj.type)}
-                  </h3>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Task Selection */}
-        {!loading && !loadError && selectedType !== null && (
-          <div className="mb-4">
-            <h3 className="mb-3 text-lg font-semibold text-black">
-              {t("اختر المهمة")}
-            </h3>
-            <div className="flex flex-col gap-3">
-              {filteredTasks.map((task: Task) => (
-                <div
-                  key={task.id}
-                  className={`border-2 rounded-xl p-3 cursor-pointer ${
-                    selectedTaskId === task.id
-                      ? "border-blueprimary bg-blue-50"
-                      : "hover:border-gray-300"
-                  }`}
-                  onClick={() => setSelectedTaskId(task.id)}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex w-3/4 gap-2">
-                      {renderResources(task)}
-                    </div>
-                    <h3 className="text-sm font-medium text-right text-black">
-                      {t(task.title)}
+                    <img
+                      src={sanabelTypeImg[index]}
+                      alt={category.category}
+                      className="object-contain w-16 h-16"
+                    />
+                    <h3
+                      className={`${colors[index]} font-bold text-center mt-2 text-sm`}
+                    >
+                      {t(category.title)}
                     </h3>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
+          {/* Type Selection */}
+          {!loading && !loadError && selectedCategoryId !== null && selectedType === null && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategoryId(null);
+                    setSelectedType(null);
+                  }}
+                  className="flex items-center gap-1 text-xs text-blueprimary font-semibold hover:underline"
+                >
+                  ← {t("العودة للفئات")}
+                </button>
+                <h3 className="text-lg font-semibold text-right text-black">
+                  {t("اختر النوع")}
+                </h3>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {availableTypes.map((typeObj, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col items-center p-3 border-2 cursor-pointer rounded-xl hover:border-blueprimary hover:shadow-sm transition-all"
+                    onClick={() => setSelectedType(typeObj.type)}
+                  >
+                    <img
+                      src={getTaskTypeImage(typeObj.type)}
+                      alt={typeObj.type}
+                      className="object-contain w-16 h-16"
+                    />
+                    <h3 className="mt-2 text-sm font-bold text-center text-black">
+                      {t(typeObj.type)}
+                    </h3>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Task Selection */}
+          {!loading && !loadError && selectedType !== null && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedType(null);
+                    setSelectedTaskId(null);
+                  }}
+                  className="flex items-center gap-1 text-xs text-blueprimary font-semibold hover:underline"
+                >
+                  ← {t("العودة للأنواع")}
+                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blueprimary font-bold">
+                    {t(selectedType)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Success celebration banner when all tasks are already added */}
+              {allTasksAdded && (
+                <div className="flex flex-col items-center justify-center p-6 mb-4 text-center bg-green-50 border border-green-200 rounded-2xl gap-3">
+                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 shadow-sm">
+                    <FaCheck size={20} />
+                  </div>
+                  <h4 className="text-sm font-bold text-green-800">
+                    {t("جميع مهام هذا القسم مضافة بالفعل إلى قائمتك اليومية")}
+                  </h4>
+                  <p className="text-xs text-green-700 max-w-sm">
+                    {t("يمكنك اختيار نوع آخر أو العودة إلى قائمة مهامك اليومية لإنجازها")}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedType(null);
+                      setSelectedTaskId(null);
+                    }}
+                    className="mt-1 px-4 py-2 text-xs font-bold text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors shadow-sm"
+                  >
+                    {t("اختر نوعاً آخر")}
+                  </button>
+                </div>
+              )}
+
+              {/* Task list with available tasks first and already-added tasks clearly badged */}
+              <div className="flex flex-col gap-2.5">
+                {/* Available Tasks */}
+                {unaddedTasks.map((task: Task) => {
+                  const isSelected = selectedTaskId === task.id;
+                  return (
+                    <div
+                      key={task.id}
+                      className={`border-2 rounded-xl p-3 cursor-pointer transition-all ${
+                        isSelected
+                          ? "border-blueprimary bg-blue-50 ring-2 ring-blue-300 shadow-sm"
+                          : "border-gray-200 hover:border-blueprimary/60 bg-white"
+                      }`}
+                      onClick={() => setSelectedTaskId(task.id)}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex w-1/2 gap-2">
+                          {renderResources(task)}
+                        </div>
+                        <div className="flex flex-col items-end gap-0.5">
+                          <h3 className="text-sm font-bold text-right text-black" dir="rtl">
+                            {t(task.title)}
+                          </h3>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Already-Added Tasks Section */}
+                {alreadyAddedTasks.length > 0 && (
+                  <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-gray-100">
+                    {!allTasksAdded && (
+                      <p className="text-xs font-bold text-gray-500 text-right mb-1">
+                        {t("مهام مضافة بالفعل")} ({alreadyAddedTasks.length})
+                      </p>
+                    )}
+                    {alreadyAddedTasks.map((task: Task) => (
+                      <div
+                        key={task.id}
+                        className="border rounded-xl p-3 bg-gray-50/80 border-gray-200 opacity-75 cursor-not-allowed select-none"
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex w-1/2 gap-2">
+                            {renderResources(task)}
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                              <FaCheck size={10} />
+                              <span>{t("مضافة بالفعل في قائمتك")}</span>
+                            </div>
+                            <h3 className="text-sm font-medium text-right text-gray-600" dir="rtl">
+                              {t(task.title)}
+                            </h3>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
-        <div className="flex-shrink-0 flex w-full gap-3 mt-4 pt-2">
+        <div className="flex-shrink-0 flex w-full gap-3 mt-4 pt-2 border-t border-gray-100">
           <PrimaryButton
             style="stroke"
             text={t("إلغاء")}
@@ -842,6 +942,7 @@ const TodoList = () => {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onAddMission={addMission}
+        existingTaskIds={todoItems.map((item) => item.task.id)}
       />
 
       {/* Confirmation Popup */}
