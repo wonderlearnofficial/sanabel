@@ -109,6 +109,7 @@ import UserData from "./pages/admin/UserData";
 // Dev-only quick-login tool
 import DevLogin from "./pages/dev/DevLogin";
 import { AppUpdateChecker } from "./components/updates/AppUpdateChecker";
+import { initAppNotificationsOnStartup } from "./services/appNotificationManager";
 
 setupIonicReact();
 
@@ -199,6 +200,11 @@ const App: React.FC = () => {
     localStorage.setItem("dir", "ltr");
   }
   const role = localStorage.getItem("role");
+
+  useEffect(() => {
+    // Automatically prompt and initialize notifications on startup for all users (student, teacher, parent, guest)
+    initAppNotificationsOnStartup();
+  }, []);
 
   // Show No Internet page if offline
   if (!isOnline) {

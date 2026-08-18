@@ -17,6 +17,7 @@ import { FaHome } from "react-icons/fa";
 import { useUserContext } from "../../../context/StudentUserProvider";
 import { getErrorMessage } from "../../../config/getErrorMessage";
 import { AudioManager } from "../../../utils/AudioManager";
+import { initAppNotificationsOnStartup } from "../../../services/appNotificationManager";
 
 const Toaster = () => (
   <ToastContainer
@@ -39,7 +40,7 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.playbackRate = 1.5; // Set playback rate to 2x
+      videoRef.current.playbackRate = 1.5; // Set playback rate
     }
   }, []);
 
@@ -59,7 +60,6 @@ const Login: React.FC = () => {
 
   const { refreshUserData } = useUserContext();
 
-  // Modified handleLogin function with proper firstTimer handling
   const handleLogin = async () => {
     try {
       const response = await axios.patch(`${API_BASE_URL}/users/login`, {
@@ -89,6 +89,9 @@ const Login: React.FC = () => {
         // Store keepLoggedIn preference
         localStorage.setItem("keepLoggedIn", "true");
 
+        // Trigger notification check & setup in the background for this user
+        initAppNotificationsOnStartup().catch(() => {});
+
         // Check if this user has logged in before
         const hasCompletedTutorial = localStorage.getItem(
           `tutorialComplete-${email}`,
@@ -102,16 +105,12 @@ const Login: React.FC = () => {
           localStorage.setItem("firstTimer", "false");
         }
 
-        // Load the role-specific account data into the shared context before
-        // navigating. This also avoids calling a React hook inside an event
-        // handler, which the previous student-only shortcut did.
+        // Load the role-specific account data into the shared context before navigating
         await refreshUserData(response.data.data.user.token);
 
         // Show success message
         toast.success(t("login_successful"));
 
-        // Do not replay the splash animation after every login. Route directly
-        // to the correct experience; new students still complete avatar setup.
         const role = response.data.data.user.role;
         if (role === "Student") {
           history.replace(
