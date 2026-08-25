@@ -1218,6 +1218,12 @@ const en = {
     "فشل في تحديد المهمة كمكتملة:": "Failed to mark task as completed:",
     "حدث خطأ أثناء تحديد المهمة كمكتملة.":
       "An error occurred while marking the task as completed.",
+    "تعذر تحديد هذه المهمة. حاول اختيارها من جديد.":
+      "Could not identify this task. Please select it again.",
+    "حدث خطأ أثناء تسجيل المهمة. حاول مرة أخرى.":
+      "An error occurred while recording the task. Please try again.",
+    "تعذر الاتصال بالخادم. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.":
+      "Could not reach the server. Check your internet connection and try again.",
 
     مستخدم: "User",
     "سجل كفرد للاستفادة من جميع الميزات":

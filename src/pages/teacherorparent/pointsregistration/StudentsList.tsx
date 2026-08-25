@@ -460,6 +460,21 @@ const StudentList = () => {
         console.error("Selected task not found");
         return;
       }
+      // `taskdata` (a static local copy of the catalog, not the database)
+      // carries no real task id, so the id is inferred from its position in
+      // that same static array. This only matches the database's real task
+      // id if both lists are kept in the exact same order with no gaps — a
+      // silent-drift risk (see the code audit notes), guarded here so a
+      // mismatch is at least caught rather than submitting a wrong/garbage id.
+      const inferredTaskIndex = taskdata.findIndex(
+        (task) =>
+          task.type === selectedTask.type &&
+          task.title === selectedTask.title,
+      );
+      if (inferredTaskIndex === -1) {
+        alert(t("تعذر تحديد هذه المهمة. حاول اختيارها من جديد."));
+        return;
+      }
       // Using fetch instead of axios
       const response = await fetch(
         role == "Teacher"
@@ -472,12 +487,7 @@ const StudentList = () => {
             Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({
-            taskId:
-              taskdata.findIndex(
-                (task) =>
-                  task.type === selectedTask.type &&
-                  task.title === selectedTask.title,
-              ) + 1,
+            taskId: inferredTaskIndex + 1,
             studentIds: selectedStudentIds.map((id) => id),
             comment: "Great job!",
             time: getCurrentTime(),
@@ -491,7 +501,7 @@ const StudentList = () => {
         setShowConfirmation(false);
         setShowCongrats(true);
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         if (
           errorData.message ===
             "Some students have already completed this task today" &&
@@ -501,11 +511,18 @@ const StudentList = () => {
           setShowDuplicateTask(true);
           setShowConfirmation(false);
         } else {
+          // This previously failed completely silently (console.error only)
+          // — the teacher/parent had no way to know the tap did nothing.
           console.error("Error adding progress:", errorData.message);
+          alert(
+            errorData.message ||
+              t("حدث خطأ أثناء تسجيل المهمة. حاول مرة أخرى."),
+          );
         }
       }
     } catch (error) {
       console.error("Error adding progress:", error);
+      alert(t("تعذر الاتصال بالخادم. تحقق من اتصالك بالإنترنت وحاول مرة أخرى."));
     }
   };
 

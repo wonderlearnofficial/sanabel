@@ -28,6 +28,7 @@ import sanabelType3Img from "../../assets/sanabeltype/سنابل الإحسان 
 import sanabelType4Img from "../../assets/sanabeltype/سنابل-الإحسان-في-العلاقة-مع-الأرض-والكون.png";
 import { sanabelImgs } from "../../data/SanabelDictionary";
 import { toFiniteNumber } from "../../utils/numericData";
+import { describeApiError } from "../../utils/apiError";
 
 // Define types
 interface Task {
@@ -669,26 +670,29 @@ const TodoList = () => {
   };
 
   const confirmMarkComplete = async () => {
-    if (selectedMissionId === null) return;
+    // The confirm button is already disabled while isLoading, but that only
+    // blocks a *second click* — an explicit guard here also blocks a second
+    // programmatic invocation (e.g. a fast double-tap racing the re-render).
+    if (selectedMissionId === null || isLoading) return;
 
     setIsLoading(true);
     const authToken = localStorage.getItem("token");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/students/add-pros`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({
+      const response = await axios.post(
+        `${API_BASE_URL}/students/add-pros`,
+        {
           taskId: selectedMissionId,
           studentIds: [user?.id],
           time: getCurrentTime(),
-        }),
-      });
+        },
+        {
+          headers: { Authorization: `Bearer ${authToken}` },
+          timeout: 15000,
+        },
+      );
 
-      if (response.ok) {
+      if (response.status === 200 || response.status === 201) {
         AudioManager.play("reward");
         setTodoItems((prev) =>
           prev.map((item) =>
@@ -701,22 +705,19 @@ const TodoList = () => {
 
         setShowConfirmPopup(false);
         setShowCongratsPopup(true);
-      } else {
-        AudioManager.play("error");
-        const errorData = await response.json();
-        console.error("Failed to mark mission complete:", errorData);
-        alert(
-          t(
-            `فشل في تحديد المهمة كمكتملة: ${
-              errorData.message || response.statusText
-            }`,
-          ),
-        );
       }
     } catch (error) {
       AudioManager.play("error");
       console.error("Error marking mission complete:", error);
-      alert(t("حدث خطأ أثناء تحديد المهمة كمكتملة."));
+      // Always show the SPECIFIC reason the request failed (timeout, offline,
+      // expired session, duplicate completion, server error...) — never a
+      // blank or generic message. Matches utils/apiError.ts used elsewhere
+      // (e.g. the shop). The previous version alerted `errorData.message ||
+      // response.statusText`, which rendered as a blank dialog whenever the
+      // server's error body used a different key AND the connection was
+      // HTTP/2 (Vercel/Railway both are) — response.statusText is spec-empty
+      // for HTTP/2 in every browser, not just Safari.
+      alert(t(describeApiError(error)));
     } finally {
       setIsLoading(false);
       setSelectedMissionId(null);

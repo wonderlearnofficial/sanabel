@@ -112,4 +112,28 @@ describe("describeApiError", () => {
       ),
     ).toBe("Class 42 does not exist.");
   });
+
+  it("never returns a blank string for a mark-task-complete failure (production regression)", () => {
+    // Reproduces the exact reported bug: a task-completion request fails on
+    // the server for any unexpected reason (dropped DB connection, timeout,
+    // etc.), addPros's catch-all responds, and the app must show something
+    // specific — never an empty alert. The old client code computed
+    // `errorData.message || response.statusText`, and response.statusText is
+    // spec-empty for every HTTP/2 response (Vercel/Railway both serve over
+    // HTTP/2, in every browser, not only Safari), so a server body missing
+    // `message` rendered as a blank dialog. The server now always includes
+    // `message`; this asserts describeApiError never renders blank either
+    // way, as a second, independent layer of protection.
+    const withMessage = describeApiError({
+      response: { status: 500, data: { message: "Internal Server Error" } },
+    });
+    expect(withMessage.length).toBeGreaterThan(0);
+
+    // Defense in depth: even a body with neither `message` nor `error` (the
+    // pre-fix shape, or a future regression) must still not render blank.
+    const withNeither = describeApiError({
+      response: { status: 500, data: {} },
+    });
+    expect(withNeither.length).toBeGreaterThan(0);
+  });
 });

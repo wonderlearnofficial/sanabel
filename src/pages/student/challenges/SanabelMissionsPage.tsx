@@ -20,6 +20,7 @@ import yellowSanabel from "../../../assets/resources/سنبلة صفراء.png";
 import xpIcon from "../../../assets/resources/اكس بي.png";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUserContext } from "../../../context/StudentUserProvider";
+import { describeApiError } from "../../../utils/apiError";
 
 type ApprovalStatus = "pending" | "approved" | "denied" | null;
 
@@ -251,7 +252,7 @@ const SanabelMissionsPage: React.FC = () => {
   };
 
   const confirmMarkComplete = async () => {
-    if (!selectedMissionId) return;
+    if (!selectedMissionId || isLoading) return;
     if (!isPersonal && !selectedApprover) return;
 
     setIsLoading(true);
@@ -299,23 +300,20 @@ const SanabelMissionsPage: React.FC = () => {
     }
 
     try {
-      const response = await fetch(
+      const response = await axios.post(
         `${API_BASE_URL}/students/add-pros`,
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({
-            taskId: selectedMissionId,
-            studentIds: [user?.id],
-            time: getCurrentTime(),
-          }),
-        }
+          taskId: selectedMissionId,
+          studentIds: [user?.id],
+          time: getCurrentTime(),
+        },
+        {
+          headers: { Authorization: `Bearer ${authToken}` },
+          timeout: 15000,
+        },
       );
 
-      if (response.ok) {
+      if (response.status === 200 || response.status === 201) {
         // Update the mission status locally
         setMissions((prevMissions: any) =>
           prevMissions.map((mission: any) =>
@@ -330,13 +328,14 @@ const SanabelMissionsPage: React.FC = () => {
 
         setShowConfirmPopup(false);
         setShowCongratsPopup(true);
-      } else {
-        console.error("Failed to mark mission complete");
-        // You might want to show an error popup here
       }
     } catch (error) {
       console.error("Error marking mission complete:", error);
-      // You might want to show an error popup here
+      // This previously failed completely silently (console.error only) —
+      // the student had no way to know the tap did nothing. Always show the
+      // specific reason (timeout, offline, expired session, server error...).
+      setShowConfirmPopup(false);
+      alert(t(describeApiError(error)));
     } finally {
       setIsLoading(false);
       setSelectedMissionId(null);
