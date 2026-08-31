@@ -7,6 +7,8 @@
 
 const KNOWN_SERVER_MESSAGES: Record<string, string> = {
   "Add some seeders or water first": "أضف كمية من الماء أو السماد أولاً.",
+  "Incorrect email or password": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+  "Invalid email or password": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
   "Invalid water or seeders quantity": "الكمية المطلوبة غير صحيحة.",
   "Insufficient snabel balance": "رصيد السنابل غير كافٍ.",
   "Student not found": "لم يتم العثور على حساب الطالب.",
