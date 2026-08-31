@@ -261,90 +261,88 @@ const Shop: React.FC = () => {
           <div className="flex-col gap-2 bg-[#FFF8E5] rounded-xl w-full flex justify-between p-2">
             <div className="flex flex-row-reverse justify-between">
               <div className="flex-center">
-                <div className="gap-1 p-1 bg-white flex-center rounded-3xl">
-                  {" "}
+                <div className="gap-1 p-1 bg-white flex-center rounded-3xl select-none">
                   <button
                     type="button"
                     aria-label={t("تقليل السماد")}
                     disabled={!user || isUserLoading || isBuying || isGrowing}
-                    className="w-6 h-6 rounded-full flex-center bg-blueprimary"
+                    className="w-6 h-6 rounded-full flex-center bg-blueprimary text-white select-none active:scale-90 transition-transform cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                     onClick={() => changeBuyFertilizerCount("-")}
                   >
-                    <h1 className="text-white"> -</h1>
+                    <span className="text-white font-bold select-none text-xs">-</span>
                   </button>
-                  <h1 className="text-black"> x{buyFertilizerCount}</h1>
+                  <span className="text-black font-semibold select-none px-1"> x{buyFertilizerCount}</span>
                   <button
                     type="button"
                     aria-label={t("زيادة السماد")}
                     disabled={!user || isUserLoading || isBuying || isGrowing}
-                    className="w-6 h-6 rounded-full flex-center bg-blueprimary"
+                    className="w-6 h-6 rounded-full flex-center bg-blueprimary text-white select-none active:scale-90 transition-transform cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                     onClick={() => changeBuyFertilizerCount("+")}
                   >
-                    <h1 className="text-white"> +</h1>
+                    <span className="text-white font-bold select-none text-xs">+</span>
                   </button>
                 </div>
-                <img src={fertilizerImg} alt="" className="w-auto h-8" />
+                <img src={fertilizerImg} alt="" className="w-auto h-8 select-none pointer-events-none" />
               </div>
               <div className="flex-center">
-                <div className="gap-1 p-1 bg-white flex-center rounded-3xl">
-                  {" "}
+                <div className="gap-1 p-1 bg-white flex-center rounded-3xl select-none">
                   <button
                     type="button"
                     aria-label={t("تقليل الماء")}
                     disabled={!user || isUserLoading || isBuying || isGrowing}
-                    className="w-6 h-6 rounded-full flex-center bg-blueprimary"
+                    className="w-6 h-6 rounded-full flex-center bg-blueprimary text-white select-none active:scale-90 transition-transform cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                     onClick={() => changeBuyWaterCount("-")}
                   >
-                    <h1 className="text-white"> -</h1>
+                    <span className="text-white font-bold select-none text-xs">-</span>
                   </button>
-                  <h1 className="text-black"> x{buyWaterCount}</h1>
+                  <span className="text-black font-semibold select-none px-1"> x{buyWaterCount}</span>
                   <button
                     type="button"
                     aria-label={t("زيادة الماء")}
                     disabled={!user || isUserLoading || isBuying || isGrowing}
                     data-testid="shop-add-water"
-                    className="w-6 h-6 rounded-full flex-center bg-blueprimary"
+                    className="w-6 h-6 rounded-full flex-center bg-blueprimary text-white select-none active:scale-90 transition-transform cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                     onClick={() => changeBuyWaterCount("+")}
                   >
-                    <h1 className="text-white"> +</h1>
+                    <span className="text-white font-bold select-none text-xs">+</span>
                   </button>
                 </div>
-                <img src={waterImg} alt="" className="w-auto h-8" />
+                <img src={waterImg} alt="" className="w-auto h-8 select-none pointer-events-none" />
               </div>
             </div>
             {(buyWaterCount > 0 || buyFertilizerCount > 0) && (
               <div className="flex flex-col w-full gap-1">
                 <div className="flex items-center justify-between w-full gap-2 p-3 bg-white border-2 rounded-3xl">
                   <div className="gap-2 flex-center">
-                    {shop.map((item) => (
-                      <div className="gap-1 flex-center">
+                    {shop.map((item, index) => (
+                      <div key={index} className="gap-1 flex-center select-none">
                         <img
                           src={item.icon}
                           alt="icon"
-                          className="w-auto h-8"
+                          className="w-auto h-8 select-none pointer-events-none"
                         />
-                        <h1 className="text-sm text-black">
+                        <span className="text-sm font-semibold text-black select-none">
                           x
                           {buyFertilizerCount * fertilizerCost +
                             buyWaterCount * waterCost}
-                        </h1>
+                        </span>
                       </div>
                     ))}
                   </div>
-                  <h1 className="py-1 text-sm font-bold text-center text-black ">
+                  <h1 className="py-1 text-sm font-bold text-center text-black select-none">
                     {t("الاجمالي")}
                   </h1>
                 </div>
-                <div
-                  className="w-full flex-center"
-                  onClick={() => setIsPopupVisible(true)}
-                >
-                  <div className="w-1/3 ">
-                    {" "}
-                    <h1 className="py-2 text-sm text-center bg-blueprimary rounded-3xl">
-                      {t("شراء")}
-                    </h1>
-                  </div>
+                <div className="w-full flex-center pt-1">
+                  <button
+                    type="button"
+                    data-testid="shop-buy-button"
+                    disabled={!user || isUserLoading || isBuying || isGrowing || (buyWaterCount === 0 && buyFertilizerCount === 0)}
+                    className="w-1/3 py-2 text-sm font-bold text-white text-center bg-blueprimary rounded-3xl select-none cursor-pointer shadow-md active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none touch-manipulation flex items-center justify-center"
+                    onClick={() => setIsPopupVisible(true)}
+                  >
+                    {t("شراء")}
+                  </button>
                 </div>
               </div>
             )}
@@ -357,59 +355,59 @@ const Shop: React.FC = () => {
                   animate={{ scale: 1, opacity: 1 }}
                   className="w-4/5 max-w-md p-6 text-center bg-white shadow-xl rounded-2xl"
                 >
-                  <h1 className="mb-4 text-xl font-bold text-black">
+                  <h1 className="mb-4 text-xl font-bold text-black select-none">
                     {t("تأكيد الشراء")}
                   </h1>
 
                   <div className="bg-[#FFF8E5] rounded-xl p-4 ">
                     <div className="flex items-center justify-center gap-8 my-3">
                       <div className="flex flex-col items-center">
-                        <h2 className="mb-2 text-black text-md">{t("ماء")}</h2>
+                        <h2 className="mb-2 text-black text-md select-none">{t("ماء")}</h2>
                         <div className="p-3 mb-2 bg-blue-100 rounded-full shadow-md">
                           <img
                             src={waterImg}
                             alt=""
-                            className="object-contain w-14 h-14"
+                            className="object-contain w-14 h-14 select-none pointer-events-none"
                           />
                         </div>
                         <div className="px-3 py-1 text-white bg-blue-500 rounded-full">
-                          <h2 className="font-bold">x{buyWaterCount}</h2>
+                          <h2 className="font-bold select-none">x{buyWaterCount}</h2>
                         </div>
                       </div>
 
                       <div className="flex flex-col items-center">
-                        <h2 className="mb-2 text-black text-md">{t("سماد")}</h2>
+                        <h2 className="mb-2 text-black text-md select-none">{t("سماد")}</h2>
                         <div className="p-3 mb-2 bg-green-100 rounded-full shadow-md">
                           <img
                             src={fertilizerImg}
                             alt=""
-                            className="object-contain w-14 h-14"
+                            className="object-contain w-14 h-14 select-none pointer-events-none"
                           />
                         </div>
                         <div className="px-3 py-1 text-white bg-green-500 rounded-full">
-                          <h2 className="font-bold">x{buyFertilizerCount}</h2>
+                          <h2 className="font-bold select-none">x{buyFertilizerCount}</h2>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex flex-col items-center justify-between w-full gap-2 p-2 bg-gray-100/25 rounded-2xl">
-                      <h1 className="font-bold text-center text-black text-md">
+                      <h1 className="font-bold text-center text-black text-md select-none">
                         {t("الاجمالي")}
                       </h1>
 
                       <div className="gap-4 p-5 flex-center rounded-xl">
-                        {shop.map((item) => (
-                          <div className="gap-1 flex-center">
+                        {shop.map((item, index) => (
+                          <div key={index} className="gap-1 flex-center select-none">
                             <img
                               src={item.icon}
                               alt="icon"
-                              className="w-auto h-8"
+                              className="w-auto h-8 select-none pointer-events-none"
                             />
-                            <h1 className="text-sm text-black">
+                            <span className="text-sm font-semibold text-black select-none">
                               x
                               {buyFertilizerCount * fertilizerCost +
                                 buyWaterCount * waterCost}
-                            </h1>
+                            </span>
                           </div>
                         ))}
                       </div>

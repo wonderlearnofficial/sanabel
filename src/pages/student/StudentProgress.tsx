@@ -44,30 +44,33 @@ const Progress: React.FC = () => {
         </p>
       </div>
 
-      <div className="flex w-full bg-[#E6E6E6] rounded-3xl p-1 gap-1 justify-between items-center">
+      <div className="flex w-full bg-[#E6E6E6] rounded-3xl p-1 gap-1 justify-between items-center select-none">
         {navbar.map((item, index) => (
-          <div
+          <button
             key={index}
-            className={`flex transition-all cursor-pointer ${
+            type="button"
+            role="tab"
+            aria-selected={selectProgressType === index}
+            className={`flex transition-all cursor-pointer select-none touch-manipulation ${
               selectProgressType === index
                 ? "flex-[2] bg-blueprimary text-white shadow-lg"
                 : "flex-[1] bg-gray-100 text-gray-700 hover:bg-blue-100"
-            } rounded-2xl py-1 items-center justify-center gap-1`}
+            } rounded-2xl py-1 items-center justify-center gap-1 border-0 outline-none`}
             onClick={() => setSelectProgressType(index)}
           >
             <img
               src={item.icon}
               alt="icon"
-              className="w-12 h-12 p-2 bg-white rounded-full shadow-md"
+              className="w-12 h-12 p-2 bg-white rounded-full shadow-md select-none pointer-events-none"
             />
-            <h1
-              className={`text-sm font-medium ${
+            <span
+              className={`text-sm font-medium select-none ${
                 selectProgressType === index ? "block" : "hidden"
               }`}
             >
               {t(item.name)}
-            </h1>
-          </div>
+            </span>
+          </button>
         ))}
       </div>
 
