@@ -333,15 +333,18 @@ const Shop: React.FC = () => {
                     {t("الاجمالي")}
                   </h1>
                 </div>
-                <div className="w-full flex-center pt-1">
+                <div className="w-full flex-center pt-2">
                   <button
                     type="button"
                     data-testid="shop-buy-button"
                     disabled={!user || isUserLoading || isBuying || isGrowing || (buyWaterCount === 0 && buyFertilizerCount === 0)}
-                    className="w-1/3 py-2 text-sm font-bold text-white text-center bg-blueprimary rounded-3xl select-none cursor-pointer shadow-md active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none touch-manipulation flex items-center justify-center"
-                    onClick={() => setIsPopupVisible(true)}
+                    className="w-full max-w-[220px] min-h-[48px] py-3 px-6 text-base font-bold text-white text-center bg-blueprimary rounded-2xl select-none cursor-pointer shadow-md active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none touch-manipulation flex items-center justify-center border-0 outline-none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsPopupVisible(true);
+                    }}
                   >
-                    {t("شراء")}
+                    <span className="pointer-events-none select-none">{t("شراء")}</span>
                   </button>
                 </div>
               </div>
@@ -414,20 +417,30 @@ const Shop: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex justify-center gap-4 mt-4">
+                  <div className="flex justify-center gap-3 mt-4">
                     <button
-                      className="flex-1 px-6 py-3 font-bold text-white transition-transform transform shadow-md bg-blueprimary rounded-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-                      onClick={buyShop}
+                      type="button"
+                      className="flex-1 min-h-[48px] px-4 py-3 font-bold text-white transition-transform transform shadow-md bg-blueprimary rounded-xl active:scale-95 disabled:opacity-50 disabled:pointer-events-none select-none cursor-pointer touch-manipulation border-0 outline-none flex items-center justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void buyShop();
+                      }}
                       disabled={isBuying}
                     >
-                      {isBuying ? t("جاري الشراء...") : t("تأكيد الشراء")}
+                      <span className="pointer-events-none select-none">
+                        {isBuying ? t("جاري الشراء...") : t("تأكيد الشراء")}
+                      </span>
                     </button>
                     <button
-                      className="px-4 py-3 font-bold text-gray-700 transition-transform transform bg-white border-2 border-gray-300 shadow-sm rounded-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-                      onClick={() => setIsPopupVisible(false)}
+                      type="button"
+                      className="min-h-[48px] px-6 py-3 font-bold text-gray-700 transition-transform transform bg-white border-2 border-gray-300 shadow-sm rounded-xl active:scale-95 disabled:opacity-50 disabled:pointer-events-none select-none cursor-pointer touch-manipulation outline-none flex items-center justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsPopupVisible(false);
+                      }}
                       disabled={isBuying}
                     >
-                      {t("إلغاء")}
+                      <span className="pointer-events-none select-none">{t("إلغاء")}</span>
                     </button>
                   </div>
                 </motion.div>
@@ -442,17 +455,17 @@ const Shop: React.FC = () => {
                   animate={{ scale: 1, opacity: 1 }}
                   className="w-4/5 max-w-md p-3 text-center bg-white shadow-xl rounded-2xl"
                 >
-                  <div className="mb-4 text-6xl text-red-600">!</div>
-                  <h1 className="mb-4 text-xl font-bold text-red-600">
+                  <div className="mb-4 text-6xl text-red-600 select-none">!</div>
+                  <h1 className="mb-4 text-xl font-bold text-red-600 select-none">
                     {t("رصيد غير كافي")}
                   </h1>
 
-                  <p className="mb-4 text-gray-700">
+                  <p className="mb-4 text-gray-700 select-none">
                     {t("تحتاج إلى المزيد من السنابل لإتمام هذه العملية")}
                   </p>
 
                   <div className="p-2 mb-4 bg-red-50 rounded-xl">
-                    <h3 className="mb-3 font-bold text-red-800">
+                    <h3 className="mb-3 font-bold text-red-800 select-none">
                       {t("السنابل المطلوبة")}
                     </h3>
 
@@ -466,17 +479,17 @@ const Shop: React.FC = () => {
                             <img
                               src={sanabel.icon}
                               alt={sanabel.name}
-                              className="w-6 h-auto"
+                              className="w-6 h-auto pointer-events-none select-none"
                             />
-                            <span className="font-medium text-gray-800">
+                            <span className="font-medium text-gray-800 select-none">
                               {sanabel.name}
                             </span>
                           </div>
                           <div className="text-end">
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-gray-600 select-none">
                               {t("لديك")}: {sanabel.available}
                             </div>
-                            <div className="text-sm font-bold text-red-600">
+                            <div className="text-sm font-bold text-red-600 select-none">
                               {t("تحتاج")}: {sanabel.needed} {t("إضافية")}
                             </div>
                           </div>
@@ -486,13 +499,15 @@ const Shop: React.FC = () => {
                   </div>
 
                   <button
-                    className="w-full px-6 py-3 font-bold text-white transition-transform transform bg-red-500 shadow-md rounded-xl hover:scale-105 active:scale-95"
-                    onClick={() => {
+                    type="button"
+                    className="w-full min-h-[48px] px-6 py-3 font-bold text-white transition-transform transform bg-red-500 shadow-md rounded-xl active:scale-95 select-none cursor-pointer touch-manipulation border-0 outline-none flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setIsInsufficientFundsVisible(false);
                       setMissingSanabel([]);
                     }}
                   >
-                    {t("فهمت")}
+                    <span className="pointer-events-none select-none">{t("فهمت")}</span>
                   </button>
                 </motion.div>
               </div>
@@ -500,18 +515,22 @@ const Shop: React.FC = () => {
 
             {/* Purchase Success Popup */}
             {isPurchaseConfirmed && (
-              <div className="fixed top-0 left-0 z-50 w-full h-full bg-black bg-opacity-50 flex-center ">
-                <div className="w-2/3 p-4 text-center bg-white rounded-xl">
+              <div className="fixed top-0 left-0 z-50 w-full h-full bg-black bg-opacity-50 flex-center">
+                <div className="w-4/5 max-w-sm p-6 text-center bg-white rounded-2xl shadow-xl">
                   <CheckmarkAnimation />
 
-                  <h1 className="text-lg text-black">
+                  <h1 className="mt-3 text-lg font-bold text-black select-none">
                     {t("تمت عملية الشراء بنجاح")}
                   </h1>
                   <button
-                    className="px-4 py-2 mt-4 text-white bg-blueprimary rounded-xl"
-                    onClick={() => setIsPurchaseConfirmed(false)}
+                    type="button"
+                    className="w-full min-h-[48px] px-6 py-3 mt-4 font-bold text-white bg-blueprimary rounded-xl select-none cursor-pointer touch-manipulation active:scale-95 transition-transform border-0 outline-none flex items-center justify-center shadow-md"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsPurchaseConfirmed(false);
+                    }}
                   >
-                    {t("إغلاق")}
+                    <span className="pointer-events-none select-none">{t("إغلاق")}</span>
                   </button>
                 </div>
               </div>

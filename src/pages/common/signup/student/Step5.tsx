@@ -1,13 +1,8 @@
-import { useState } from "react";
-import { useTheme } from "../../../../context/ThemeContext";
+import React from "react";
 import PrimaryButton from "../../../../components/PrimaryButton";
-import { IonRouterLink } from "@ionic/react";
-
 import GenericInput from "../../../../components/GenericInput";
-import BackArrow from "../../../../icons/BackArrow";
 import GoBackButton from "../../../../components/GoBackButton";
 import { useTranslation } from "react-i18next";
-
 import ProgressBar from "../ProgressBar";
 
 interface Step5Props {
@@ -23,12 +18,12 @@ const Step5: React.FC<Step5Props> = ({
   parentCode,
   setParentCode,
 }) => {
-  const { darkMode, toggleDarkMode } = useTheme();
   const { t } = useTranslation();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setParentCode(e.target.value);
   };
+
   return (
     <div className="registration-page">
       <div className="flex flex-col w-full gap-3">
@@ -39,7 +34,7 @@ const Step5: React.FC<Step5Props> = ({
         <ProgressBar filledBars={5} />
 
         <div className="flex flex-col self-end gap-2">
-          <h1 className="text-2xl font-bold text-black text-end " dir="ltr">
+          <h1 className="text-2xl font-bold text-black text-end" dir="ltr">
             {t("أدخل رمزاً لولي أمرك")}
           </h1>
 
@@ -58,10 +53,9 @@ const Step5: React.FC<Step5Props> = ({
           value={parentCode}
         />
       </div>
-      <div className="w-full ">
-        <div onClick={onContinue}>
-          <PrimaryButton style="fill" text={t("متابعة")} arrow="left" />
-        </div>
+
+      <div className="w-full">
+        <PrimaryButton style="fill" text={t("متابعة")} arrow="left" onClick={onContinue} />
       </div>
     </div>
   );

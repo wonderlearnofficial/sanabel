@@ -213,6 +213,10 @@ button,
   -webkit-touch-callout: none;
 }
 
+button * {
+  pointer-events: none;
+}
+
 button,
 [role="button"],
 a,

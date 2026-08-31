@@ -1,14 +1,10 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useTheme } from "../../../../context/ThemeContext";
 import PrimaryButton from "../../../../components/PrimaryButton";
-import { IonRouterLink } from "@ionic/react";
-
-import GenericInput from "../../../../components/GenericInput";
-import BackArrow from "../../../../icons/BackArrow";
 import GoBackButton from "../../../../components/GoBackButton";
 import { useTranslation } from "react-i18next";
+
 // Import AVATARS
-// Boys Avatars
 import boy1 from "../../../../assets/avatars/Boys/boy1.png";
 import boy2 from "../../../../assets/avatars/Boys/boy2.png";
 import boy3 from "../../../../assets/avatars/Boys/boy3.png";
@@ -17,7 +13,6 @@ import boy5 from "../../../../assets/avatars/Boys/boy5.png";
 import boy6 from "../../../../assets/avatars/Boys/boy6.png";
 import boy7 from "../../../../assets/avatars/Boys/boy7.png";
 
-// Girls Avatars
 import girl1 from "../../../../assets/avatars/Girls/girl1.png";
 import girl2 from "../../../../assets/avatars/Girls/girl2.png";
 import girl3 from "../../../../assets/avatars/Girls/girl3.png";
@@ -32,7 +27,6 @@ import ProgressBar from "../ProgressBar";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import i18n from "../../../../i18n";
 
 const Toaster = () => (
   <ToastContainer
@@ -49,7 +43,6 @@ const Toaster = () => (
   />
 );
 
-// Grouped arrays for easier access
 const boysAvatars = [boy1, boy2, boy3, boy4, boy5, boy6, boy7];
 const girlsAvatars = [
   girl1,
@@ -78,7 +71,6 @@ const Step6: React.FC<Step6Props> = ({
   onBack,
   gender,
 }) => {
-  const { darkMode, toggleDarkMode } = useTheme();
   const { t } = useTranslation();
 
   function handleGenderStep() {
@@ -88,7 +80,7 @@ const Step6: React.FC<Step6Props> = ({
       onComplete();
     }
   }
-  console.log(character);
+
   return (
     <div className="registration-page">
       <div className="absolute">
@@ -101,7 +93,7 @@ const Step6: React.FC<Step6Props> = ({
         <ProgressBar filledBars={6} />
 
         <div className="flex flex-col self-end gap-2">
-          <h1 className="text-2xl font-bold text-black text-end " dir="ltr">
+          <h1 className="text-2xl font-bold text-black text-end" dir="ltr">
             {t("ضع صورة شخصية لك")}
           </h1>
 
@@ -114,27 +106,31 @@ const Step6: React.FC<Step6Props> = ({
       <div className="grid w-full grid-cols-3 gap-4 place-items-center sm:grid-cols-4">
         {(gender === "boy" ? boysAvatars : girlsAvatars).map(
           (avatar, index) => (
-            <img
+            <button
+              type="button"
               key={index}
-              src={avatar}
-              alt={`Avatar ${index + 1}`}
-              className={`w-16 h-16 sm:w-20 sm:h-20 bg-redprimary rounded-full  ${
-                character == avatar ? "scale-125 opacity-100" : "opacity-70"
-              }`}
               onClick={() => setCharacter(avatar)}
-            />
+              className="p-1 rounded-full border-0 bg-transparent outline-none cursor-pointer select-none touch-manipulation transition-transform"
+            >
+              <img
+                src={avatar}
+                alt={`Avatar ${index + 1}`}
+                className={`w-16 h-16 sm:w-20 sm:h-20 bg-redprimary rounded-full pointer-events-none select-none transition-all ${
+                  character === avatar ? "scale-125 ring-4 ring-blueprimary opacity-100 shadow-md" : "opacity-70"
+                }`}
+              />
+            </button>
           ),
         )}
       </div>
 
-      <div className="w-full ">
-        <div onClick={handleGenderStep}>
-          <PrimaryButton
-            style="fill"
-            text={t("ابدأ رحلة جمع الحسنات")}
-            arrow="left"
-          />
-        </div>
+      <div className="w-full">
+        <PrimaryButton
+          style="fill"
+          text={t("ابدأ رحلة جمع الحسنات")}
+          arrow="left"
+          onClick={handleGenderStep}
+        />
       </div>
     </div>
   );

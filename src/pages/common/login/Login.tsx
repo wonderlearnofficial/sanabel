@@ -192,8 +192,8 @@ const Login: React.FC = () => {
         </div>
       </div>
 
-      <div className="w-full" onClick={handleLogin}>
-        <PrimaryButton style="fill" text={t("تسجيل الدخول")} arrow="none" />
+      <div className="w-full">
+        <PrimaryButton style="fill" text={t("تسجيل الدخول")} arrow="none" onClick={handleLogin} />
       </div>
 
       <IonRouterLink routerLink="/choosesignmethod" className="text-md">

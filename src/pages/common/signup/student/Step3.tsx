@@ -1,9 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import PrimaryButton from "../../../../components/PrimaryButton";
-import { IonRouterLink } from "@ionic/react";
-
 import GenericInput from "../../../../components/GenericInput";
-import BackArrow from "../../../../icons/BackArrow";
 import GoBackButton from "../../../../components/GoBackButton";
 import { useTranslation } from "react-i18next";
 
@@ -12,7 +9,6 @@ import ProgressBar from "../ProgressBar";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import i18n from "../../../../i18n";
 
 const Toaster = () => (
   <ToastContainer
@@ -50,7 +46,6 @@ const Step3: React.FC<Step3Props> = ({
 
   const handleInputChange = (field: string, value: string) => {
     if (/^\d*$/.test(value)) {
-      // Allow only numbers
       setBirthdate({ ...birthdate, [field]: value });
     } else {
       toast.error(t("numbers_only"));
@@ -60,13 +55,11 @@ const Step3: React.FC<Step3Props> = ({
   const isValidDate = (day: number, month: number, year: number): boolean => {
     const currentYear = new Date().getFullYear();
 
-    // Year validation
     if (year < 1940 || year > currentYear || year.toString().length !== 4) {
       toast.error(t("invalid_date"));
       return false;
     }
 
-    // Month and day validation
     if (month < 1 || month > 12) return false;
     const daysInMonth = new Date(year, month, 0).getDate();
     return day > 0 && day <= daysInMonth;
@@ -85,6 +78,7 @@ const Step3: React.FC<Step3Props> = ({
       onContinue();
     }
   }
+
   return (
     <div className="registration-page">
       <div className="absolute">
@@ -98,7 +92,7 @@ const Step3: React.FC<Step3Props> = ({
         <ProgressBar filledBars={3} />
 
         <div className="flex flex-col self-end gap-2">
-          <h1 className="text-2xl font-bold text-black text-end " dir="ltr">
+          <h1 className="text-2xl font-bold text-black text-end" dir="ltr">
             {t("أدخل تاريخ عيد ميلادك 🎂")}
           </h1>
 
@@ -110,7 +104,7 @@ const Step3: React.FC<Step3Props> = ({
 
       <div className="flex items-center justify-center w-full gap-3">
         <div className="flex flex-col items-center justify-center w-full gap-3">
-          <img src={cakeImage} alt="" className="signup-illustration" />
+          <img src={cakeImage} alt="" className="signup-illustration pointer-events-none select-none" />
           <div className="grid w-full grid-cols-3 gap-2 sm:gap-3">
             <GenericInput
               type="text"
@@ -137,10 +131,8 @@ const Step3: React.FC<Step3Props> = ({
         </div>
       </div>
 
-      <div className="w-full ">
-        <div onClick={handleBirthdayStep}>
-          <PrimaryButton style="fill" text={t("متابعة")} arrow="left" />
-        </div>
+      <div className="w-full">
+        <PrimaryButton style="fill" text={t("متابعة")} arrow="left" onClick={handleBirthdayStep} />
       </div>
     </div>
   );

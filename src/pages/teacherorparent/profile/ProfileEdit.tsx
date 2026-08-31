@@ -229,8 +229,8 @@ const Step1: React.FC = () => {
 
       {/* Class */}
 
-      <div className="w-full " onClick={handleSubmit}>
-        <PrimaryButton style="fill" text={t("حفظ")} arrow="none" />
+      <div className="w-full">
+        <PrimaryButton style="fill" text={t("حفظ")} arrow="none" onClick={handleSubmit} />
       </div>
     </div>
   );

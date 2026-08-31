@@ -944,8 +944,8 @@ const Step1 = () => {
           transition={{ delay: 0.5, duration: 0.5 }}
         >
           {/* Save Button */}
-          <div onClick={() => handleSave()}>
-            <PrimaryButton style="fill" text={t("حفظ")} arrow="none" />
+          <div>
+            <PrimaryButton style="fill" text={t("حفظ")} arrow="none" onClick={handleSave} />
           </div>
         </motion.div>
       </div>

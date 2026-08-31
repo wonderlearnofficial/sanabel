@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useTheme } from "../../../../context/ThemeContext";
 import PrimaryButton from "../../../../components/PrimaryButton";
 import GenericInput from "../../../../components/GenericInput";
@@ -6,8 +6,6 @@ import GoBackButton from "../../../../components/GoBackButton";
 import { useTranslation } from "react-i18next";
 
 import parentFemaleImg from "../../../../assets/choosesignmethod/chooseparentorteacher.png";
-import parentMaleImg from "../../../../assets/choosesignmethod/chooseparentorteacher.png";
-import teacherMaleImg from "../../../../assets/choosesignmethod/chooseparentorteacher.png";
 import teacherFemaleImg from "../../../../assets/choosesignmethod/chooseparentorteacher.png";
 
 import { ToastContainer, toast } from "react-toastify";
@@ -57,27 +55,23 @@ const Step1: React.FC<Step1Props> = ({
 
   // Improved validation for Arabic and English names
   const isValidName = (str: string) => {
-    // Allow Arabic, English letters, and spaces
     const arabicEnglishRegex = /^[\u0621-\u064A\u0660-\u0669A-Za-z\s]+$/;
     return arabicEnglishRegex.test(str.trim()) && str.trim().length >= 2;
   };
 
   const finishStep1 = async () => {
-    if (isSubmitting) return; // Prevent double submission
+    if (isSubmitting) return;
 
-    // Validate first name
     if (!name.firstName || !name.firstName.trim()) {
       toast.error(t("enterFirstName") || "Please enter your first name");
       return;
     }
 
-    // Validate last name
     if (!name.lastName || !name.lastName.trim()) {
       toast.error(t("enterLastName") || "Please enter your last name");
       return;
     }
 
-    // Validate first name format
     if (!isValidName(name.firstName)) {
       toast.error(
         t("invalidFirstName") ||
@@ -86,7 +80,6 @@ const Step1: React.FC<Step1Props> = ({
       return;
     }
 
-    // Validate last name format
     if (!isValidName(name.lastName)) {
       toast.error(
         t("invalidLastName") || "Please enter a valid last name (letters only)",
@@ -94,7 +87,6 @@ const Step1: React.FC<Step1Props> = ({
       return;
     }
 
-    // Validate role selection
     if (!role) {
       toast.error(t("pleaseSelectRole") || "Please select your role");
       return;
@@ -103,15 +95,12 @@ const Step1: React.FC<Step1Props> = ({
     setIsSubmitting(true);
 
     try {
-      // Set avatar based on role selection
       const avatarMap = {
-        Parent: parentFemaleImg, // You can make this dynamic based on gender if needed
+        Parent: parentFemaleImg,
         Teacher: teacherFemaleImg,
       };
 
       setAvatar(avatarMap[role as keyof typeof avatarMap] || parentFemaleImg);
-
-      // Call parent completion handler
       await onComplete();
     } catch (error) {
       console.error("Error in Step1 completion:", error);
@@ -123,7 +112,6 @@ const Step1: React.FC<Step1Props> = ({
 
   const handleRoleSelection = (selectedRole: string) => {
     setRole(selectedRole);
-    console.log("Role selected:", selectedRole);
   };
 
   return (
@@ -133,8 +121,8 @@ const Step1: React.FC<Step1Props> = ({
       </div>
 
       <div className="flex flex-col w-full gap-3">
-        <div className="flex justify-start w-full" onClick={onBack}>
-          <GoBackButton />
+        <div className="flex justify-start w-full">
+          <GoBackButton onClick={onBack} />
         </div>
 
         <div className="flex flex-col self-end gap-2">
@@ -152,41 +140,43 @@ const Step1: React.FC<Step1Props> = ({
         {/* Role Selection */}
         <div className="flex flex-col gap-5 transition-all duration-300">
           <div className="grid grid-cols-2 gap-3">
-            <div
-              className={`flex min-w-0 flex-col items-center gap-2 p-3 rounded-lg cursor-pointer transition-all duration-200 transform hover:scale-[1.02] ${
+            <button
+              type="button"
+              className={`flex min-w-0 flex-col items-center gap-2 p-3 rounded-lg cursor-pointer transition-all duration-200 transform hover:scale-[1.02] border-0 outline-none select-none touch-manipulation ${
                 role === "Parent"
                   ? "bg-blue-600 text-white shadow-lg"
                   : "bg-gray-100 text-black hover:bg-gray-200"
-              } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
+              } ${isSubmitting ? "opacity-50 pointer-events-none" : ""}`}
               onClick={() => !isSubmitting && handleRoleSelection("Parent")}
             >
               <img
                 src={parentFemaleImg}
                 alt="Parent"
-                className="object-cover w-20 h-20 rounded-full sm:w-24 sm:h-24"
+                className="object-cover w-20 h-20 rounded-full sm:w-24 sm:h-24 pointer-events-none select-none"
               />
-              <p className="text-lg font-semibold text-center sm:text-xl">
+              <p className="text-lg font-semibold text-center sm:text-xl pointer-events-none select-none">
                 {t("Parent") || "Parent"}
               </p>
-            </div>
+            </button>
 
-            <div
-              className={`flex min-w-0 flex-col items-center gap-2 p-3 rounded-lg cursor-pointer transition-all duration-200 transform hover:scale-[1.02] ${
+            <button
+              type="button"
+              className={`flex min-w-0 flex-col items-center gap-2 p-3 rounded-lg cursor-pointer transition-all duration-200 transform hover:scale-[1.02] border-0 outline-none select-none touch-manipulation ${
                 role === "Teacher"
                   ? "bg-blue-600 text-white shadow-lg"
                   : "bg-gray-100 text-black hover:bg-gray-200"
-              } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
+              } ${isSubmitting ? "opacity-50 pointer-events-none" : ""}`}
               onClick={() => !isSubmitting && handleRoleSelection("Teacher")}
             >
               <img
                 src={teacherFemaleImg}
                 alt="Teacher"
-                className="object-cover w-20 h-20 rounded-full sm:w-24 sm:h-24"
+                className="object-cover w-20 h-20 rounded-full sm:w-24 sm:h-24 pointer-events-none select-none"
               />
-              <p className="text-lg font-semibold text-center sm:text-xl">
+              <p className="text-lg font-semibold text-center sm:text-xl pointer-events-none select-none">
                 {t("Teacher") || "Teacher"}
               </p>
-            </div>
+            </button>
           </div>
         </div>
 
@@ -213,22 +203,17 @@ const Step1: React.FC<Step1Props> = ({
 
       {/* Submit Button */}
       <div className="w-full">
-        <div
-          className={`${
-            isSubmitting ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-          }`}
-          onClick={!isSubmitting ? finishStep1 : undefined}
-        >
-          <PrimaryButton
-            style="fill"
-            text={
-              isSubmitting
-                ? t("جاري الإنشاء") || "Creating..."
-                : t("متابعة") || "Continue"
-            }
-            arrow="left"
-          />
-        </div>
+        <PrimaryButton
+          style="fill"
+          text={
+            isSubmitting
+              ? t("جاري الإنشاء") || "Creating..."
+              : t("متابعة") || "Continue"
+          }
+          arrow="left"
+          disabled={isSubmitting}
+          onClick={finishStep1}
+        />
       </div>
     </div>
   );

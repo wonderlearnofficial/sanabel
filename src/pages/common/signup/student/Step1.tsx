@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useTheme } from "../../../../context/ThemeContext";
 import PrimaryButton from "../../../../components/PrimaryButton";
 import { IonRouterLink } from "@ionic/react";
@@ -48,12 +48,8 @@ const Step1: React.FC<Step1Props> = ({
   const { darkMode, toggleDarkMode } = useTheme();
   const { t } = useTranslation();
 
-  console.log(name.firstName);
-  console.log(name.parentName);
   const handleNameChange = (key: string, value: string) => {
     setName({ ...name, [key]: value });
-    console.log(name.firstName);
-    console.log(name.parentName);
   };
   const isRTL = i18n.language === "ar";
   // Validation helper to check if a string contains only letters
@@ -97,7 +93,7 @@ const Step1: React.FC<Step1Props> = ({
 
       <div className="flex flex-col w-full gap-5">
         <div className="flex flex-col">
-          <img src={nameImg} alt="" className="signup-illustration" />
+          <img src={nameImg} alt="" className="signup-illustration pointer-events-none select-none" />
           <div className="grid grid-cols-2 gap-3">
             <GenericInput
               type="text"
@@ -116,12 +112,13 @@ const Step1: React.FC<Step1Props> = ({
           </div>
         </div>
       </div>
-      <div className="w-full " onClick={isSubmitting ? undefined : finishStep1}>
+      <div className="w-full">
         <PrimaryButton
           style="fill"
           text={isSubmitting ? "جاري التحميل..." : "إنشاء حساب جديد"}
           arrow={isRTL ? "left" : "right"}
           disabled={isSubmitting}
+          onClick={finishStep1}
         />
       </div>
     </div>
