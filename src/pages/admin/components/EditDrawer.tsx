@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { FaTimes, FaPlus } from "react-icons/fa";
+import { FaTimes, FaPlus, FaUserGraduate } from "react-icons/fa";
 
 type Tab =
   | "users"
@@ -21,6 +21,7 @@ interface EditDrawerProps {
   editingRow: any;
   onClose: () => void;
   onSave: () => void;
+  onImpersonateStudent?: (row: any) => void;
   isSaving: boolean;
   accentColor: string;
 
@@ -61,6 +62,7 @@ export const EditDrawer: React.FC<EditDrawerProps> = ({
   editingRow,
   onClose,
   onSave,
+  onImpersonateStudent,
   isSaving,
   accentColor,
 
@@ -478,6 +480,20 @@ export const EditDrawer: React.FC<EditDrawerProps> = ({
               : t("admin.modal.saveBtn")}
           </button>
         </div>
+
+        {/* Impersonate Button for Student */}
+        {((activeTab === "students" || editingRow?.role === "Student") && onImpersonateStudent && !isNew) && (
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => onImpersonateStudent(editingRow)}
+              className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-cyan-800 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 transition-all flex items-center justify-center gap-2 shadow-sm"
+            >
+              <FaUserGraduate size={14} className="text-cyan-600" />
+              <span>{t("admin.impersonate.button")}</span>
+            </button>
+          </div>
+        )}
       </motion.div>
     </>
   );

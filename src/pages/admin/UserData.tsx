@@ -893,6 +893,49 @@ const UserData: React.FC = () => {
     }
   };
 
+  const handleImpersonateStudent = async (row: any) => {
+    const studentId = row.id ?? row.studentId ?? row.userId;
+    if (!studentId) return;
+
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/admin/students/${studentId}/impersonate`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      if (res.data?.data?.token) {
+        // Preserve admin return credentials
+        const currentAdminToken = localStorage.getItem("token");
+        const currentAdminRole = localStorage.getItem("role") || "Admin";
+        if (currentAdminToken) {
+          localStorage.setItem("adminReturnToken", currentAdminToken);
+          localStorage.setItem("adminReturnRole", currentAdminRole);
+          const studentName = getName(activeTab, row) || res.data.data.user?.firstName || "Student";
+          localStorage.setItem("adminImpersonatedStudentName", studentName);
+        }
+
+        // Set student session in storage
+        localStorage.setItem("token", res.data.data.token);
+        if (res.data.data.refreshToken) {
+          localStorage.setItem("refreshToken", res.data.data.refreshToken);
+        }
+        localStorage.setItem("role", "Student");
+        localStorage.setItem("keepLoggedIn", "true");
+        localStorage.setItem(`tutorialComplete-${res.data.data.user?.email}`, "true");
+        localStorage.setItem("firstTimer", "false");
+
+        toast.success(t("admin.impersonate.success"));
+        setTimeout(() => {
+          window.location.href = "/student/home";
+        }, 300);
+      }
+    } catch (err: any) {
+      console.error("Impersonation error:", err);
+      toast.error(describeApiError(err, (key, options) => t(key, options)));
+    }
+  };
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
@@ -1043,6 +1086,7 @@ const UserData: React.FC = () => {
                 onResetPasswordClick={(row) =>
                   setConfirmReset({ userId: getUserId(activeTab as UserLikeTab, row), name: getName(activeTab, row) })
                 }
+                onImpersonateStudent={handleImpersonateStudent}
                 accentColor={accent.from}
                 sortField={sortField}
                 sortDir={sortDir}
@@ -1069,6 +1113,7 @@ const UserData: React.FC = () => {
             editingRow={editingRow}
             onClose={() => setEditingRow(null)}
             onSave={handleSaveEdit}
+            onImpersonateStudent={handleImpersonateStudent}
             isSaving={isSavingEdit}
             accentColor={accent.from}
             editFirstName={editFirstName}

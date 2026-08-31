@@ -111,6 +111,7 @@ import DevLogin from "./pages/dev/DevLogin";
 import { AppUpdateChecker } from "./components/updates/AppUpdateChecker";
 import { initAppNotificationsOnStartup } from "./services/appNotificationManager";
 import PermissionsStartupModal from "./components/PermissionsStartupModal";
+import ImpersonationBanner from "./components/ImpersonationBanner";
 
 setupIonicReact();
 
@@ -217,6 +218,7 @@ const App: React.FC = () => {
       <ThemeProvider>
         <NotificationProvider>
         <GuideProvider>
+          <ImpersonationBanner />
           {/* Simulation & desktop admin pages: render outside the phone frame and Ionic router entirely */}
           {window.location.pathname === "/simulation" ? (
             <Simulation />

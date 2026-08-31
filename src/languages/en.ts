@@ -1506,6 +1506,12 @@ const en = {
     "admin.delete.confirm": "Delete",
     "admin.delete.cancel": "Cancel",
 
+    // Impersonate
+    "admin.impersonate.button": "Sign In as Student",
+    "admin.impersonate.success": "Signed in as student successfully",
+    "admin.impersonate.banner": "You are currently browsing as student: {{name}}",
+    "admin.impersonate.return": "Return to Admin",
+
     // Reset password confirmation
     "admin.reset.title": "Reset Password",
     "admin.reset.message": "Are you sure you want to reset the password for",

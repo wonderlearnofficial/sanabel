@@ -436,6 +436,12 @@ const ar = {
     "admin.delete.confirm": "حذف",
     "admin.delete.cancel": "إلغاء",
 
+    // Impersonate
+    "admin.impersonate.button": "تسجيل الدخول كطالب",
+    "admin.impersonate.success": "تم تسجيل الدخول بنجاح كطالب",
+    "admin.impersonate.banner": "أنت تتصفح الآن بحساب الطالب: {{name}}",
+    "admin.impersonate.return": "العودة للوحة التحكم",
+
     // Reset password confirmation
     "admin.reset.title": "إعادة تعيين كلمة المرور",
     "admin.reset.message": "هل أنت متأكد من إعادة تعيين كلمة المرور لـ",

@@ -8,6 +8,7 @@ import { describeApiError } from "../../../utils/apiError";
 import GoBackButton from "../../../components/GoBackButton";
 import GenericInput from "../../../components/GenericInput";
 import PrimaryButton from "../../../components/PrimaryButton";
+import { FaUserGraduate } from "react-icons/fa";
 
 interface Organization {
   id: number;
@@ -159,6 +160,41 @@ const StudentDetailEdit: React.FC = () => {
     }
   };
 
+  const handleImpersonate = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/admin/students/${studentId}/impersonate`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (res.data?.data?.token) {
+        const currentAdminToken = localStorage.getItem("token");
+        const currentAdminRole = localStorage.getItem("role") || "Admin";
+        if (currentAdminToken) {
+          localStorage.setItem("adminReturnToken", currentAdminToken);
+          localStorage.setItem("adminReturnRole", currentAdminRole);
+          localStorage.setItem("adminImpersonatedStudentName", firstName || "Student");
+        }
+        localStorage.setItem("token", res.data.data.token);
+        if (res.data.data.refreshToken) {
+          localStorage.setItem("refreshToken", res.data.data.refreshToken);
+        }
+        localStorage.setItem("role", "Student");
+        localStorage.setItem("keepLoggedIn", "true");
+        localStorage.setItem(`tutorialComplete-${email}`, "true");
+        localStorage.setItem("firstTimer", "false");
+
+        toast.success(t("admin.impersonate.success"));
+        setTimeout(() => {
+          window.location.href = "/student/home";
+        }, 300);
+      }
+    } catch (err: any) {
+      toast.error(describeApiError(err, (key, options) => t(key, options)));
+    }
+  };
+
   return (
     <div className="flex flex-col items-center w-full h-full gap-4 p-4 overflow-y-auto">
       <Toaster />
@@ -264,6 +300,18 @@ const StudentDetailEdit: React.FC = () => {
           onClick={handleSubmit}
           disabled={isLoading || !dataLoaded}
         />
+      </div>
+
+      <div className="w-full">
+        <button
+          type="button"
+          onClick={handleImpersonate}
+          disabled={!dataLoaded}
+          className="w-full py-3 px-4 rounded-xl text-sm font-bold text-cyan-800 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+        >
+          <FaUserGraduate size={16} className="text-cyan-600" />
+          <span>{t("admin.impersonate.button")}</span>
+        </button>
       </div>
 
       {confirmDelete ? (

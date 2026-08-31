@@ -12,6 +12,7 @@ import {
   FaChevronUp,
   FaChevronDown,
   FaEllipsisV,
+  FaUserGraduate,
 } from "react-icons/fa";
 import { SkeletonLoader } from "./SkeletonLoader";
 import { EmptyState } from "./EmptyState";
@@ -37,6 +38,7 @@ interface DataTableProps {
   onEditClick: (row: any) => void;
   onDeleteClick: (row: any) => void;
   onResetPasswordClick: (row: any) => void;
+  onImpersonateStudent?: (row: any) => void;
   accentColor: string;
   sortField: string | null;
   sortDir: "asc" | "desc" | null;
@@ -169,6 +171,7 @@ export const DataTable: React.FC<DataTableProps> = ({
   onEditClick,
   onDeleteClick,
   onResetPasswordClick,
+  onImpersonateStudent,
   accentColor,
   sortField,
   sortDir,
@@ -820,6 +823,19 @@ export const DataTable: React.FC<DataTableProps> = ({
                                   <FaEdit size={12} className="text-slate-400" />
                                   <span>{t("تعديل")}</span>
                                 </button>
+
+                                {Boolean((activeTab === "students" || activeTab === "scores" || (activeTab === "users" && row.role === "Student")) && onImpersonateStudent) && (
+                                  <button
+                                    onClick={() => {
+                                      onImpersonateStudent!(row);
+                                      closeActionMenu();
+                                    }}
+                                    className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-cyan-700 hover:bg-cyan-50 rounded-lg transition-colors text-right w-full"
+                                  >
+                                    <FaUserGraduate size={12} className="text-cyan-600" />
+                                    <span>{t("admin.impersonate.button")}</span>
+                                  </button>
+                                )}
 
                                 {isUserType && (
                                   <button
