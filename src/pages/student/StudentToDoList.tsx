@@ -569,8 +569,8 @@ const AddMissionModal = ({
 
 const TodoList = () => {
   const { t } = useTranslation();
-  const { user, refreshUserData } = useUserContext();
-  const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
+  const { user, refreshUserData, mutateStudent } = useUserContext();
+  const [storedItems, setTodoItems] = useState<TodoItem[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [filter, setFilter] = useState<"all" | "completed" | "pending">("all");
@@ -590,52 +590,43 @@ const TodoList = () => {
   const canAssignTask = user?.canAssignTask;
   const isPersonal = !user?.classId;
 
-  // Load todos from localStorage on mount, resetting completion status once per day.
-  // This must be a single effect: splitting "load" and "reset" into separate
-  // useEffects let the save-effect below run in between with the pre-load empty
-  // array, wiping todoList out of localStorage before the reset check ever saw it.
-  const isInitialMount = useRef(true);
+  const submitting = useRef(false);
+  const [loadedFor, setLoadedFor] = useState<number | null>(null);
+  // Local storage owns selection only. Completion always comes from StudentTask.
+  const todoItems = storedItems.map(item => ({
+    ...item,
+    completed: user?.completedTasks?.taskIds.includes(Number(item.task.id)) ?? false,
+  }));
 
   useEffect(() => {
-    const savedTodos = localStorage.getItem("todoList");
-    const lastReset = localStorage.getItem("lastResetDate");
-    const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
-
-    if (savedTodos) {
-      try {
-        const parsedTodos: TodoItem[] = JSON.parse(savedTodos);
-        if (lastReset !== today) {
-          const resetTodos = parsedTodos.map((item) => ({
-            ...item,
-            completed: false,
-          }));
-          setTodoItems(resetTodos);
-          localStorage.setItem("todoList", JSON.stringify(resetTodos));
-        } else {
-          setTodoItems(parsedTodos);
-        }
-      } catch (error) {
-        console.error("Error parsing/resetting todos:", error);
-        localStorage.removeItem("todoList");
+    if (!user) return;
+    try {
+      const key = `sanabel:todos:${user.id}`;
+      let selections = localStorage.getItem(key);
+      // Adopt the legacy shared selection list once for the signed-in user.
+      // Its cached completion flags are deliberately never trusted.
+      if (selections === null && !localStorage.getItem("sanabel:legacy-todos-migrated")) {
+        selections = localStorage.getItem("todoList");
+        if (selections) localStorage.setItem(key, selections);
+        localStorage.setItem("sanabel:legacy-todos-migrated", String(user.id));
       }
+      const saved = JSON.parse(selections || "[]");
+      setTodoItems(Array.isArray(saved) ? saved : []);
+    } catch {
+      setTodoItems([]);
     }
-    localStorage.setItem("lastResetDate", today);
-  }, []);
+    setLoadedFor(user.id);
+    void refreshUserData();
+  }, [user?.id, refreshUserData]);
 
-  // Save todos to localStorage whenever todoItems changes. Skip the initial
-  // mount — the load/reset effect above already owns localStorage for that
-  // first render, and running this then would use the stale pre-load state.
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
+    if (!user || loadedFor !== user.id) return;
+    try {
+      localStorage.setItem(`sanabel:todos:${user.id}`, JSON.stringify(storedItems.map(item => ({ ...item, completed: false }))));
+    } catch {
+      // Selections remain usable in memory when browser storage is unavailable.
     }
-    if (todoItems.length > 0) {
-      localStorage.setItem("todoList", JSON.stringify(todoItems));
-    } else {
-      localStorage.removeItem("todoList");
-    }
-  }, [todoItems]);
+  }, [storedItems, user?.id, loadedFor]);
 
   const addMission = (task: Task) => {
     const newTodoItem: TodoItem = {
@@ -670,39 +661,18 @@ const TodoList = () => {
   };
 
   const confirmMarkComplete = async () => {
-    // The confirm button is already disabled while isLoading, but that only
-    // blocks a *second click* — an explicit guard here also blocks a second
-    // programmatic invocation (e.g. a fast double-tap racing the re-render).
-    if (selectedMissionId === null || isLoading) return;
+    // The ref closes the gap before React renders the disabled button.
+    if (selectedMissionId === null || submitting.current) return;
+    submitting.current = true;
 
     setIsLoading(true);
-    const authToken = localStorage.getItem("token");
-
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/students/add-pros`,
-        {
-          taskId: selectedMissionId,
-          studentIds: [user?.id],
-          time: getCurrentTime(),
-        },
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-          timeout: 15000,
-        },
-      );
+      const response = await mutateStudent("mission", {
+        taskId: selectedMissionId, time: getCurrentTime(),
+      });
 
       if (response.status === 200 || response.status === 201) {
-        AudioManager.play("reward");
-        setTodoItems((prev) =>
-          prev.map((item) =>
-            item.id === selectedMissionId ? { ...item, completed: true } : item,
-          ),
-        );
-
-        // Refresh the user context so inventory/xp reflect the new totals
-        await refreshUserData();
-
+        // mutateStudent already reconciled the authoritative daily snapshot.
         setShowConfirmPopup(false);
         setShowCongratsPopup(true);
       }
@@ -718,7 +688,12 @@ const TodoList = () => {
       // HTTP/2 (Vercel/Railway both are) — response.statusText is spec-empty
       // for HTTP/2 in every browser, not just Safari.
       alert(t(describeApiError(error)));
+      // A timeout can occur after the server committed. Reconcile before
+      // another attempt instead of assuming the completion was rolled back.
+      void refreshUserData();
     } finally {
+      submitting.current = false;
+      setShowConfirmPopup(false);
       setIsLoading(false);
       setSelectedMissionId(null);
     }
@@ -892,9 +867,13 @@ const TodoList = () => {
                       </span>
                     </div>
 
-                    {item.task.completionStatus !== "Completed" &&
-                      (isPersonal || !grade || canAssignTask) && (
-                        <div
+                    {(isPersonal || !grade || canAssignTask) && (
+                        <button
+                          type="button"
+                          aria-label={t(item.completed ? "مكتملة" : "تأكيد الإنجاز")}
+                          aria-pressed={item.completed}
+                          disabled={item.completed || isLoading || !user}
+                          data-testid={`complete-mission-${item.task.id}`}
                           data-guide-id="mission-action"
                           onClick={() =>
                             handleToggleCompleteClick(item.task.id)
@@ -906,7 +885,7 @@ const TodoList = () => {
                           }`}
                         >
                           {item.completed && <FaCheck size={12} />}
-                        </div>
+                        </button>
                       )}
                   </div>
                   <div className="flex items-center justify-between mt-2">

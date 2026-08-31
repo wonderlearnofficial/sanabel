@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "../../../config/api";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -25,7 +25,7 @@ import { describeApiError } from "../../../utils/apiError";
 type ApprovalStatus = "pending" | "approved" | "denied" | null;
 
 const SanabelMissionsPage: React.FC = () => {
-  const { user, refreshUserData } = useUserContext();
+  const { user, refreshUserData, mutateStudent } = useUserContext();
   const history = useHistory();
 
   // School-affiliated students go through the parent/teacher approval
@@ -92,8 +92,9 @@ const SanabelMissionsPage: React.FC = () => {
   const [approvalError, setApprovalError] = useState<string | null>(null);
   const [showRequestSentPopup, setShowRequestSentPopup] = useState(false);
 
-  console.log(missions);
+  const submitting = useRef(false);
   useEffect(() => {
+    let active = true;
     const fetchAllData = async () => {
       const authToken = localStorage.getItem("token");
       if (!authToken) return;
@@ -103,6 +104,7 @@ const SanabelMissionsPage: React.FC = () => {
         const categoryResponse = await axios.get(
           `${API_BASE_URL}/students/tasks-category`,
           {
+            timeout: 15000,
             headers: {
               Authorization: `Bearer ${authToken}`,
             },
@@ -112,13 +114,15 @@ const SanabelMissionsPage: React.FC = () => {
         if (categoryResponse.status === 200) {
           const fetchedCategoryName =
             categoryResponse.data.data[index].category;
+          if (!active) return;
           setCategoryName(fetchedCategoryName);
 
           // Fetch Sanabel
           const sanabelResponse = await axios.get(
             `${API_BASE_URL}/students/appear-Taskes-Type/${APIIndex}`,
             {
-              headers: {
+              timeout: 15000,
+            headers: {
                 Authorization: `Bearer ${authToken}`,
               },
             }
@@ -132,6 +136,7 @@ const SanabelMissionsPage: React.FC = () => {
               }
             });
 
+            if (!active) return;
             setSanabel(uniqueTypes);
 
             // Fetch Missions
@@ -139,7 +144,8 @@ const SanabelMissionsPage: React.FC = () => {
               const missionsResponse = await axios.get(
                 `${API_BASE_URL}/students/appear-Taskes-Type-Category/${APIIndex}/${uniqueTypes[subIndex]}`,
                 {
-                  headers: {
+                  timeout: 15000,
+            headers: {
                     Authorization: `Bearer ${authToken}`,
                   },
                 }
@@ -170,18 +176,20 @@ const SanabelMissionsPage: React.FC = () => {
                   }
                 );
 
-                setMissions(sortedMissions);
+                if (active) setMissions(sortedMissions);
               }
             }
           }
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        if (active) setApprovalError(t(describeApiError(error)));
       }
     };
 
-    fetchAllData();
-  }, [index, subIndex, APIIndex]);
+    void fetchAllData();
+    void refreshUserData();
+    return () => { active = false; };
+  }, [index, subIndex, APIIndex, refreshUserData]);
 
   const getTodayDateOnly = () => new Date().toISOString().split("T")[0];
 
@@ -252,9 +260,10 @@ const SanabelMissionsPage: React.FC = () => {
   };
 
   const confirmMarkComplete = async () => {
-    if (!selectedMissionId || isLoading) return;
+    if (!selectedMissionId || submitting.current) return;
     if (!isPersonal && !selectedApprover) return;
 
+    submitting.current = true;
     setIsLoading(true);
     const authToken = localStorage.getItem("token");
 
@@ -293,6 +302,7 @@ const SanabelMissionsPage: React.FC = () => {
         }
         setShowConfirmPopup(false);
       } finally {
+        submitting.current = false;
         setIsLoading(false);
         setSelectedMissionId(null);
       }
@@ -300,32 +310,12 @@ const SanabelMissionsPage: React.FC = () => {
     }
 
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/students/add-pros`,
-        {
-          taskId: selectedMissionId,
-          studentIds: [user?.id],
-          time: getCurrentTime(),
-        },
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-          timeout: 15000,
-        },
-      );
+      const response = await mutateStudent("mission", {
+        taskId: selectedMissionId, time: getCurrentTime(),
+      });
 
       if (response.status === 200 || response.status === 201) {
-        // Update the mission status locally
-        setMissions((prevMissions: any) =>
-          prevMissions.map((mission: any) =>
-            mission.id === selectedMissionId
-              ? { ...mission, completionStatus: "Completed" }
-              : mission
-          )
-        );
-
-        // Refresh the user context so inventory/xp reflect the new totals
-        await refreshUserData();
-
+        // Personal checkmarks derive from the committed context snapshot.
         setShowConfirmPopup(false);
         setShowCongratsPopup(true);
       }
@@ -336,7 +326,9 @@ const SanabelMissionsPage: React.FC = () => {
       // specific reason (timeout, offline, expired session, server error...).
       setShowConfirmPopup(false);
       alert(t(describeApiError(error)));
+      void refreshUserData();
     } finally {
+      submitting.current = false;
       setIsLoading(false);
       setSelectedMissionId(null);
     }
@@ -421,7 +413,7 @@ const SanabelMissionsPage: React.FC = () => {
         {missions.map((mission: any, index: number) => {
           const approvalStatus = requestStatusMap[mission.id];
           const isCompleted =
-            mission.completionStatus === "Completed" ||
+            (isPersonal ? (user?.completedTasks?.taskIds.includes(Number(mission.id)) ?? false) : mission.completionStatus === "Completed") ||
             approvalStatus === "approved";
 
           return (

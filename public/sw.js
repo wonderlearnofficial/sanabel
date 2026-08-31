@@ -3,8 +3,8 @@ self.addEventListener("push", function (event) {
   const title = data.title || "تنبيه جديد";
   const options = {
     body: data.body || "إشعار من تطبيق سنابل الإحسان.",
-    icon: data.icon || "/assets/snabel-logo.png",
-    badge: "/assets/snabel-logo.png",
+    icon: data.icon || "/icons/icon-192.png",
+    badge: data.badge || "/icons/icon-192.png",
     dir: "rtl",
     vibrate: [200, 100, 200, 100, 200, 100, 200],
     requireInteraction: true,

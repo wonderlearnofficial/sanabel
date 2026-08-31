@@ -18,7 +18,6 @@ import axios from "axios";
 import { calculateLevel } from "../../utils/LevelCalculator";
 import { medalsData } from "../../data/MedalsData";
 import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
-import { AudioManager } from "../../utils/AudioManager";
 import { toFiniteNumber } from "../../utils/numericData";
 
 const Skeleton = ({ className }: { className: string }) => (
@@ -64,7 +63,7 @@ const StudentHome: React.FC = () => {
   useEffect(() => {
     if (prevLevelRef.current !== null && level > prevLevelRef.current) {
       setShowLevelUp(true);
-      AudioManager.play("reward");
+      prevLevelRef.current = level;
       const timer = setTimeout(() => setShowLevelUp(false), 3000);
       return () => clearTimeout(timer);
     }
@@ -93,8 +92,14 @@ const StudentHome: React.FC = () => {
   };
 
   useEffect(() => {
+    if (!user) return;
+    if (!user.classId) {
+      setMissionsDoneToday(user.completedTasks?.taskIds.length ?? 0);
+      setIsMissionsLoading(false);
+      return;
+    }
     fetchUserData();
-  }, []);
+  }, [user?.id, user?.classId, user?.completedTasks]);
 
   const [medalImgTracker, setMedalImgTracker] = useState(0);
   useEffect(() => {

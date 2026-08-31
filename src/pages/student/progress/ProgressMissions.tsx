@@ -1,10 +1,12 @@
+import { useUserContext } from "../../../context/StudentUserProvider";
+import { describeApiError } from "../../../utils/apiError";
 import { API_BASE_URL } from "../../../config/api";
 import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
 import StudentNavbar from "../../../components/navbar/StudentNavbar";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Sanabel type
 import sanabelType1Img from "../../../assets/sanabeltype/سنابل الإحسان في العلاقة مع الأسرة والمجتمع.png";
@@ -74,10 +76,14 @@ const ProgressMissions: React.FC = () => {
 
   useAutoStartGuide("student-stats", true);
   const { t } = useTranslation();
+  const { user } = useUserContext();
+  const requestVersion = useRef(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [completedTasks, setCompletedTasks]: any = useState(0);
 
   const fetchTasksCompleted = async (token?: string) => {
+    const version = ++requestVersion.current;
     const authToken = token || localStorage.getItem("token");
     if (!authToken) return;
 
@@ -85,24 +91,28 @@ const ProgressMissions: React.FC = () => {
       const response = await axios.get(
         `${API_BASE_URL}/students/calculate-completed-tasks-by-category`,
         {
+          timeout: 15000,
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
         }
       );
 
+      if (version !== requestVersion.current) return;
       if (response.status === 200) {
+        setLoadError(null);
         setCompletedTasks(toFiniteNumber(response.data.totalCompletedTasks));
         setCategoryCounts(normalizeCategoryCounts(response.data.categoryCounts));
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      if (version === requestVersion.current) setLoadError(describeApiError(error));
     }
   };
 
   useEffect(() => {
-    fetchTasksCompleted();
-  }, []);
+    if (user) void fetchTasksCompleted();
+    return () => { ++requestVersion.current; };
+  }, [user]);
 
   // Define the data structure for the chart
   interface sanabelType {
@@ -175,6 +185,7 @@ const ProgressMissions: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full gap-3 overflow-y-auto h-3/4">
+      {loadError && <div role="alert">{t(loadError)} <button onClick={() => void fetchTasksCompleted()}>{t("إعادة المحاولة")}</button></div>}
       <motion.div
         className="w-full bg-[#E14E54] flex-center justify-between items-center p-2 gap-3 rounded-xl text-lg"
         variants={containerVariants}

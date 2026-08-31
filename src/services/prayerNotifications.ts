@@ -44,7 +44,7 @@ const PRAYERS = [
 ] as const;
 
 export type EnableResult =
-  | { ok: true }
+  | { ok: true; city?: PrayerCity; coords?: Coords }
   // needsCity: automatic location failed/denied — the UI should offer the
   // EGYPT_CITIES list and retry with the chosen city.
   | { ok: false; message: string; needsCity?: boolean };
@@ -54,22 +54,36 @@ type Coords = { latitude: number; longitude: number };
 export interface PrayerCity extends Coords {
   key: string;
   arabicName: string;
+  englishName: string;
 }
 
 // Fallback when device location is denied or unavailable. GPS is always
 // preferred — prayer times from exact coordinates beat any city preset.
 export const EGYPT_CITIES: PrayerCity[] = [
-  { key: "cairo", arabicName: "القاهرة", latitude: 30.0444, longitude: 31.2357 },
-  { key: "alexandria", arabicName: "الإسكندرية", latitude: 31.2001, longitude: 29.9187 },
-  { key: "giza", arabicName: "الجيزة", latitude: 30.0131, longitude: 31.2089 },
-  { key: "mansoura", arabicName: "المنصورة", latitude: 31.0409, longitude: 31.3785 },
-  { key: "tanta", arabicName: "طنطا", latitude: 30.7865, longitude: 31.0004 },
-  { key: "portsaid", arabicName: "بورسعيد", latitude: 31.2653, longitude: 32.3019 },
-  { key: "suez", arabicName: "السويس", latitude: 29.9668, longitude: 32.5498 },
-  { key: "asyut", arabicName: "أسيوط", latitude: 27.1809, longitude: 31.1837 },
-  { key: "luxor", arabicName: "الأقصر", latitude: 25.6872, longitude: 32.6396 },
-  { key: "aswan", arabicName: "أسوان", latitude: 24.0889, longitude: 32.8998 },
+  { key: "cairo", arabicName: "القاهرة", englishName: "Cairo", latitude: 30.0444, longitude: 31.2357 },
+  { key: "alexandria", arabicName: "الإسكندرية", englishName: "Alexandria", latitude: 31.2001, longitude: 29.9187 },
+  { key: "giza", arabicName: "الجيزة", englishName: "Giza", latitude: 30.0131, longitude: 31.2089 },
+  { key: "mansoura", arabicName: "المنصورة", englishName: "Mansoura", latitude: 31.0409, longitude: 31.3785 },
+  { key: "tanta", arabicName: "طنطا", englishName: "Tanta", latitude: 30.7865, longitude: 31.0004 },
+  { key: "portsaid", arabicName: "بورسعيد", englishName: "Port Said", latitude: 31.2653, longitude: 32.3019 },
+  { key: "suez", arabicName: "السويس", englishName: "Suez", latitude: 29.9668, longitude: 32.5498 },
+  { key: "asyut", arabicName: "أسيوط", englishName: "Asyut", latitude: 27.1809, longitude: 31.1837 },
+  { key: "luxor", arabicName: "الأقصر", englishName: "Luxor", latitude: 25.6872, longitude: 32.6396 },
+  { key: "aswan", arabicName: "أسوان", englishName: "Aswan", latitude: 24.0889, longitude: 32.8998 },
 ];
+
+export const findNearestCity = (lat: number, lng: number): PrayerCity => {
+  let closest = EGYPT_CITIES[0];
+  let minDistance = Infinity;
+  for (const city of EGYPT_CITIES) {
+    const d = Math.hypot(city.latitude - lat, city.longitude - lng);
+    if (d < minDistance) {
+      minDistance = d;
+      closest = city;
+    }
+  }
+  return closest;
+};
 
 const LOCATION_FALLBACK_MESSAGE =
   "لم نتمكن من تحديد موقعك تلقائيًا. اختر أقرب مدينة لك.";
@@ -150,6 +164,9 @@ const scheduleNativePrayerNotifications = async (
       body: "لا تنس ذكر الله وإقامة الصلاة في وقتها.",
       schedule: { at: prayer.time, allowWhileIdle: true },
       channelId: ANDROID_CHANNEL_ID,
+      smallIcon: "ic_launcher",
+      largeIcon: "ic_launcher",
+      iconColor: "#22c55e",
     })),
   });
 
@@ -184,9 +201,17 @@ const enableNative = async (coords?: Coords): Promise<EnableResult> => {
 
   await scheduleNativePrayerNotifications(resolved.latitude, resolved.longitude);
 
+  const nearestCity = findNearestCity(resolved.latitude, resolved.longitude);
   localStorage.setItem(COORDS_KEY, JSON.stringify(resolved));
+  localStorage.setItem("userCity", nearestCity.arabicName);
+  localStorage.setItem("userLocation", JSON.stringify({
+    latitude: resolved.latitude,
+    longitude: resolved.longitude,
+    cityName: nearestCity.arabicName,
+    cityKey: nearestCity.key,
+  }));
   localStorage.setItem(PRAYER_ENABLED_KEY, "true");
-  return { ok: true };
+  return { ok: true, city: nearestCity, coords: resolved };
 };
 
 // ---------------------------------------------------------------------------
@@ -209,21 +234,14 @@ const getWebPosition = (): Promise<GeolocationPosition> =>
   });
 
 const enableWeb = async (coords?: Coords): Promise<EnableResult> => {
-  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-    return { ok: false, message: "متصفحك لا يدعم الإشعارات." };
-  }
-
-  const token = localStorage.getItem("token");
-  if (!token) {
-    return { ok: false, message: "انتهت صلاحية جلستك. سجل الدخول مرة أخرى." };
-  }
-
-  const permission = await Notification.requestPermission();
-  if (permission !== "granted") {
-    return {
-      ok: false,
-      message: "يجب الموافقة على الإشعارات لتفعيل هذه الخاصية.",
-    };
+  if (typeof window !== "undefined" && "Notification" in window) {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      return {
+        ok: false,
+        message: "يجب الموافقة على الإشعارات لتفعيل هذه الخاصية.",
+      };
+    }
   }
 
   let resolved = coords;
@@ -239,33 +257,44 @@ const enableWeb = async (coords?: Coords): Promise<EnableResult> => {
     }
   }
 
-  try {
-    const registration = await navigator.serviceWorker.register("/sw.js");
-    const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string;
-    if (!vapidKey) {
-      return { ok: false, message: "حدث خطأ أثناء تفعيل الإشعارات." };
+  const nearestCity = findNearestCity(resolved.latitude, resolved.longitude);
+  localStorage.setItem(COORDS_KEY, JSON.stringify(resolved));
+  localStorage.setItem("userCity", nearestCity.arabicName);
+  localStorage.setItem("userLocation", JSON.stringify({
+    latitude: resolved.latitude,
+    longitude: resolved.longitude,
+    cityName: nearestCity.arabicName,
+    cityKey: nearestCity.key,
+  }));
+  localStorage.setItem(PRAYER_ENABLED_KEY, "true");
+
+  if ("serviceWorker" in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register("/sw.js");
+      const token = localStorage.getItem("token");
+      const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string;
+
+      if (token && vapidKey && "PushManager" in window) {
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey),
+        });
+
+        await axios.post(
+          `${API_BASE_URL}/users/subscribe-push`,
+          {
+            subscription,
+            location: resolved,
+          },
+          { headers: { Authorization: `Bearer ${token}` }, timeout: 15000 },
+        ).catch(() => {});
+      }
+    } catch (error) {
+      console.warn("Web push subscription attempt error:", error);
     }
-
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidKey),
-    });
-
-    await axios.post(
-      `${API_BASE_URL}/users/subscribe-push`,
-      {
-        subscription,
-        location: resolved,
-      },
-      { headers: { Authorization: `Bearer ${token}` }, timeout: 15000 },
-    );
-
-    localStorage.setItem(PRAYER_ENABLED_KEY, "true");
-    return { ok: true };
-  } catch (error) {
-    console.error("Web push subscribe error:", error);
-    return { ok: false, message: "حدث خطأ أثناء تفعيل الإشعارات." };
   }
+
+  return { ok: true, city: nearestCity, coords: resolved };
 };
 
 // ---------------------------------------------------------------------------
@@ -340,6 +369,9 @@ export const sendTestPrayerNotification = async (): Promise<EnableResult> => {
             body: "هذا إشعار تجريبي للتأكد من عمل تنبيهات الصلاة.",
             schedule: { at: new Date(Date.now() + 10_000), allowWhileIdle: true },
             channelId: ANDROID_CHANNEL_ID,
+            smallIcon: "ic_launcher",
+            largeIcon: "ic_launcher",
+            iconColor: "#22c55e",
           },
         ],
       });
@@ -360,7 +392,8 @@ export const sendTestPrayerNotification = async (): Promise<EnableResult> => {
     setTimeout(() => {
       registration.showNotification("حان وقت صلاة الظهر (تجربة)", {
         body: "هذا إشعار تجريبي للتأكد من عمل تنبيهات الصلاة.",
-        icon: "/icons/icon-192.webp",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
         dir: "rtl",
       });
     }, 10_000);

@@ -1,8 +1,10 @@
+import { useUserContext } from "../../../context/StudentUserProvider";
+import { describeApiError } from "../../../utils/apiError";
 import { API_BASE_URL } from "../../../config/api";
 import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import trophy from "../../../assets/trophy.png";
 import Loading from "../../../components/Loading";
 import i18n from "i18next";
@@ -36,12 +38,16 @@ const containerVariants = {
 const Progress: React.FC = () => {
   useAutoStartGuide("student-trophies", true);
   const { t } = useTranslation();
+  const { user } = useUserContext();
+  const requestVersion = useRef(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [trophyType, setTrophyType] = useState(0); // 0 = Sanabel trophies, 1 = Other trophies
   const [trophies, setTrophies] = useState<any[]>([]);
   const [groupedTrophies, setGroupedTrophies] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true); // Loading state
 
   const fetchTrophies = async (token?: string) => {
+    const version = ++requestVersion.current;
     setLoading(true);
     const authToken = token || localStorage.getItem("token");
     if (!authToken) {
@@ -54,28 +60,30 @@ const Progress: React.FC = () => {
           ? `${API_BASE_URL}/students/student-trophy-secondaire`
           : `${API_BASE_URL}/students/student-trophy-primaire`,
         {
+          timeout: 15000,
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
         }
       );
+      if (version !== requestVersion.current) return;
       if (response.status === 200 && response.data) {
+        setLoadError(null);
         const data = Array.isArray(response.data.data) ? response.data.data : [];
         setTrophies(data);
         groupTrophiesByTitle(data);
       }
     } catch (error) {
-      console.error("Error fetching trophies data:", error);
-      setTrophies([]);
-      setGroupedTrophies({});
+      if (version === requestVersion.current) setLoadError(describeApiError(error));
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTrophies();
-  }, [trophyType]);
+    if (user) void fetchTrophies();
+    return () => { ++requestVersion.current; };
+  }, [trophyType, user]);
 
   // Group trophies by title to show one card per trophy type
   const groupTrophiesByTitle = (trophiesData: any[]) => {
@@ -174,6 +182,7 @@ const Progress: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full gap-3 overflow-y-auto h-3/4">
+      {loadError && <div role="alert">{t(loadError)} <button onClick={() => void fetchTrophies()}>{t("إعادة المحاولة")}</button></div>}
       <div className="flex w-full rounded-2xl bg-[#e6e6e6]">
         <h1
           className={`text-[#999] text-sm p-2 rounded-2xl w-1/2 flex-center cursor-pointer transition-colors ${

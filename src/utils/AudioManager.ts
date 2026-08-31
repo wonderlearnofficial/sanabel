@@ -44,6 +44,14 @@ export const SOUND_PROFILES = {
     maxDurationMs: 1950,
     priority: 4,
   },
+  levelUp: {
+    src: SOUND_FILES.success,
+    volume: 0.5,
+    rate: 1.12,
+    cooldownMs: 0,
+    maxDurationMs: 1950,
+    priority: 5,
+  },
 } as const;
 
 export type SoundKey = keyof typeof SOUND_PROFILES;
@@ -130,6 +138,29 @@ export class AudioManagerClass {
 
   /** Plays one intentional sound cue. Returns false when it is suppressed. */
   public play(key: SoundKey, overrideCooldown = false): boolean {
+    try {
+      return this.playCue(key, overrideCooldown);
+    } catch (error) {
+      // Audio is feedback, never a reason to turn a committed purchase into
+      // an apparent API failure.
+      console.warn("Sound playback failed", error);
+      return false;
+    }
+  }
+
+  /** Call synchronously from a gesture, before waiting for the network. */
+  public unlock() {
+    if (!this._effectsEnabled) return;
+    try {
+      if (Howler.ctx?.state === "suspended") {
+        void Howler.ctx.resume().catch((error) => console.warn("Audio resume failed", error));
+      }
+    } catch (error) {
+      console.warn("Audio resume failed", error);
+    }
+  }
+
+  private playCue(key: SoundKey, overrideCooldown = false): boolean {
     if (!this._effectsEnabled) return false;
 
     const profile = SOUND_PROFILES[key];
@@ -141,7 +172,7 @@ export class AudioManagerClass {
     }
 
     if (
-      this.activePlayback?.sound.playing(this.activePlayback.id) &&
+      !overrideCooldown && this.activePlayback?.sound.playing(this.activePlayback.id) &&
       profile.priority < this.activePlayback.priority
     ) {
       return false;
@@ -169,15 +200,27 @@ export class AudioManagerClass {
         HapticsManager.notificationError();
         break;
       case "reward":
+      case "levelUp":
         HapticsManager.celebration();
         break;
     }
 
-    this.stopTimer = setTimeout(() => {
-      if (sound.playing(id)) sound.stop(id);
-      if (this.activePlayback?.id === id) this.activePlayback = null;
-      this.stopTimer = null;
-    }, profile.maxDurationMs);
+    // Loading/unlock may delay playback. Its duration starts at PLAY, not at
+    // the API response (which previously stopped a still-queued sound).
+    sound.once("play", () => {
+      if (this.activePlayback?.sound !== sound || this.activePlayback.id !== id) return;
+      this.clearStopTimer();
+      this.stopTimer = setTimeout(() => {
+        if (sound.playing(id)) sound.stop(id);
+        if (this.activePlayback?.sound === sound && this.activePlayback.id === id) this.activePlayback = null;
+        this.stopTimer = null;
+      }, profile.maxDurationMs);
+    }, id);
+    sound.once("playerror", () => {
+      sound.once("unlock", () => {
+        if (this.activePlayback?.sound === sound && this.activePlayback.id === id) sound.play(id);
+      });
+    }, id);
 
     return true;
   }
@@ -199,3 +242,8 @@ export class AudioManagerClass {
 }
 
 export const AudioManager = new AudioManagerClass();
+
+if (typeof document !== "undefined") {
+  document.addEventListener("pointerdown", () => AudioManager.unlock(), { passive: true });
+  document.addEventListener("keydown", () => AudioManager.unlock());
+}

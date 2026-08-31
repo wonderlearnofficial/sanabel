@@ -70,6 +70,7 @@ const Inventory: React.FC<Props> = ({
           {inventory.map((items, index) => (
             <motion.div
               key={index} 
+              data-testid={`inventory-${["blue", "yellow", "red", "fertilizer", "water"][index]}`}
               variants={itemVariants}
               className="w-1/6 flex flex-col items-center justify-center rounded-lg bg-[#FFF8E5] p-1 gap-0.5 cursor-default"
             >

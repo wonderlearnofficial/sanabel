@@ -162,6 +162,9 @@ export const sendLocalAppNotification = async (options: {
             body: options.body,
             schedule: options.scheduleAt ? { at: options.scheduleAt, allowWhileIdle: true } : undefined,
             channelId,
+            smallIcon: "ic_launcher",
+            largeIcon: "ic_launcher",
+            iconColor: "#22c55e",
           },
         ],
       });
@@ -175,7 +178,8 @@ export const sendLocalAppNotification = async (options: {
         if (registration) {
           registration.showNotification(options.title, {
             body: options.body,
-            icon: "/icons/icon-192.webp",
+            icon: "/icons/icon-192.png",
+            badge: "/icons/icon-192.png",
             dir: "rtl",
           });
           return true;
@@ -183,7 +187,8 @@ export const sendLocalAppNotification = async (options: {
       }
       new Notification(options.title, {
         body: options.body,
-        icon: "/icons/icon-192.webp",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
         dir: "rtl",
       });
       return true;

@@ -1,8 +1,7 @@
-import { API_BASE_URL } from "../../config/api";
 import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import trophy from "../../../assets/trophy.png";
 import { ToastContainer, toast } from "react-toastify";
 
@@ -19,12 +18,10 @@ import { useUserContext } from "../../context/StudentUserProvider";
 
 import CheckmarkAnimation from "../../assets/checkmarkAnimation";
 import { treeStages } from "../../data/Tree";
-import axios from "axios";
 import { toFiniteNumber } from "../../utils/numericData";
 import { computeMissingByColor } from "../../utils/shopMath";
 import { describeApiError } from "../../utils/apiError";
 import { AudioManager } from "../../utils/AudioManager";
-import { HapticsManager } from "../../utils/HapticsManager";
 
 const Toaster = () => (
   <ToastContainer
@@ -43,7 +40,7 @@ const Toaster = () => (
 
 const Shop: React.FC = () => {
   const { t } = useTranslation();
-  const { user, refreshUserData } = useUserContext();
+  const { user, refreshUserData, mutateStudent, isLoading: isUserLoading } = useUserContext();
   useAutoStartGuide("student-shop", true);
 
   const shop = [
@@ -79,20 +76,18 @@ const Shop: React.FC = () => {
     fertilizerNeeded - fertilizerCount,
   );
 
-  // Check if tree progress is ready
-  const [isProgressReady, setIsProgressReady] = useState(false);
-
-  useEffect(() => {
-    setIsProgressReady(
-      waterCount >= waterNeeded && fertilizerCount >= fertilizerNeeded,
-    );
-  }, [waterCount, fertilizerCount, waterNeeded, fertilizerNeeded]);
+  const isProgressReady = !!user && treeProgress > 0 &&
+    waterCount >= waterNeeded && fertilizerCount >= fertilizerNeeded;
+  const submitting = useRef(false);
+  const [isGrowing, setIsGrowing] = useState(false);
+  useEffect(() => { void refreshUserData(); }, [refreshUserData]);
 
   function changeBuyWaterCount(operation: any) {
+    if (submitting.current) return;
     if (operation === "-" && buyWaterCount !== 0) {
-      setBuyWaterCount(buyWaterCount - 1);
-    } else if (operation === "+" && buyWaterCount !== remainingWaterNeeded) {
-      setBuyWaterCount(buyWaterCount + 1);
+      setBuyWaterCount(count => Math.max(0, count - 1));
+    } else if (operation === "+" && buyWaterCount < remainingWaterNeeded) {
+      setBuyWaterCount(count => Math.min(remainingWaterNeeded, count + 1));
     } else if (operation === "+" && buyWaterCount === remainingWaterNeeded) {
       toast.warning(t("لقد وصلت إلى الحد الأقصى المطلوب من الماء"));
     }
@@ -100,12 +95,12 @@ const Shop: React.FC = () => {
 
   function changeBuyFertilizerCount(operation: any) {
     if (operation === "-" && buyFertilizerCount !== 0) {
-      setBuyFertilizerCount(buyFertilizerCount - 1);
+      setBuyFertilizerCount(count => Math.max(0, count - 1));
     } else if (
       operation === "+" &&
-      buyFertilizerCount !== remainingFertilizerNeeded
+      buyFertilizerCount < remainingFertilizerNeeded
     ) {
-      setBuyFertilizerCount(buyFertilizerCount + 1);
+      setBuyFertilizerCount(count => Math.min(remainingFertilizerNeeded, count + 1));
     } else if (
       operation === "+" &&
       buyFertilizerCount === remainingFertilizerNeeded
@@ -170,44 +165,19 @@ const Shop: React.FC = () => {
 
   // Buy Shop
   const buyShop = async () => {
-    if (isBuying) return;
+    if (submitting.current) return;
+    submitting.current = true;
     setIsBuying(true);
     try {
-      const token = localStorage.getItem("token");
-      const totalCost =
-        buyFertilizerCount * fertilizerCost + buyWaterCount * waterCost;
-
-      const response = await axios.patch(
-        `${API_BASE_URL}/students/buy-water-seeder`,
-        {
-          water: buyWaterCount,
-          seeders: buyFertilizerCount,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          timeout: 15000,
-        },
-      );
+      const response = await mutateStudent("purchase", {
+        water: buyWaterCount, seeders: buyFertilizerCount,
+      });
 
       if (response.status === 200) {
-        AudioManager.play("success");
         setBuyWaterCount(0);
         setBuyFertilizerCount(0);
         setIsPopupVisible(false);
         setIsPurchaseConfirmed(true);
-        setIsPopupVisible(false);
-        setIsProgressReady(false);
-
-        // Refresh user data to update UI with new resource counts
-        await refreshUserData();
-
-        // Reset purchase counts after successful purchase
-        setTimeout(() => {
-          setBuyWaterCount(0);
-          setBuyFertilizerCount(0);
-        }, 2000);
       }
     } catch (error: any) {
       AudioManager.play("error");
@@ -243,29 +213,24 @@ const Shop: React.FC = () => {
         setIsPopupVisible(false);
         toast.error(t(describeApiError(error)));
       }
+      // A lost response does not prove the purchase failed on the server.
+      void refreshUserData();
     } finally {
+      submitting.current = false;
       setIsBuying(false);
     }
   };
 
   const progressTree = async () => {
+    if (submitting.current) return;
+    submitting.current = true;
+    setIsGrowing(true);
     try {
       setIsPurchaseConfirmed(false);
-      const token = localStorage.getItem("token");
-      console.log(token);
-      const response = await axios.patch(
-        `${API_BASE_URL}/students/grow-tree`,
-        {}, // Empty request body or you can add payload data here if needed
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          timeout: 15000,
-        },
-      );
+      const response = await mutateStudent("tree");
 
       if (response.status === 200) {
-        AudioManager.play("reward");
+
         setIsCelebrationVisible(true);
         // Refresh user data to show updated tree stage
       }
@@ -274,7 +239,10 @@ const Shop: React.FC = () => {
       console.error("Error progress tree:", error);
       toast.error(t(describeApiError(error)));
       // The resource counts on screen may be stale — resync with the server.
-      refreshUserData();
+      void refreshUserData();
+    } finally {
+      submitting.current = false;
+      setIsGrowing(false);
     }
   };
 
@@ -282,10 +250,11 @@ const Shop: React.FC = () => {
     <div
       className="flex-col w-full  flex-center shadow-md p-2 border-[1px] border-[#33333325] rounded-xl"
     >
+      {isUserLoading && <p role="status">{t("جاري تحميل البيانات...")}</p>}
       <div className="absolute">
         <Toaster />
       </div>
-      {isProgressReady == false ? (
+      {(!isProgressReady || isPurchaseConfirmed) && !isCelebrationVisible ? (
         <div className="flex flex-col w-full h-full gap-1">
           <h1 className="text-lg text-black text-start">{t("المتجر")}</h1>
 
@@ -294,38 +263,51 @@ const Shop: React.FC = () => {
               <div className="flex-center">
                 <div className="gap-1 p-1 bg-white flex-center rounded-3xl">
                   {" "}
-                  <div
+                  <button
+                    type="button"
+                    aria-label={t("تقليل السماد")}
+                    disabled={!user || isUserLoading || isBuying || isGrowing}
                     className="w-6 h-6 rounded-full flex-center bg-blueprimary"
                     onClick={() => changeBuyFertilizerCount("-")}
                   >
                     <h1 className="text-white"> -</h1>
-                  </div>
+                  </button>
                   <h1 className="text-black"> x{buyFertilizerCount}</h1>
-                  <div
+                  <button
+                    type="button"
+                    aria-label={t("زيادة السماد")}
+                    disabled={!user || isUserLoading || isBuying || isGrowing}
                     className="w-6 h-6 rounded-full flex-center bg-blueprimary"
                     onClick={() => changeBuyFertilizerCount("+")}
                   >
                     <h1 className="text-white"> +</h1>
-                  </div>
+                  </button>
                 </div>
                 <img src={fertilizerImg} alt="" className="w-auto h-8" />
               </div>
               <div className="flex-center">
                 <div className="gap-1 p-1 bg-white flex-center rounded-3xl">
                   {" "}
-                  <div
+                  <button
+                    type="button"
+                    aria-label={t("تقليل الماء")}
+                    disabled={!user || isUserLoading || isBuying || isGrowing}
                     className="w-6 h-6 rounded-full flex-center bg-blueprimary"
                     onClick={() => changeBuyWaterCount("-")}
                   >
                     <h1 className="text-white"> -</h1>
-                  </div>
+                  </button>
                   <h1 className="text-black"> x{buyWaterCount}</h1>
-                  <div
+                  <button
+                    type="button"
+                    aria-label={t("زيادة الماء")}
+                    disabled={!user || isUserLoading || isBuying || isGrowing}
+                    data-testid="shop-add-water"
                     className="w-6 h-6 rounded-full flex-center bg-blueprimary"
                     onClick={() => changeBuyWaterCount("+")}
                   >
                     <h1 className="text-white"> +</h1>
-                  </div>
+                  </button>
                 </div>
                 <img src={waterImg} alt="" className="w-auto h-8" />
               </div>
@@ -551,6 +533,8 @@ const Shop: React.FC = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={progressTree}
+              disabled={isGrowing || !user}
+              aria-busy={isGrowing}
             >
               <div className="">
                 <span>🌟</span>
@@ -631,7 +615,7 @@ const Shop: React.FC = () => {
                     />
                     <motion.img
                       key={treeProgress + 1}
-                      src={treeStages[treeProgress + 3]}
+                      src={treeStages[Math.min(treeProgress + 2, treeStages.length - 1)]}
                       alt={`Next tree stage ${treeProgress + 1}`}
                       className="absolute inset-0 object-contain object-bottom w-full h-full"
                       initial={{ opacity: 0 }}
@@ -677,7 +661,7 @@ const Shop: React.FC = () => {
                   transition={{ delay: 1.3 }}
                   onClick={() => {
                     setIsCelebrationVisible(false);
-                    refreshUserData();
+
                   }}
                 >
                   {t("رائع")}

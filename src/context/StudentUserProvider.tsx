@@ -1,16 +1,23 @@
 import { API_BASE_URL } from "../config/api";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
+import { describeApiError } from "../utils/apiError";
+import { AudioManager } from "../utils/AudioManager";
+import { GameplayAction, gameplayEndpoints, gameplaySound, reconcileGameplay } from "../utils/gameplay";
 import { toFiniteNumber } from "../utils/numericData";
 import React, {
   createContext,
   useContext,
   useState,
+  useRef,
+  useCallback,
   useEffect,
   ReactNode,
 } from "react";
 
 // Define the shape of the user data for different roles
 interface BaseUser {
+  completedTasks?: { date: string; taskIds: number[] };
   id: number;
   firstName: string;
   lastName: string;
@@ -77,6 +84,7 @@ interface UserContextProps {
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   refreshUserData: (token?: string) => Promise<void>;
   isLoading: boolean;
+  mutateStudent: (action: GameplayAction, body?: Record<string, unknown>) => Promise<any>;
 }
 
 // Create the context
@@ -94,13 +102,52 @@ const API_ENDPOINTS = {
 export const UserProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const { t } = useTranslation();
+  const [refreshError, setRefreshError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   // Start in loading state so protected pages do not interpret the first render
   // (before this provider's effect runs) as a missing session.
   const [isLoading, setIsLoading] = useState(true);
 
+  const requestVersion = useRef(0);
+  const mutationInFlight = useRef(false);
+  const currentUser = useRef<User | null>(null);
+  currentUser.current = user;
+
+  const mutateStudent = useCallback(async (action: GameplayAction, body: Record<string, unknown> = {}) => {
+    const token = localStorage.getItem("token");
+    const reject = (message: string) => Object.assign(new Error(message), { response: { status: 400, data: { message } } });
+    if (!token || !currentUser.current) throw reject("يرجى تسجيل الدخول أولاً");
+    if (mutationInFlight.current) throw reject("يرجى الانتظار حتى تكتمل العملية الحالية");
+    mutationInFlight.current = true;
+    ++requestVersion.current;
+    AudioManager.unlock();
+    try {
+      const endpoint = gameplayEndpoints[action];
+      const response = await axios.request({
+        method: endpoint.method, url: `${API_BASE_URL}/students/${endpoint.path}`,
+        data: body, headers: { Authorization: `Bearer ${token}` }, timeout: 15000,
+      });
+      if (token !== localStorage.getItem("token") || !currentUser.current) throw reject("يرجى تسجيل الدخول أولاً");
+      const previous = currentUser.current;
+      const next = reconcileGameplay(previous, response.data);
+      currentUser.current = next;
+      setUser(next);
+      setRefreshError(null);
+      if (!response.data.alreadyCompleted) {
+        AudioManager.play(gameplaySound(action, previous.xp, next.xp), true);
+      }
+      return response;
+    } finally {
+      ++requestVersion.current;
+      mutationInFlight.current = false;
+      setIsLoading(false);
+    }
+  }, []);
+
   // Function to fetch user data based on role
-  const fetchUserData = async (token?: string) => {
+  const fetchUserData = useCallback(async (token?: string) => {
+    const version = ++requestVersion.current;
     const authToken = token || localStorage.getItem("token");
     const role = localStorage.getItem("role");
 
@@ -122,12 +169,15 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       const response = await axios.get(endpoint, {
+        timeout: 15000,
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
       });
 
+      if (version !== requestVersion.current || mutationInFlight.current || authToken !== localStorage.getItem("token")) return;
       if (response.status === 200) {
+        setRefreshError(null);
         const userData = response.data.data;
 
         // Handle different response structures based on role
@@ -135,6 +185,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
           case "Student":
             setUser({
               id: userData.student.id,
+              completedTasks: userData.completedTasks,
               firstName: userData.student.user.firstName,
               lastName: userData.student.user.lastName,
               email: userData.student.user.email,
@@ -156,7 +207,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
               waterNeeded: toFiniteNumber(userData.treePoint?.water),
               fertilizerNeeded: toFiniteNumber(userData.treePoint?.seeders),
               treeStage: toFiniteNumber(userData.treePoint?.stage),
-              treeProgress: toFiniteNumber(userData.treePoint?.treeProgress),
+              treeProgress: toFiniteNumber(userData.student.treeProgress),
               profileImg: userData.student.user.profileImg,
               gender: userData.student.user.gender,
               dateOfBirth: userData.student.user.dateOfBirth,
@@ -256,18 +307,44 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
             console.error(`Unhandled role: ${role}`);
         }
 
-        console.log("User data:", userData);
+
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
+      if (version === requestVersion.current) setRefreshError(describeApiError(error));
     } finally {
-      setIsLoading(false);
+      if (version === requestVersion.current) setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchUserData();
-  }, []);
+    void fetchUserData();
+    const refresh = () => { if (!mutationInFlight.current) void fetchUserData(); };
+    const visible = () => { if (document.visibilityState === "visible") refresh(); };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      ++requestVersion.current;
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", visible);
+    };
+  }, [fetchUserData]);
+
+  useEffect(() => {
+    // A calendar boundary, not a delay used to synchronize mutations. The
+    // backend remains authoritative for which tasks belong to the new day.
+    let timer: ReturnType<typeof setTimeout>;
+    const scheduleMidnightRefresh = () => {
+      const nextMidnight = new Date();
+      nextMidnight.setUTCHours(24, 0, 0, 0);
+      timer = setTimeout(() => {
+        void fetchUserData();
+        scheduleMidnightRefresh();
+      }, nextMidnight.getTime() - Date.now());
+    };
+    scheduleMidnightRefresh();
+    return () => clearTimeout(timer);
+  }, [fetchUserData]);
 
   useEffect(() => {
     let checkInFlight = false;
@@ -309,8 +386,14 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
 
   return (
     <UserContext.Provider
-      value={{ user, setUser, refreshUserData: fetchUserData, isLoading }}
+      value={{ user, setUser, refreshUserData: fetchUserData, isLoading, mutateStudent }}
     >
+      {refreshError && (
+        <div role="alert" className="bg-red-50 text-red-800 p-3">
+          {t("تعذر تحديث بيانات الطالب")}: {t(refreshError)}
+          <button type="button" onClick={() => void fetchUserData()}>{t("إعادة المحاولة")}</button>
+        </div>
+      )}
       {children}
     </UserContext.Provider>
   );

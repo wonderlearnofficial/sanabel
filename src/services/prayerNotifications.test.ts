@@ -70,4 +70,19 @@ describe("buildPrayerSchedule", () => {
     expect(first.map((p) => p.id)).toEqual(second.map((p) => p.id));
     first.forEach((p) => expect(p.id).toBeGreaterThanOrEqual(510000));
   });
+
+  it("finds the nearest city correctly", async () => {
+    const { findNearestCity } = await import("./prayerNotifications");
+    // Near Cairo coordinates (30.05, 31.24)
+    const cairoMatch = findNearestCity(30.05, 31.24);
+    expect(cairoMatch.key).toBe("cairo");
+
+    // Near Alexandria coordinates (31.21, 29.92)
+    const alexMatch = findNearestCity(31.21, 29.92);
+    expect(alexMatch.key).toBe("alexandria");
+
+    // Near Aswan coordinates (24.1, 32.9)
+    const aswanMatch = findNearestCity(24.1, 32.9);
+    expect(aswanMatch.key).toBe("aswan");
+  });
 });

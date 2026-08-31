@@ -1,12 +1,24 @@
 {
   "id": "/",
-  "short_name": "Sanabel",
-  "name": "Sanabel Al-Ehsan",
+  "short_name": "سنابل الإحسان",
+  "name": "سنابل الإحسان - Sanabel Al-Ehsan",
   "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
     {
       "src": "/icons/icon-192.webp",
       "type": "image/webp",
       "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
       "purpose": "any maskable"
     },
     {
@@ -20,6 +32,6 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#ffffff",
+  "theme_color": "#22c55e",
   "background_color": "#ffffff"
 }

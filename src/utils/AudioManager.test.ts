@@ -6,11 +6,16 @@ const audioMocks = vi.hoisted(() => ({
   muted: false,
   stopped: false,
   volume: 0,
+  sounds: [] as any[],
 }));
 
 vi.mock("howler", () => {
   class MockHowl {
     private isPlaying = false;
+    private callbacks = new Map<string, () => void>();
+    constructor() { audioMocks.sounds.push(this); }
+    once(event: string, callback: () => void) { this.callbacks.set(event, callback); return this; }
+    emit(event: string) { this.callbacks.get(event)?.(); this.callbacks.delete(event); }
 
     play() {
       this.isPlaying = true;
@@ -95,5 +100,23 @@ describe("AudioManager", () => {
     expect(localStorage.getItem(SOUND_EFFECTS_STORAGE_KEY)).toBe("false");
     expect(audioMocks.muted).toBe(true);
     expect(audioMocks.stopped).toBe(true);
+  });
+
+  it("does not cut off a sound waiting for loading or unlock", () => {
+    const manager = new AudioManagerClass();
+    manager.play("reward", true);
+    const sound = audioMocks.sounds.findLast(sound => sound.playing());
+    vi.advanceTimersByTime(10000);
+    expect(sound.playing()).toBe(true);
+    sound.emit("play");
+    vi.advanceTimersByTime(SOUND_PROFILES.reward.maxDurationMs);
+    expect(sound.playing()).toBe(false);
+  });
+
+  it("a confirmed purchase is not suppressed by the previous reward", () => {
+    const manager = new AudioManagerClass();
+    expect(manager.play("reward", true)).toBe(true);
+    expect(manager.play("success", true)).toBe(true);
+    expect(manager.play("levelUp", true)).toBe(true);
   });
 });
