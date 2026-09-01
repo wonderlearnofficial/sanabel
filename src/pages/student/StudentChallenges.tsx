@@ -39,8 +39,8 @@ const Challenges: React.FC = () => {
 
   const { user } = useUserContext();
 
-  // Students with no class assigned get the "personal" to-do list; school
-  // students choose a Sanabel type first, matching StudentNavbar's gating.
+  // Both experiences use one workspace. StudentToDoList keeps Solo selection
+  // local and switches School Students to the persistent assignment API.
   const isPersonal = !user?.classId;
   useAutoStartGuide(
     isPersonal ? "student-mission-personal" : "student-mission-school",
@@ -56,7 +56,7 @@ const Challenges: React.FC = () => {
     >
       {/* Dynamic View Rendering */}
       <div className="w-full max-w-md overflow-y-auto bg-white shadow-md rounded-xl">
-        {isPersonal ? <StudentToDoList /> : <ChooseSanabelType />}
+        <StudentToDoList />
       </div>
 
       {/* Navbar */}

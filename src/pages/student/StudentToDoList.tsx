@@ -50,6 +50,11 @@ interface TodoItem {
   task: Task;
   completed: boolean;
   addedDate: string;
+  status?: "todo" | "pending_approval" | "completed";
+  sources?: Array<{ sourceType: "student" | "teacher" | "parent"; sourceId: number; name?: string }>;
+  approvalRequests?: Array<{ id: number; status: string; approvedByType?: string; approvedById?: number }>;
+  completionSource?: string | null;
+  completedByName?: string | null;
 }
 
 interface TaskCategory {
@@ -573,7 +578,7 @@ const TodoList = () => {
   const [storedItems, setTodoItems] = useState<TodoItem[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [filter, setFilter] = useState<"all" | "completed" | "pending">("all");
+  const [filter, setFilter] = useState<"all" | "active" | "completed" | "pending">("all");
 
   // State to manage the confirmation popup for marking complete
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
@@ -582,6 +587,8 @@ const TodoList = () => {
   );
   const [showCongratsPopup, setShowCongratsPopup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [approvers, setApprovers] = useState<Array<{ id: number; type: "parent" | "teacher"; name: string }>>([]);
+  const [selectedApprover, setSelectedApprover] = useState<{ id: number; type: "parent" | "teacher"; name: string } | null>(null);
 
   const role = localStorage.getItem("role");
 
@@ -592,14 +599,47 @@ const TodoList = () => {
 
   const submitting = useRef(false);
   const [loadedFor, setLoadedFor] = useState<number | null>(null);
-  // Local storage owns selection only. Completion always comes from StudentTask.
+  // Solo selection stays local. School To-Do state is populated from the
+  // server below and already carries authoritative lifecycle state.
   const todoItems = storedItems.map(item => ({
     ...item,
-    completed: user?.completedTasks?.taskIds.includes(Number(item.task.id)) ?? false,
+    completed: isPersonal
+      ? (user?.completedTasks?.taskIds.includes(Number(item.task.id)) ?? false)
+      : item.status === "completed",
   }));
+
+  const fetchSchoolTodo = async () => {
+    const authToken = localStorage.getItem("token");
+    if (!authToken) return;
+    const [todoResponse, approverResponse] = await Promise.all([
+      axios.get(`${API_BASE_URL}/mission/todo`, { headers: { Authorization: `Bearer ${authToken}` } }),
+      axios.get(`${API_BASE_URL}/mission/myApprovers`, { headers: { Authorization: `Bearer ${authToken}` } }),
+    ]);
+    const items = Array.isArray(todoResponse.data.data) ? todoResponse.data.data : [];
+    setTodoItems(items.map((item: any) => ({
+      id: item.id,
+      task: item.Task,
+      completed: item.status === "completed",
+      addedDate: item.createdAt,
+      status: item.status,
+      sources: item.Sources || [],
+      approvalRequests: item.ApprovalRequests || [],
+      completionSource: item.completionSource,
+      completedByName: item.completedByName,
+    })));
+    setApprovers(approverResponse.data?.data?.approvers || []);
+  };
 
   useEffect(() => {
     if (!user) return;
+    if (!isPersonal) {
+      void fetchSchoolTodo().catch((error) => {
+        console.error("Error loading School Student To-Do:", error);
+        setTodoItems([]);
+      });
+      setLoadedFor(user.id);
+      return;
+    }
     try {
       const key = `sanabel:todos:${user.id}`;
       let selections = localStorage.getItem(key);
@@ -617,18 +657,34 @@ const TodoList = () => {
     }
     setLoadedFor(user.id);
     void refreshUserData();
-  }, [user?.id, refreshUserData]);
+  }, [user?.id, isPersonal, refreshUserData]);
 
   useEffect(() => {
-    if (!user || loadedFor !== user.id) return;
+    if (!user || !isPersonal || loadedFor !== user.id) return;
     try {
       localStorage.setItem(`sanabel:todos:${user.id}`, JSON.stringify(storedItems.map(item => ({ ...item, completed: false }))));
     } catch {
       // Selections remain usable in memory when browser storage is unavailable.
     }
-  }, [storedItems, user?.id, loadedFor]);
+  }, [storedItems, user?.id, loadedFor, isPersonal]);
 
-  const addMission = (task: Task) => {
+  const addMission = async (task: Task) => {
+    if (!isPersonal) {
+      const authToken = localStorage.getItem("token");
+      if (!authToken || submitting.current) return;
+      submitting.current = true;
+      try {
+        await axios.post(`${API_BASE_URL}/mission/todo`, { taskId: task.id }, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+        await fetchSchoolTodo();
+      } catch (error) {
+        alert(t(describeApiError(error)));
+      } finally {
+        submitting.current = false;
+      }
+      return;
+    }
     const newTodoItem: TodoItem = {
       id: task.id,
       task: task,
@@ -667,9 +723,22 @@ const TodoList = () => {
 
     setIsLoading(true);
     try {
-      const response = await mutateStudent("mission", {
-        taskId: selectedMissionId, time: getCurrentTime(),
-      });
+      const selectedItem = todoItems.find((item) => Number(item.id) === selectedMissionId);
+      if (!selectedItem) return;
+      if (!isPersonal) {
+        if (!selectedApprover) return;
+        const authToken = localStorage.getItem("token");
+        await axios.post(`${API_BASE_URL}/mission/requestApproval`, {
+          taskId: selectedItem.task.id,
+          todoItemId: selectedItem.id,
+          approverId: selectedApprover.id,
+          approverType: selectedApprover.type,
+        }, { headers: { Authorization: `Bearer ${authToken}` } });
+        await fetchSchoolTodo();
+        setShowConfirmPopup(false);
+        return;
+      }
+      const response = await mutateStudent("mission", { taskId: selectedItem.task.id, time: getCurrentTime() });
 
       if (response.status === 200 || response.status === 201) {
         // mutateStudent already reconciled the authoritative daily snapshot.
@@ -696,10 +765,21 @@ const TodoList = () => {
       setShowConfirmPopup(false);
       setIsLoading(false);
       setSelectedMissionId(null);
+      setSelectedApprover(null);
     }
   };
 
-  const deleteTodo = (id: number) => {
+  const deleteTodo = async (id: number) => {
+    if (!isPersonal) {
+      const authToken = localStorage.getItem("token");
+      try {
+        await axios.delete(`${API_BASE_URL}/mission/todo/${id}`, { headers: { Authorization: `Bearer ${authToken}` } });
+        await fetchSchoolTodo();
+      } catch (error) {
+        alert(t(describeApiError(error)));
+      }
+      return;
+    }
     setTodoItems((prev) => {
       const updated = prev.filter((item) => item.id !== id);
       return updated;
@@ -736,15 +816,17 @@ const TodoList = () => {
       t(item.task.title).toLowerCase().includes(searchQuery.toLowerCase());
 
     if (filter === "completed") return matchesSearch && item.completed;
-    if (filter === "pending") return matchesSearch && !item.completed;
+    if (filter === "pending") return matchesSearch && item.status === "pending_approval";
+    if (filter === "active") return matchesSearch && !item.completed && item.status !== "pending_approval";
     return matchesSearch;
   });
 
   const getStats = () => {
     const total = todoItems.length;
     const completed = todoItems.filter((item) => item.completed).length;
-    const pending = total - completed;
-    return { total, completed, pending };
+    const pending = todoItems.filter((item) => item.status === "pending_approval").length;
+    const active = total - completed - pending;
+    return { total, completed, pending, active };
   };
 
   const stats = getStats();
@@ -779,9 +861,9 @@ const TodoList = () => {
         </div>
 
         {/* Filter Buttons */}
-        <div className="flex w-full gap-2 flex-center">
+        <div className="grid w-full grid-cols-4 gap-2">
           <div
-            className={`flex-center py-2 w-1/3 px-4 gap-1 rounded-xl text-sm font-medium cursor-pointer ${
+            className={`flex-center py-2 px-2 gap-1 rounded-xl text-xs font-medium cursor-pointer ${
               filter === "all"
                 ? "bg-blueprimary text-white"
                 : "bg-gray-100 text-gray-700"
@@ -794,7 +876,20 @@ const TodoList = () => {
             </span>
           </div>
           <div
-            className={`flex-center py-2 w-1/3 px-4 gap-1 rounded-xl text-sm font-medium cursor-pointer ${
+            className={`flex-center py-2 px-2 gap-1 rounded-xl text-xs font-medium cursor-pointer ${
+              filter === "active"
+                ? "bg-blueprimary text-white"
+                : "bg-gray-100 text-gray-700"
+            }`}
+            onClick={() => setFilter("active")}
+          >
+            {t("To Do")}
+            <span className="w-4 h-4 bg-white rounded-full flex-center text-blueprimary">
+              {stats.active}
+            </span>
+          </div>
+          <div
+            className={`flex-center py-2 px-2 gap-1 rounded-xl text-xs font-medium cursor-pointer ${
               filter === "pending"
                 ? "bg-blueprimary text-white"
                 : "bg-gray-100 text-gray-700"
@@ -807,7 +902,7 @@ const TodoList = () => {
             </span>
           </div>
           <div
-            className={`flex-center py-2 w-1/3 px-4 gap-1 rounded-xl text-sm font-medium cursor-pointer ${
+            className={`flex-center py-2 px-2 gap-1 rounded-xl text-xs font-medium cursor-pointer ${
               filter === "completed"
                 ? "bg-blueprimary text-white"
                 : "bg-gray-100 text-gray-700"
@@ -855,28 +950,30 @@ const TodoList = () => {
               <div className="flex items-start justify-between w-full h-full overflow-y-auto">
                 <div className="flex-1 ">
                   <div className="flex items-center justify-between w-full h-full">
-                    <button
-                      onClick={() => deleteTodo(item.id)}
-                      className="flex items-center justify-center w-6 h-6 text-white bg-red-500 rounded-full hover:bg-red-600"
-                    >
-                      <FaTrash size={10} />
-                    </button>
+                    {(isPersonal || (item.status === "todo" && !(item.sources || []).some((source) => source.sourceType !== "student"))) && (
+                      <button
+                        onClick={() => deleteTodo(item.id)}
+                        className="flex items-center justify-center w-6 h-6 text-white bg-red-500 rounded-full hover:bg-red-600"
+                      >
+                        <FaTrash size={10} />
+                      </button>
+                    )}
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-600">
                         {t(item.task.type)}
                       </span>
                     </div>
 
-                    {(isPersonal || !grade || canAssignTask) && (
+                    {(
                         <button
                           type="button"
                           aria-label={t(item.completed ? "مكتملة" : "تأكيد الإنجاز")}
                           aria-pressed={item.completed}
-                          disabled={item.completed || isLoading || !user}
+                          disabled={item.completed || item.status === "pending_approval" || isLoading || !user}
                           data-testid={`complete-mission-${item.task.id}`}
                           data-guide-id="mission-action"
                           onClick={() =>
-                            handleToggleCompleteClick(item.task.id)
+                            handleToggleCompleteClick(item.id)
                           }
                           className={`w-8 h-8 rounded-full border-2 flex items-center justify-center cursor-pointer ${
                             item.completed
@@ -900,6 +997,21 @@ const TodoList = () => {
                       {t(item.task.title)}
                     </h3>
                   </div>
+                  {!isPersonal && (
+                    <div className="mt-2 text-xs text-gray-600 text-end">
+                      {(item.sources || []).length > 0 ? (
+                        <span>{(item.sources || []).map((source) => source.sourceType === "student"
+                          ? t("Added by you")
+                          : `${t("Assigned by")}: ${source.name || t(source.sourceType)}`).join(" • ")}</span>
+                      ) : <span>{t("No prior assignment")}</span>}
+                      {item.status === "pending_approval" && <span className="block font-semibold text-amber-600">{t("Waiting for approval")}</span>}
+                      {item.status === "completed" && (
+                        <span className="block font-semibold text-green-700">
+                          {t("Completed")}{item.completedByName ? ` — ${t("Confirmed by")}: ${item.completedByName}` : ""}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -946,6 +1058,24 @@ const TodoList = () => {
                 <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-green-500 rounded-full">
                   <FaCheck className="text-2xl text-white" />
                 </div>
+                {!isPersonal && (
+                  <select
+                    data-testid="mission-approver-select"
+                    className="w-full p-3 mb-5 text-black bg-white border rounded-xl"
+                    value={selectedApprover ? `${selectedApprover.type}:${selectedApprover.id}` : ""}
+                    onChange={(event) => {
+                      const selected = approvers.find((approver) => `${approver.type}:${approver.id}` === event.target.value);
+                      setSelectedApprover(selected || null);
+                    }}
+                  >
+                    <option value="">{t("Choose a Parent or Teacher")}</option>
+                    {approvers.map((approver) => (
+                      <option key={`${approver.type}:${approver.id}`} value={`${approver.type}:${approver.id}`}>
+                        {approver.name} — {t(approver.type === "parent" ? "Parent" : "Teacher")}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <h2 className="mb-2 text-xl font-bold text-gray-800">
                   {t("تأكيد الإنجاز")}
                 </h2>
@@ -960,8 +1090,9 @@ const TodoList = () => {
                     {t("إلغاء")}
                   </button>
                   <button
+                    data-testid="confirm-mission-action"
                     onClick={confirmMarkComplete}
-                    disabled={isLoading}
+                    disabled={isLoading || (!isPersonal && !selectedApprover)}
                     className="flex-1 px-4 py-2 font-medium text-white transition-all bg-green-500 rounded-lg hover:bg-green-600 disabled:opacity-50"
                   >
                     {isLoading ? t("جاري التحديث...") : t("تأكيد")}
@@ -975,7 +1106,7 @@ const TodoList = () => {
 
       {/* Congratulations Popup */}
       <AnimatePresence>
-        {showCongratsPopup && (
+        {showCongratsPopup && isPersonal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

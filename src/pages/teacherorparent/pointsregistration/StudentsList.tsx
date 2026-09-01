@@ -49,6 +49,7 @@ interface TaskCategory {
 }
 
 interface Task {
+  id?: number;
   type: string;
   title: string;
   description: string;
@@ -149,6 +150,7 @@ const ConfirmationPopup = ({
   selectedTask,
   selectedStudents,
   onRemoveStudent,
+  action,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -156,6 +158,7 @@ const ConfirmationPopup = ({
   selectedTask: Task | null;
   selectedStudents: StudentData[];
   onRemoveStudent: (studentId: number) => void;
+  action: "assign" | "complete";
 }) => {
   const { t } = useTranslation();
 
@@ -187,6 +190,9 @@ const ConfirmationPopup = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="w-11/12 max-w-md p-5 overflow-y-auto bg-white rounded-xl max-h-90vh">
+        <p className={`mb-2 text-sm font-bold text-center ${action === "assign" ? "text-blueprimary" : "text-green-700"}`}>
+          {t(action === "assign" ? "Assign Mission" : "Register Completed Mission")}
+        </p>
         <h2 className="mb-4 text-xl font-bold text-center text-black">
           {t("تأكيد تسجيل المهمة")}
         </h2>
@@ -362,6 +368,7 @@ const StudentList = () => {
   const [showCongrats, setShowCongrats] = useState(false);
   const [showDuplicateTask, setShowDuplicateTask] = useState(false);
   const [existingStudentIds, setExistingStudentIds] = useState<number[]>([]);
+  const [missionAction, setMissionAction] = useState<"assign" | "complete">("complete");
 
   const role = localStorage.getItem("role");
   useAutoStartGuide("teacher-register", true);
@@ -395,14 +402,15 @@ const StudentList = () => {
 
   // Update filtered tasks when type changes
   useEffect(() => {
-    if (selectedType) {
-      const tasksForType = taskdata.filter(
-        (task) =>
-          task.categoryId === selectedCategoryId && task.type === selectedType,
-      );
-      setFilteredTasks(tasksForType);
-      setSelectedTaskId(null);
-    }
+    if (!selectedType || !selectedCategoryId) return;
+    const authToken = localStorage.getItem("token");
+    const rolePath = role == "Teacher" ? "teachers" : "parents";
+    void fetch(`${API_BASE_URL}/${rolePath}/appear-Taskes-Type-Category/${selectedCategoryId}/${encodeURIComponent(selectedType)}`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    }).then((response) => response.json())
+      .then((body) => setFilteredTasks(Array.isArray(body.data) ? body.data : []))
+      .catch((error) => { console.error("Error loading mission catalog", error); setFilteredTasks([]); });
+    setSelectedTaskId(null);
   }, [selectedType, selectedCategoryId]);
 
   const fetchStudentsData = async () => {
@@ -466,20 +474,16 @@ const StudentList = () => {
       // id if both lists are kept in the exact same order with no gaps — a
       // silent-drift risk (see the code audit notes), guarded here so a
       // mismatch is at least caught rather than submitting a wrong/garbage id.
-      const inferredTaskIndex = taskdata.findIndex(
-        (task) =>
-          task.type === selectedTask.type &&
-          task.title === selectedTask.title,
-      );
-      if (inferredTaskIndex === -1) {
+      const authoritativeTaskId = Number(selectedTask.id);
+      if (!Number.isSafeInteger(authoritativeTaskId) || authoritativeTaskId <= 0) {
         alert(t("تعذر تحديد هذه المهمة. حاول اختيارها من جديد."));
         return;
       }
       // Using fetch instead of axios
+      const rolePath = role == "Teacher" ? "teachers" : "parents";
+      const endpoint = missionAction === "assign" ? "assign-mission" : "add-pros";
       const response = await fetch(
-        role == "Teacher"
-          ? `${API_BASE_URL}/teachers/add-pros`
-          : `${API_BASE_URL}/parents/add-pros`,
+        `${API_BASE_URL}/${rolePath}/${endpoint}`,
         {
           method: "POST",
           headers: {
@@ -487,7 +491,7 @@ const StudentList = () => {
             Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({
-            taskId: inferredTaskIndex + 1,
+            taskId: authoritativeTaskId,
             studentIds: selectedStudentIds.map((id) => id),
             comment: "Great job!",
             time: getCurrentTime(),
@@ -495,13 +499,24 @@ const StudentList = () => {
         },
       );
 
+      const responseData = await response.json().catch(() => ({}));
       if (response.ok) {
-        console.log("Progress added successfully");
-        console.log(selectedStudentIds);
         setShowConfirmation(false);
-        setShowCongrats(true);
+        if (missionAction === "assign") {
+          const created = responseData.summary?.created || 0;
+          const existing = responseData.summary?.existing || 0;
+          const completed = responseData.summary?.already_completed || 0;
+          alert(t(`Mission assigned: ${created} new, ${existing} already active, ${completed} completed today`));
+          handleCongratsClose();
+        } else {
+          const completed = responseData.summary?.completed || 0;
+          const already = responseData.summary?.already_completed || 0;
+          const failed = (responseData.summary?.failed || 0) + (responseData.summary?.unauthorized || 0) + (responseData.summary?.not_found || 0);
+          if (already || failed) alert(t(`Completion results: ${completed} completed, ${already} already completed, ${failed} failed`));
+          setShowCongrats(true);
+        }
       } else {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = responseData;
         if (
           errorData.message ===
             "Some students have already completed this task today" &&
@@ -862,6 +877,18 @@ const StudentList = () => {
       )}
 
       {/* Action Buttons */}
+      {isStudentsSelected && (
+        <div className="grid w-full grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl">
+          <button type="button" onClick={() => setMissionAction("assign")}
+            className={`p-3 text-sm font-bold rounded-lg ${missionAction === "assign" ? "text-white bg-blueprimary" : "text-gray-700 bg-white"}`}>
+            {t("Assign Mission")}
+          </button>
+          <button type="button" onClick={() => setMissionAction("complete")}
+            className={`p-3 text-sm font-bold rounded-lg ${missionAction === "complete" ? "text-white bg-green-600" : "text-gray-700 bg-white"}`}>
+            {t("Register Completed Mission")}
+          </button>
+        </div>
+      )}
       {!isStudentsSelected && selectedStudentIds.length > 0 && (
         <PrimaryButton
           style=""
@@ -925,6 +952,7 @@ const StudentList = () => {
             removeSelectedStudent(studentIndex);
           }
         }}
+        action={missionAction}
       />
 
       {/* Congratulations Popup */}
