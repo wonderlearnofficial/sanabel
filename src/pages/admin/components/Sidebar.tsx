@@ -15,6 +15,7 @@ import {
   FaTrophy,
   FaHistory,
   FaMobileAlt,
+  FaChartLine,
 } from "react-icons/fa";
 import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
 import { useGuide } from "../../../guides/GuideProvider";
@@ -30,7 +31,8 @@ type Tab =
   | "grades"
   | "scores"
   | "history"
-  | "app_version";
+  | "app_version"
+  | "analytics";
 
 interface SidebarProps {
   activeTab: Tab;
@@ -54,6 +56,7 @@ const TAB_ICONS: Record<Tab, React.ReactNode> = {
   scores: <FaTrophy size={16} />,
   history: <FaHistory size={16} />,
   app_version: <FaMobileAlt size={16} />,
+  analytics: <FaChartLine size={16} />,
 };
 
 const TAB_I18N: Record<Tab, string> = {
@@ -68,6 +71,7 @@ const TAB_I18N: Record<Tab, string> = {
   scores: "admin.tab.scores",
   history: "admin.tab.history",
   app_version: "admin.tab.app_version",
+  analytics: "admin.analytics.title",
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -149,13 +153,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <h1 className="text-base font-bold leading-tight text-white">
               {t("admin.userDataTitle")}
             </h1>
-            <p className="text-xs text-slate-500 font-medium">Sanabel Admin</p>
+            <p className="text-xs text-slate-500 font-medium">{t("admin.panelName")}</p>
           </div>
         </div>
       </div>
 
       {/* Navigation Groups */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
+        {/* Group: Analytics — Super Admin only. renderTabButton returns null
+            when the tab is in hiddenTabs, so a school admin never sees this
+            group at all (and the API refuses them regardless). */}
+        {!hiddenTabs.includes("analytics") && (
+          <div className="space-y-1.5">
+            <p className="px-3.5 text-[10px] font-bold tracking-wider uppercase text-indigo-400">
+              {t("admin.analytics.title")}
+            </p>
+            <div className="space-y-1">{renderTabButton("analytics")}</div>
+          </div>
+        )}
+
         {/* Group: Scores & Activity */}
         <div className="space-y-1.5">
           <p className="px-3.5 text-[10px] font-bold tracking-wider uppercase text-amber-400">

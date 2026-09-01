@@ -19,7 +19,8 @@ type Tab =
   | "grades"
   | "scores"
   | "history"
-  | "app_version";
+  | "app_version"
+  | "analytics";
 
 interface AdminHeaderProps {
   activeTab: Tab;
@@ -46,6 +47,7 @@ const TAB_I18N: Record<Tab, string> = {
   scores: "admin.tab.scores",
   history: "admin.tab.history",
   app_version: "admin.tab.app_version",
+  analytics: "admin.analytics.title",
 };
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({
@@ -65,25 +67,25 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   const getSubDescription = (): string => {
     switch (activeTab) {
       case "scores":
-        return t("Monitor student scores, XP, level, medal, tree progress, and sanabel counts.");
+        return t("admin.header.description.scores");
       case "history":
-        return t("View recent student task completion history and rewards granted.");
+        return t("admin.header.description.history");
       case "users":
-        return t("Manage every user inside your platform.");
+        return t("admin.header.description.users");
       case "students":
-        return t("Monitor student records and credentials.");
+        return t("admin.header.description.students");
       case "teachers":
-        return t("Assign and manage classrooms for teachers.");
+        return t("admin.header.description.teachers");
       case "parents":
-        return t("Review parent link codes and family links.");
+        return t("admin.header.description.parents");
       case "admins":
-        return t("Manage system administrator level access.");
+        return t("admin.header.description.admins");
       case "classes":
-        return t("Create and modify classes and grades.");
+        return t("admin.header.description.classes");
       case "organizations":
-        return t("Configure schools and organizations.");
+        return t("admin.header.description.organizations");
       case "grades":
-        return t("Manage learning grades and academic streams.");
+        return t("admin.header.description.grades");
       default:
         return "";
     }

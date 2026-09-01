@@ -14,7 +14,8 @@ type Tab =
   | "grades"
   | "scores"
   | "history"
-  | "app_version";
+  | "app_version"
+  | "analytics";
 
 interface EditDrawerProps {
   activeTab: Tab;

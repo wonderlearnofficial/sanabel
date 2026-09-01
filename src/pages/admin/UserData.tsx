@@ -26,6 +26,7 @@ import { EditDrawer } from "./components/EditDrawer";
 import { CreateWizard } from "./components/CreateWizard";
 import { Pagination } from "./components/Pagination";
 import { AppVersionControl } from "./components/AppVersionControl";
+import AnalyticsDashboard from "./analytics/AnalyticsDashboard";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Tab =
@@ -39,7 +40,8 @@ type Tab =
   | "grades"
   | "scores"
   | "history"
-  | "app_version";
+  | "app_version"
+  | "analytics";
 type UserLikeTab = "users" | "students" | "teachers" | "parents" | "admins";
 type SortDir = "asc" | "desc" | null;
 
@@ -65,6 +67,7 @@ const TAB_ACCENT: Record<Tab, { from: string; to: string; glow: string; light: s
   scores: { from: "#f59e0b", to: "#d97706", glow: "rgba(245,158,11,0.35)", light: "#fef3c7" },
   history: { from: "#10b981", to: "#059669", glow: "rgba(16,185,129,0.35)", light: "#d1fae5" },
   app_version: { from: "#6366f1", to: "#4f46e5", glow: "rgba(99,102,241,0.35)", light: "#e0e7ff" },
+  analytics: { from: "#4f46e5", to: "#4338ca", glow: "rgba(79,70,229,0.35)", light: "#e0e7ff" },
 };
 
 const ENDPOINTS: Record<Tab, string> = {
@@ -79,6 +82,7 @@ const ENDPOINTS: Record<Tab, string> = {
   scores: `${API_BASE_URL}/admin/scores`,
   history: `${API_BASE_URL}/admin/history`,
   app_version: `${API_BASE_URL}/admin/app-version`,
+  analytics: `${API_BASE_URL}/admin/analytics/overview`,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -251,7 +255,7 @@ const UserData: React.FC = () => {
   const [scopedOrganizationId, setScopedOrganizationId] = useState<number | null>(null);
   const isScopedAdmin = scopedOrganizationId !== null;
   const hiddenTabs = useMemo<Tab[]>(
-    () => (isScopedAdmin ? ["organizations", "admins"] : []),
+    () => (isScopedAdmin ? ["organizations", "admins", "analytics"] : []),
     [isScopedAdmin],
   );
   const [gradesList, setGradesList] = useState<{ id: number; name: string; organizationId?: number | null }[]>([]);
@@ -299,7 +303,7 @@ const UserData: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     if (!token) return;
-    if (activeTab === "app_version") {
+    if (activeTab === "app_version" || activeTab === "analytics") {
       setLoading(false);
       return;
     }
@@ -999,6 +1003,7 @@ const UserData: React.FC = () => {
             scores: 0,
             history: 0,
             app_version: 0,
+            analytics: 0,
           }
         }
         accentColor={accent.from}
@@ -1031,7 +1036,9 @@ const UserData: React.FC = () => {
 
         {/* Dash Content */}
         <div className="flex-1 px-8 py-6 overflow-y-auto">
-          {activeTab === "app_version" ? (
+          {activeTab === "analytics" ? (
+            <AnalyticsDashboard accentColor={accent.from} />
+          ) : activeTab === "app_version" ? (
             <AppVersionControl />
           ) : (
             <>
@@ -1241,7 +1248,7 @@ const UserData: React.FC = () => {
         title={t("admin.bulk.confirmDelete")}
         message={
           <>
-            Delete <strong>{selectedIds.size}</strong> items? This cannot be undone.
+            {t("admin.deleteItemsConfirm", { count: selectedIds.size })}
           </>
         }
         confirmLabel={t("admin.bulk.delete")}
@@ -1254,7 +1261,7 @@ const UserData: React.FC = () => {
         title={t("admin.reset.title")}
         message={
           <>
-            Reset password for <strong>{confirmReset?.name || "—"}</strong>?
+            {t("admin.resetPasswordFor", { name: confirmReset?.name || "—" })}
           </>
         }
         confirmLabel={t("admin.reset.confirm")}
