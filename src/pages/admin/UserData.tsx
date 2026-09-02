@@ -18,7 +18,7 @@ import i18n from "../../i18n";
 
 // ─── Sub-components Imports ───────────────────────────────────────────────────
 import { Sidebar } from "./components/Sidebar";
-import { AdminHeader } from "./components/AdminHeader";
+import { AdminHeader, AdminIdentity } from "./components/AdminHeader";
 import { StatsCards } from "./components/StatsCards";
 import { FilterBar } from "./components/FilterBar";
 import { DataTable } from "./components/DataTable";
@@ -27,21 +27,19 @@ import { CreateWizard } from "./components/CreateWizard";
 import { Pagination } from "./components/Pagination";
 import { AppVersionControl } from "./components/AppVersionControl";
 import AnalyticsDashboard from "./analytics/AnalyticsDashboard";
+import { AdminPage } from "./components/ui/layout";
+import {
+  AnalyticsSection,
+  NavItem,
+  Tab,
+  findNavGroup,
+  findNavItem,
+  scopedAdminHiddenTabs,
+} from "./navigation";
+import { BRAND, ENTITY_ACCENT, SURFACE, cx } from "./theme";
+import { useAdminShell } from "./useAdminShell";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Tab =
-  | "users"
-  | "students"
-  | "teachers"
-  | "parents"
-  | "admins"
-  | "classes"
-  | "organizations"
-  | "grades"
-  | "scores"
-  | "history"
-  | "app_version"
-  | "analytics";
 type UserLikeTab = "users" | "students" | "teachers" | "parents" | "admins";
 type SortDir = "asc" | "desc" | null;
 
@@ -54,21 +52,6 @@ const USER_LIKE_TABS: UserLikeTab[] = [
 ];
 const isUserLikeTab = (tab: Tab): tab is UserLikeTab =>
   (USER_LIKE_TABS as Tab[]).includes(tab);
-
-const TAB_ACCENT: Record<Tab, { from: string; to: string; glow: string; light: string }> = {
-  users: { from: "#3b82f6", to: "#2563eb", glow: "rgba(59,130,246,0.35)", light: "#dbeafe" },
-  students: { from: "#06b6d4", to: "#0891b2", glow: "rgba(6,182,212,0.35)", light: "#cffafe" },
-  teachers: { from: "#10b981", to: "#059669", glow: "rgba(16,185,129,0.35)", light: "#d1fae5" },
-  parents: { from: "#f59e0b", to: "#d97706", glow: "rgba(245,158,11,0.35)", light: "#fef3c7" },
-  admins: { from: "#a855f7", to: "#9333ea", glow: "rgba(168,85,247,0.35)", light: "#f3e8ff" },
-  classes: { from: "#f43f5e", to: "#e11d48", glow: "rgba(244,63,94,0.35)", light: "#ffe4e6" },
-  organizations: { from: "#6366f1", to: "#4f46e5", glow: "rgba(99,102,241,0.35)", light: "#e0e7ff" },
-  grades: { from: "#8b5cf6", to: "#7c3aed", glow: "rgba(139,92,246,0.35)", light: "#ede9fe" },
-  scores: { from: "#f59e0b", to: "#d97706", glow: "rgba(245,158,11,0.35)", light: "#fef3c7" },
-  history: { from: "#10b981", to: "#059669", glow: "rgba(16,185,129,0.35)", light: "#d1fae5" },
-  app_version: { from: "#6366f1", to: "#4f46e5", glow: "rgba(99,102,241,0.35)", light: "#e0e7ff" },
-  analytics: { from: "#4f46e5", to: "#4338ca", glow: "rgba(79,70,229,0.35)", light: "#e0e7ff" },
-};
 
 const ENDPOINTS: Record<Tab, string> = {
   users: `${API_BASE_URL}/admin/users`,
@@ -250,14 +233,28 @@ const UserData: React.FC = () => {
   const [stats, setStats] = useState<Record<string, number>>({});
   const [statsLoading, setStatsLoading] = useState(false);
 
+  // Which analytics section the sidebar has selected. The analytics page reads
+  // this instead of owning its own section tabs.
+  const [analyticsSection, setAnalyticsSection] = useState<AnalyticsSection>("overview");
+
+  // Sidebar collapse / drawer state, persisted where the browser allows it.
+  const shell = useAdminShell();
+
   // Admin scope: a number = school admin locked to that organization,
   // null = super admin. Drives which tabs/filters/actions are offered.
   const [scopedOrganizationId, setScopedOrganizationId] = useState<number | null>(null);
+  const [identity, setIdentity] = useState<AdminIdentity | null>(null);
   const isScopedAdmin = scopedOrganizationId !== null;
+  // Derived from the navigation tree, so a new Super-Admin-only page is hidden
+  // from School Admins automatically. The server gate is still what enforces it.
   const hiddenTabs = useMemo<Tab[]>(
-    () => (isScopedAdmin ? ["organizations", "admins", "analytics"] : []),
+    () => (isScopedAdmin ? scopedAdminHiddenTabs() : []),
     [isScopedAdmin],
   );
+
+  // Actionable sidebar badge. Sourced from the analytics overview, which is
+  // Super-Admin-only, so a School Admin never requests it and never shows it.
+  const [pendingApprovals, setPendingApprovals] = useState<number | null>(null);
   const [gradesList, setGradesList] = useState<{ id: number; name: string; organizationId?: number | null }[]>([]);
   const [createOrganizations, setCreateOrganizations] = useState<{ id: number; name: string }[]>([]);
   const [createClasses, setCreateClasses] = useState<{ id: number; classname: string; grade: string; organizationId?: number; gradeId?: number | null }[]>([]);
@@ -398,11 +395,50 @@ const UserData: React.FC = () => {
       .get(`${API_BASE_URL}/admin/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      .then((r) => setScopedOrganizationId(r.data.data?.organizationId ?? null))
+      .then((r) => {
+        const profile = r.data.data;
+        const organizationId = profile?.organizationId ?? null;
+        setScopedOrganizationId(organizationId);
+        setIdentity({
+          name:
+            `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() ||
+            profile?.email ||
+            "",
+          email: profile?.email ?? "",
+          isSuperAdmin: profile?.isSuperAdmin ?? organizationId === null,
+        });
+      })
       .catch((err) => {
         console.error("[Admin UserData] failed to resolve admin scope:", err);
+        toast.error(describeApiError(err, (key, options) => t(key, options)));
       });
-  }, [authorized, token]);
+  }, [authorized, token, t]);
+
+  // Pending approvals for the sidebar badge. `/admin/analytics/overview` is
+  // Super-Admin-only and returns 403 to a School Admin, so it is only requested
+  // once scope is known to be global.
+  useEffect(() => {
+    if (!authorized || !token || isScopedAdmin || !identity?.isSuperAdmin) return;
+    let cancelled = false;
+    axios
+      .get(`${API_BASE_URL}/admin/analytics/overview`, {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 20000,
+      })
+      .then((r) => {
+        if (cancelled) return;
+        const pending = r.data?.data?.approvals?.pending;
+        setPendingApprovals(typeof pending === "number" ? pending : null);
+      })
+      .catch(() => {
+        // A badge is not worth a toast. Leaving it null shows no badge at all,
+        // which is honest: an unknown queue length must not render as 0.
+        if (!cancelled) setPendingApprovals(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authorized, token, isScopedAdmin, identity?.isSuperAdmin]);
 
   // A scoped admin must never sit on a tab that doesn't apply to them
   // (e.g. after their scope is assigned while the panel is open).
@@ -414,10 +450,10 @@ const UserData: React.FC = () => {
     if (authorized) fetchGradesList();
   }, [authorized, fetchGradesList, activeTab]);
 
-  const handleTabChange = (tab: Tab) => {
+  const handleTabChange = (tab: Tab, nextSearch = "") => {
     setActiveTab(tab);
     setRows([]);
-    setSearch("");
+    setSearch(nextSearch);
     setPage(1);
     setSelectedIds(new Set());
     setFilterGradeId("");
@@ -426,6 +462,21 @@ const UserData: React.FC = () => {
     setFilterVerified(false);
     setSortField(null);
     setSortDir(null);
+  };
+
+  const handleNavigate = (item: NavItem) => {
+    if (item.section) setAnalyticsSection(item.section);
+    handleTabChange(item.tab);
+    // In drawer layout the overlay dismisses itself once a page is chosen.
+    shell.handleNavigate();
+  };
+
+  // A global-search hit opens that entity's page with the query applied as its
+  // filter. The panel has no per-row detail route for organizations or classes,
+  // so a filtered list is the only destination that actually exists.
+  const handleSearchSelect = (tab: Tab, query: string) => {
+    if (hiddenTabs.includes(tab)) return;
+    handleTabChange(tab, query);
   };
 
   const handleSort = (field: string) => {
@@ -467,7 +518,9 @@ const UserData: React.FC = () => {
     setEditFirstName(row.firstName ?? row.user?.firstName ?? row.User?.firstName ?? "");
     setEditLastName(row.lastName ?? row.user?.lastName ?? row.User?.lastName ?? "");
     setEditEmail(row.email ?? row.user?.email ?? row.User?.email ?? "");
-    setEditGrade(row.gradeId ? String(row.gradeId) : row.grade ?? "");
+    // Select controls use database IDs. The legacy free-text grade is display
+    // fallback only and must not become an invalid <option> value.
+    setEditGrade(row.gradeId ? String(row.gradeId) : "");
     setEditOrgId(String(row.organizationId ?? row.Organization?.id ?? ""));
     setEditClassId(String(row.classId ?? ""));
     setEditClassIds(row.Classes ? row.Classes.map((c: any) => String(c.id)) : []);
@@ -955,10 +1008,39 @@ const UserData: React.FC = () => {
 
   if (!authorized) return null;
 
-  const accent = TAB_ACCENT[activeTab];
+  const accentColor = ENTITY_ACCENT[activeTab];
 
+  const activeNavItem = findNavItem(activeTab, analyticsSection);
+  const activeNavGroup = findNavGroup(activeTab, analyticsSection);
+  const pageTitle = activeNavItem ? t(activeNavItem.labelKey) : "";
+  // One crumb: the group. The page's own name is already the heading beside it.
+  const breadcrumbs = activeNavGroup ? [t(activeNavGroup.labelKey)] : undefined;
+
+  // `admin.header.description.*` exists for the ten record pages only; the
+  // analytics sections and app settings have no such key, so they get no
+  // subtitle rather than a rendered key name.
+  const DESCRIBED_TABS: Tab[] = [
+    "users",
+    "students",
+    "teachers",
+    "parents",
+    "admins",
+    "classes",
+    "organizations",
+    "grades",
+    "scores",
+    "history",
+  ];
+  const pageDescription = DESCRIBED_TABS.includes(activeTab)
+    ? t(`admin.header.description.${activeTab}`)
+    : undefined;
+
+  // Analytics and app settings are not record lists, so they get no create
+  // button rather than a create button that does nothing.
   const createLabel =
-    activeTab === "classes"
+    activeTab === "analytics" || activeTab === "app_version"
+      ? undefined
+      : activeTab === "classes"
       ? t("admin.create.class")
       : activeTab === "organizations"
       ? t("admin.create.organization")
@@ -966,10 +1048,33 @@ const UserData: React.FC = () => {
       ? t("admin.create.grade")
       : t("admin.create.user");
 
+  const onCreateClick =
+    activeTab === "classes"
+      ? openCreateClassModal
+      : activeTab === "organizations"
+      ? openCreateOrgModal
+      : activeTab === "grades"
+      ? openCreateGradeModal
+      : () => setShowCreateModal(true);
+
+  // A scoped admin's organizations list contains exactly their own school, so
+  // its name is already loaded — no extra request to label their scope.
+  const identityWithScope: AdminIdentity | null = identity
+    ? {
+        ...identity,
+        organizationName: isScopedAdmin
+          ? createOrganizations.find((org) => org.id === scopedOrganizationId)?.name ??
+            null
+          : null,
+      }
+    : null;
+
   return (
     <div
-      className="flex w-full min-h-screen font-sans"
-      style={{ background: "#f8fafc" }}
+      className={cx("flex w-full min-h-screen font-sans", SURFACE.page)}
+      // Exposed as a CSS variable so primitives can paint the brand colour
+      // without importing the token at every call site.
+      style={{ ["--admin-primary" as string]: BRAND.primary }}
       dir={isRTL ? "rtl" : "ltr"}
     >
       <ToastContainer
@@ -986,64 +1091,64 @@ const UserData: React.FC = () => {
       />
 
       {/* ══════════════════ SIDEBAR ══════════════════ */}
+      {/* Docked rail on desktop, overlay drawer below `lg`. In drawer layout it
+          renders as a fixed layer, so the main column keeps its full width. */}
       <Sidebar
         activeTab={activeTab}
-        onTabChange={handleTabChange}
+        activeSection={analyticsSection}
+        onNavigate={handleNavigate}
         onLogout={handleLogout}
-        totalCounts={
-          {
-            users: stats.users ?? 0,
-            students: stats.students ?? 0,
-            teachers: stats.teachers ?? 0,
-            parents: stats.parents ?? 0,
-            admins: 0,
-            classes: 0,
-            organizations: 0,
-            grades: 0,
-            scores: 0,
-            history: 0,
-            app_version: 0,
-            analytics: 0,
-          }
-        }
-        accentColor={accent.from}
+        badges={{ pendingApprovals }}
         hiddenTabs={hiddenTabs}
+        isCollapsed={shell.isCollapsed}
+        isDrawerLayout={shell.isDrawerLayout}
+        isDrawerOpen={shell.isDrawerOpen}
+        onToggle={shell.toggleSidebar}
+        onCloseDrawer={shell.closeDrawer}
       />
 
       {/* ══════════════════ MAIN CONTENT ══════════════════ */}
-      <main className="flex flex-col flex-1 min-h-screen overflow-hidden">
+      {/* `min-w-0` is what stops a wide table from pushing the flex row past
+          the viewport and scrolling the whole page sideways. */}
+      <main className="flex flex-col flex-1 min-w-0 min-h-screen">
         {/* Header */}
         <AdminHeader
-          activeTab={activeTab}
-          total={total}
+          title={pageTitle}
+          breadcrumbs={breadcrumbs}
+          description={pageDescription}
+          onToggleSidebar={shell.toggleSidebar}
+          isDrawerLayout={shell.isDrawerLayout}
           createLabel={createLabel}
-          onCreateClick={
-            activeTab === "classes"
-              ? openCreateClassModal
-              : activeTab === "organizations"
-              ? openCreateOrgModal
-              : activeTab === "grades"
-              ? openCreateGradeModal
-              : () => setShowCreateModal(true)
-          }
+          onCreateClick={createLabel ? onCreateClick : undefined}
           onExportClick={handleExportCSV}
           onImportClick={() => setShowImport(true)}
           onLanguageToggle={toggleLanguage}
+          onLogout={handleLogout}
           exporting={exporting}
-          accentColor={accent.from}
-          isImportable={activeTab !== "users" && activeTab !== "admins"}
+          isImportable={
+            activeTab !== "users" &&
+            activeTab !== "admins" &&
+            activeTab !== "analytics" &&
+            activeTab !== "app_version"
+          }
+          identity={identityWithScope}
+          token={token}
+          onSearchSelect={handleSearchSelect}
+          canSearchOrganizations={!isScopedAdmin}
         />
 
         {/* Dash Content */}
-        <div className="flex-1 px-8 py-6 overflow-y-auto">
+        {/* Analytics goes full width; record pages get a reading measure so a
+            wide monitor does not stretch a table to unreadable line lengths. */}
+        <AdminPage width={activeTab === "analytics" ? "full" : "content"}>
           {activeTab === "analytics" ? (
-            <AnalyticsDashboard accentColor={accent.from} />
+            <AnalyticsDashboard accentColor={accentColor} section={analyticsSection} />
           ) : activeTab === "app_version" ? (
             <AppVersionControl />
           ) : (
             <>
               {/* Lightweight KPI Cards & Analytics drawer */}
-              <StatsCards stats={stats} rows={rows} activeTab={activeTab} accentColor={accent.from} loading={statsLoading} />
+              <StatsCards stats={stats} rows={rows} activeTab={activeTab} accentColor={accentColor} loading={statsLoading} />
 
               {/* Filter, Search bar */}
               <FilterBar
@@ -1075,7 +1180,7 @@ const UserData: React.FC = () => {
                 }}
                 gradesList={gradesList}
                 organizations={createOrganizations}
-                accentColor={accent.from}
+                accentColor={accentColor}
                 hideSchoolFilter={isScopedAdmin}
               />
 
@@ -1094,7 +1199,7 @@ const UserData: React.FC = () => {
                   setConfirmReset({ userId: getUserId(activeTab as UserLikeTab, row), name: getName(activeTab, row) })
                 }
                 onImpersonateStudent={handleImpersonateStudent}
-                accentColor={accent.from}
+                accentColor={accentColor}
                 sortField={sortField}
                 sortDir={sortDir}
                 onSort={handleSort}
@@ -1105,11 +1210,11 @@ const UserData: React.FC = () => {
 
               {/* Styled SaaS Pagination */}
               {total > limit && (
-                <Pagination page={page} setPage={setPage} total={total} limit={limit} accentColor={accent.from} />
+                <Pagination page={page} setPage={setPage} total={total} limit={limit} accentColor={accentColor} />
               )}
             </>
           )}
-        </div>
+        </AdminPage>
       </main>
 
       {/* ══════════════════ EDIT DRAWER ══════════════════ */}
@@ -1122,7 +1227,7 @@ const UserData: React.FC = () => {
             onSave={handleSaveEdit}
             onImpersonateStudent={handleImpersonateStudent}
             isSaving={isSavingEdit}
-            accentColor={accent.from}
+            accentColor={accentColor}
             editFirstName={editFirstName}
             setEditFirstName={setEditFirstName}
             editLastName={editLastName}
@@ -1164,7 +1269,7 @@ const UserData: React.FC = () => {
             isCreating={isCreating}
             createdCredentials={createdCredentials}
             onDone={() => setCreatedCredentials(null)}
-            accentColor={accent.from}
+            accentColor={accentColor}
             gradesList={gradesList}
             organizations={createOrganizations}
             classes={createClasses}

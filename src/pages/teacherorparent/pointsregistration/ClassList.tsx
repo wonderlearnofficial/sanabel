@@ -50,6 +50,7 @@ interface StudentData {
 interface ClassData {
   classId: number;
   className: string;
+  grade?: string | null;
   organizationName: string;
   studentCount?: number;
 }
@@ -89,7 +90,7 @@ const FilterSortDropdown = ({
   currentFilter: string;
   currentSort: string;
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [tempFilter, setTempFilter] = useState(currentFilter);
   const [tempSort, setTempSort] = useState(currentSort);
 
@@ -138,7 +139,7 @@ const FilterSortDropdown = ({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50"
-      dir="rtl"
+      dir={i18n.language.startsWith("ar") ? "rtl" : "ltr"}
     >
       <div className="w-11/12 max-w-md p-5 overflow-y-auto bg-white rounded-xl max-h-90vh ">
         <h2 className="mb-4 text-xl font-bold text-center text-black">
@@ -362,7 +363,7 @@ const ConfirmationPopup = ({
         </div>
 
         <div className="mb-5">
-          <h3 className="mb-2 font-medium text-right text-black">
+          <h3 className="mb-2 font-medium text-end text-black">
             {t("الطلاب المختارين")}
           </h3>
           <div className="flex justify-start gap-3 px-4 py-2 overflow-x-auto ">
@@ -490,7 +491,8 @@ const CongratsPopup = ({
 };
 
 const ClassList: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language.startsWith("ar");
   const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [classesData, setClassesData] = useState<ClassData[]>([]);
@@ -1120,15 +1122,16 @@ const ClassList: React.FC = () => {
     <div
       className="flex flex-col items-center justify-between gap-5 p-4"
       id="page-height"
+      dir={isRTL ? "rtl" : "ltr"}
     >
       {/* Header and Search */}
       <div className="flex-col w-full gap-3 flex-center">
         <div className="flex items-center justify-between w-full">
-          <div className="w-16 h-16"></div>
-          <h1 className="text-2xl font-bold text-black" dir="ltr">
+          {isRTL ? <div className="w-16 h-16" /> : <GoBackButton />}
+          <h1 className="text-2xl font-bold text-black">
             {getCurrentStepTitle()}
           </h1>
-          <GoBackButton />
+          {isRTL ? <GoBackButton /> : <div className="w-16 h-16" />}
         </div>
         {(!isClassSelected || !isStudentsSelected) && (
           <div className="flex items-center justify-between w-full gap-2">
@@ -1141,7 +1144,7 @@ const ClassList: React.FC = () => {
                 placeholder={t(
                   !isClassSelected ? "ابحث عن فصل" : "ابحث عن طالب"
                 )}
-                className="w-full py-3 text-black bg-transparent drop-shadow-sm text-end"
+                className="w-full py-3 text-black bg-transparent outline-none drop-shadow-sm text-start"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -1240,10 +1243,33 @@ const ClassList: React.FC = () => {
             filteredClasses.map((classItem) => (
               <div
                 key={classItem.classId}
-                className="flex justify-between w-full p-4 border-2 cursor-pointer rounded-xl hover:bg-gray-50"
+                className="flex items-center justify-between w-full gap-4 p-4 border-2 cursor-pointer rounded-xl hover:bg-gray-50"
                 onClick={() => handleClassSelection(classItem)}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col flex-1 min-w-0 text-start">
+                  <h1 className="font-semibold text-black capitalize text-md">
+                    {classItem.className}
+                  </h1>
+                  {/* Grade sits with the class name: a class name alone does
+                      not say which year it belongs to. */}
+                  <p className="text-sm font-medium text-blueprimary">
+                    {classItem.grade ? t(classItem.grade) : t("لا يوجد صف")}
+                  </p>
+                  <h1 className="text-sm text-gray-500 capitalize">
+                    {classItem.organizationName}
+                  </h1>
+                  <div
+                    className="py-1 font-medium text-gray-800 rounded-lg"
+                  >
+                    {classXpData[classItem.classId]?.studentCount || 0}{" "}
+                    {t("طلاب")}
+                  </div>
+                  {/* Add student avatars display */}
+                  <div className="flex justify-start w-full mt-2">
+                    {renderClassAvatars(classItem.classId)}
+                  </div>
+                </div>
+                <div className="flex items-center flex-shrink-0 gap-2">
                   <MedalAndLevel
                     level={
                       calculateLevel(
@@ -1254,25 +1280,6 @@ const ClassList: React.FC = () => {
                     dir={""}
                     size={""}
                   />
-                </div>
-                <div className="flex flex-col w-full text-end">
-                  <h1 className="text-black capitalize text-md">
-                    {classItem.className}
-                  </h1>
-                  <h1 className="text-sm text-gray-500 capitalize">
-                    {classItem.organizationName}
-                  </h1>
-                  <div
-                    className="px-3 py-1 font-medium text-gray-800 rounded-lg"
-                    dir="rtl"
-                  >
-                    {classXpData[classItem.classId]?.studentCount || 0}{" "}
-                    {t("طلاب")}
-                  </div>
-                  {/* Add student avatars display */}
-                  <div className="flex justify-end w-full mt-2">
-                    {renderClassAvatars(classItem.classId)}
-                  </div>
                 </div>
               </div>
             ))
@@ -1285,13 +1292,17 @@ const ClassList: React.FC = () => {
       ) : !isStudentsSelected ? (
         // Student List View
         <div className="flex flex-col justify-start w-full h-full gap-2 overflow-y-auto">
-          <div className="gap-2 p-2 mb-2 text-center flex-center bg-blueprimary rounded-xl">
+          <div className="flex flex-col items-center gap-0.5 p-3 mb-2 text-center bg-blueprimary rounded-xl">
             <h2 className="text-lg font-bold text-white capitalize">
               {selectedClass?.className}
             </h2>
-            <p className="text-sm text-white opacity-90" dir="rtl">
-              {classXpData[selectedClass?.classId || 0]?.studentCount || 0}{" "}
-              {t("طلاب")}
+            <p className="text-sm font-medium text-white opacity-95">
+              {[
+                selectedClass?.grade ? t(selectedClass.grade) : null,
+                `${classXpData[selectedClass?.classId || 0]?.studentCount || 0} ${t("طلاب")}`,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
           </div>
 
@@ -1324,13 +1335,58 @@ const ClassList: React.FC = () => {
 
               return (
                 <div
-                  className={`w-full flex p-2 justify-between items-center border-2 rounded-xl ${
+                  className={`w-full flex p-2 gap-3 justify-between items-center border-2 rounded-xl ${
                     isSelected ? "border-blueprimary bg-blue-50" : ""
                   }`}
                   key={student.id}
                 >
-                  <div
-                    className={`w-10 h-10 flex-center rounded-xl ${
+                  <div className="flex flex-1 items-center min-w-0 gap-3">
+                    <div className="flex-shrink-0 w-12 h-12">
+                      <GetAvatar userAvatarData={student.user.profileImg} />
+                    </div>
+                    <div className="flex flex-1 flex-col min-w-0 text-start">
+                      <div className="flex items-center justify-start min-w-0 gap-2">
+                        <h1 className="min-w-0 font-semibold text-black truncate">
+                          {`${student.user.firstName} ${student.user.lastName || ""}`.trim()}
+                        </h1>
+                        <div className="flex-shrink-0">
+                          <MedalAndLevel
+                            level={calculateLevel(student.xp).level}
+                            color="text-blueprimary text-sm"
+                            dir=""
+                            size={"w-8"}
+                          />
+                        </div>
+                      </div>
+                      {/* Grade and class, so a row identifies the student
+                          rather than only their level. */}
+                      <p className="text-xs text-gray-500 capitalize truncate">
+                        {/* appear-student-class returns the association as
+                            `class`; other endpoints use `Class`. */}
+                        {[
+                          (student as any).Class?.grade || (student as any).class?.grade
+                            ? t((student as any).Class?.grade || (student as any).class?.grade)
+                            : null,
+                          (student as any).Class?.classname || (student as any).class?.classname,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || t("لا يوجد فصل")}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={
+                      isRTL
+                        ? isSelected
+                          ? "إلغاء تحديد الطالب"
+                          : "تحديد الطالب"
+                        : isSelected
+                          ? "Deselect student"
+                          : "Select student"
+                    }
+                    aria-pressed={isSelected}
+                    className={`w-10 h-10 flex-center flex-shrink-0 rounded-xl ${
                       isSelected
                         ? "bg-blueprimary border-0"
                         : "bg-transparent border-2"
@@ -1340,23 +1396,7 @@ const ClassList: React.FC = () => {
                     <FaCheck
                       className={isSelected ? "text-white" : "text-gray-400"}
                     />
-                  </div>
-                  <div className="gap-3 flex-center">
-                    <div className="gap-0 flex-center">
-                      <MedalAndLevel
-                        level={calculateLevel(student.xp).level}
-                        color="text-blueprimary text-sm"
-                        dir=""
-                        size={"w-8"}
-                      />
-                      <h1 className="mx-2 text-black text-nowrap">
-                        {`${student.user.firstName} ${student.user.lastName}`}
-                      </h1>
-                    </div>
-                    <div className="w-12 h-12">
-                      <GetAvatar userAvatarData={student.user.profileImg} />
-                    </div>
-                  </div>
+                  </button>
                 </div>
               );
             })
@@ -1431,7 +1471,7 @@ const ClassList: React.FC = () => {
                       <div className="flex w-20 gap-2">
                         {renderResources(task)}
                       </div>
-                      <h3 className="text-right text-black text-md">
+                      <h3 className="text-end text-black text-md">
                         {t(task.title)}
                       </h3>
                     </div>

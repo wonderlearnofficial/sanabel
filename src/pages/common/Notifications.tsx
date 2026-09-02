@@ -45,9 +45,9 @@ const Profile: React.FC = () => {
       <div className="h-24" />
 
       <div className="flex items-center justify-between w-full ">
-        <h1 className="text-[#999] w-max">منذ دقيقة</h1>
+        <h1 className="text-[#999] w-max">{t("منذ دقيقة")}</h1>
         <h1 className="w-3/5 text-black text-md text-end">
-          محمد منجي يدعوك للانضمام لمتابعة واحرز تقدمك في الحسنات{" "}
+          {t("دعوة لمتابعة التقدم في الحسنات")}{" "}
         </h1>
         <div className="w-12 h-12 rounded-full bg-blueprimary"></div>
       </div>

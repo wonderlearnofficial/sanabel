@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { API_BASE_URL } from "../../../config/api";
 import { describeApiError } from "../../../utils/apiError";
+import { AnalyticsSection } from "../navigation";
 
 // Super-Admin-only analytics. Every panel is fed by /admin/analytics/*, which
 // the backend gates with requireSuperAdmin — this component never decides
@@ -22,7 +23,9 @@ import { describeApiError } from "../../../utils/apiError";
 // All aggregation happens in SQL; tables are server-paginated. Nothing here
 // pulls a full dataset into the browser.
 
-type Section = "overview" | "missions" | "people" | "organizations" | "approvals" | "assignments";
+// The section list lives in `../navigation` so the sidebar and this page cannot
+// drift apart. `people` is this page's name for the nav's users section.
+type Section = AnalyticsSection;
 
 const SECTIONS: { key: Section; label: string }[] = [
   { key: "overview", label: "admin.analytics.overview" },
@@ -92,9 +95,24 @@ const SimpleTable: React.FC<{ head: string[]; rows: React.ReactNode[][]; empty: 
   </div>
 );
 
-const AnalyticsDashboard: React.FC<{ accentColor: string }> = ({ accentColor }) => {
+interface AnalyticsDashboardProps {
+  accentColor: string;
+  /**
+   * Section to show. When supplied, the sidebar owns section choice and this
+   * page hides its own pill row rather than showing two competing selectors.
+   */
+  section?: Section;
+}
+
+const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
+  accentColor,
+  section: controlledSection,
+}) => {
   const { t } = useTranslation();
-  const [section, setSection] = useState<Section>("overview");
+  const [internalSection, setInternalSection] = useState<Section>("overview");
+  const isControlled = controlledSection !== undefined;
+  const section = isControlled ? controlledSection : internalSection;
+  const setSection = setInternalSection;
   const [from, setFrom] = useState(isoDaysAgo(29));
   const [to, setTo] = useState(isoDaysAgo(0));
   const [data, setData] = useState<Record<string, any>>({});
@@ -129,7 +147,7 @@ const AnalyticsDashboard: React.FC<{ accentColor: string }> = ({ accentColor }) 
       );
       setData((previous) => ({ ...previous, [section]: response.data.data }));
     } catch (requestError) {
-      setError(t(describeApiError(requestError)));
+      setError(describeApiError(requestError, (key, options) => t(key, options)));
     } finally {
       setLoading(false);
     }
@@ -144,7 +162,7 @@ const AnalyticsDashboard: React.FC<{ accentColor: string }> = ({ accentColor }) 
       });
       setCompletions({ rows: response.data.data ?? [], total: response.data.total ?? 0 });
     } catch (requestError) {
-      setError(t(describeApiError(requestError)));
+      setError(describeApiError(requestError, (key, options) => t(key, options)));
     }
   }, [from, to, page, search, t]);
 
@@ -164,21 +182,23 @@ const AnalyticsDashboard: React.FC<{ accentColor: string }> = ({ accentColor }) 
     <div className="flex flex-col gap-5">
       {/* Section tabs + date range */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex flex-wrap gap-2">
-          {SECTIONS.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => setSection(item.key)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                section === item.key ? "text-white shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-              }`}
-              style={section === item.key ? { backgroundColor: accentColor } : undefined}
-            >
-              {t(item.label)}
-            </button>
-          ))}
-        </div>
+        {!isControlled && (
+          <div className="flex flex-wrap gap-2">
+            {SECTIONS.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setSection(item.key)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  section === item.key ? "text-white shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                }`}
+                style={section === item.key ? { backgroundColor: accentColor } : undefined}
+              >
+                {t(item.label)}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="flex items-center gap-2 ms-auto">
           <input
             type="date"
@@ -201,7 +221,7 @@ const AnalyticsDashboard: React.FC<{ accentColor: string }> = ({ accentColor }) 
       {error && (
         <div className="px-4 py-3 text-sm text-red-700 border border-red-200 bg-red-50 rounded-xl">{error}</div>
       )}
-      {loading && <p className="text-sm text-slate-400">{t("جاري التحميل...")}</p>}
+      {loading && <p className="text-sm text-slate-400">{t("admin.shell.loading")}</p>}
 
       {/* ---------------------------------------------------------------- */}
       {section === "overview" && overview && (
@@ -316,7 +336,7 @@ const AnalyticsDashboard: React.FC<{ accentColor: string }> = ({ accentColor }) 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <Panel title={t("admin.analytics.mostActive")}>
                   <SimpleTable
-                    head={[t("admin.analytics.student"), t("admin.analytics.type"), t("المرحلة"), t("admin.analytics.completions")]}
+                    head={[t("admin.analytics.student"), t("admin.analytics.type"), t("admin.analytics.level"), t("admin.analytics.completions")]}
                     rows={(people.mostActiveStudents || []).map((row: any) => [
                       `${row.firstName ?? ""} ${row.lastName ?? ""}`.trim() || `#${row.studentId}`,
                       row.studentType,

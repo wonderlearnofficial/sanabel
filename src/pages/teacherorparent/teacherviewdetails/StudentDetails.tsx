@@ -55,8 +55,11 @@ const Profile: React.FC = () => {
         <h1 className="text-black">
           {user?.firstName} {user?.lastName}
         </h1>
-        <h1 className="text-[#B3B3B3]"> طالب</h1>
-        <h1 className="text-[#B3B3B3]"> المرحلة الإعدادية - فصل 4/8</h1>
+        <h1 className="text-[#B3B3B3]">{t("طالب")}</h1>
+        <h1 className="text-[#B3B3B3]">
+          {(user as any)?.gradeName || t("المرحلة غير محددة")}
+          {(user as any)?.classname ? ` - ${(user as any).classname}` : ""}
+        </h1>
       </div>
 
       <div className="flex flex-col items-center w-full gap-1">
@@ -136,7 +139,7 @@ const Profile: React.FC = () => {
             </div>
             {/* Total Points */}
             <div className="flex items-center justify-end gap-3 p-2 sanabel-shadow-bottom rounded-2xl">
-              <h1 className="text-black">average medals</h1>
+              <h1 className="text-black">{t("متوسط الميداليات")}</h1>
             </div>
           </div>
         )}

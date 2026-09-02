@@ -328,7 +328,7 @@ const Profile: React.FC = () => {
       {/* City fallback picker — only shown when automatic location fails */}
       {showCityPicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="flex flex-col w-full max-w-sm max-h-[80vh] p-5 bg-white rounded-xl">
+          <div className="flex flex-col w-full max-w-sm max-h-[80vh] max-h-[80dvh] p-5 bg-white rounded-xl">
             <h2 className="mb-1 text-lg font-bold text-center text-black">
               {t("اختر مدينتك")}
             </h2>

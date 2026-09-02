@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import logo from "./assets/login/logo.png";
 // Pick ONLY 4–6 avatars to showcase customization
 import Boy1 from "./assets/avatars/Boys/Boy1";
@@ -226,26 +227,26 @@ const getBackgroundStyle = (bg: any) => {
 };
 
 const AvatarShowcase = () => {
+  const { t } = useTranslation();
   return (
     <div className="flex-col w-full min-h-screen p-10 bg-white flex-center">
       <div className="mb-16 text-center">
         <p className="mb-3 text-sm font-semibold tracking-[0.25em] text-[#7B8794] uppercase">
-          Personalized Learning Experience
+          {t("Personalized Learning Experience")}
         </p>
 
         <h1 className="text-[56px] font-extrabold tracking-tight text-[#1F2937] leading-none">
-          Character
-          <span className="block text-[#4F8A6F]">Customization</span>
+          {t("Character")}
+          <span className="block text-[#4F8A6F]">{t("Customization")}</span>
         </h1>
 
         <p className="max-w-2xl mx-auto mt-5 text-lg leading-relaxed text-gray-500">
-          Personalized avatars with customizable hairstyles, clothing colors,
-          skin tones, and backgrounds.
+          {t("Personalized avatars with customizable hairstyles, clothing colors, skin tones, and backgrounds.")}
         </p>
 
         <img
           src={logo}
-          alt="Sanabel Al Ihsan"
+          alt={t("Sanabel Al Ihsan")}
           className="object-contain mx-auto mt-8 h-44"
         />
       </div>

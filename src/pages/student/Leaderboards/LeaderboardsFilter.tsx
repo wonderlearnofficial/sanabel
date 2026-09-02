@@ -184,21 +184,21 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
           >
             <IoMdClose size={24} />
           </button>
-          <h2 className="text-xl font-bold text-gray-800 text-right">{t("تصفية النتائج")}</h2>
+          <h2 className="text-xl font-bold text-gray-800 text-end">{t("تصفية النتائج")}</h2>
         </div>
 
         {/* Form Body */}
         <div className="flex flex-col gap-4">
           {/* Grade Selector */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-600 text-right">
+            <label className="text-sm font-semibold text-gray-600 text-end">
               {t("المرحلة الدراسية")}
             </label>
             <div className="relative">
               <select
                 value={filters.grade}
                 onChange={(e) => handleFilterChange("grade", e.target.value)}
-                className="w-full p-3.5 pr-10 text-right capitalize border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blueprimary focus:border-blueprimary appearance-none bg-white text-gray-800 shadow-sm transition-all outline-none"
+                className="w-full py-3.5 ps-4 pe-10 text-base text-start capitalize border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blueprimary focus:border-blueprimary appearance-none bg-white text-gray-800 shadow-sm transition-all outline-none"
               >
                 <option value="">{t("جميع المراحل")}</option>
                 {grades.map((grade) => (
@@ -207,7 +207,7 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
                   </option>
                 ))}
               </select>
-              <div className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 pointer-events-none">
+              <div className="absolute top-1/2 end-3 -translate-y-1/2 text-gray-400 pointer-events-none">
                 <FiChevronDown size={20} />
               </div>
             </div>
@@ -215,7 +215,7 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
 
           {/* Class Selector */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-600 text-right">
+            <label className="text-sm font-semibold text-gray-600 text-end">
               {t("الفصل الدراسي")}
             </label>
             <div className="relative">
@@ -223,7 +223,7 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
                 value={filters.classId}
                 onChange={(e) => handleFilterChange("classId", e.target.value)}
                 disabled={!filters.grade || loadingClasses}
-                className="w-full p-3.5 pr-10 text-right capitalize border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blueprimary focus:border-blueprimary appearance-none bg-white text-gray-800 shadow-sm transition-all outline-none disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+                className="w-full py-3.5 ps-4 pe-10 text-base text-start capitalize border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blueprimary focus:border-blueprimary appearance-none bg-white text-gray-800 shadow-sm transition-all outline-none disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
               >
                 <option value="">{t("جميع الفصول")}</option>
                 {classes.map((classItem) => (
@@ -232,12 +232,12 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
                   </option>
                 ))}
               </select>
-              <div className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 pointer-events-none">
+              <div className="absolute top-1/2 end-3 -translate-y-1/2 text-gray-400 pointer-events-none">
                 <FiChevronDown size={20} />
               </div>
             </div>
             {loadingClasses && (
-              <p className="text-xs text-right text-blueprimary animate-pulse">
+              <p className="text-xs text-end text-blueprimary animate-pulse">
                 {t("جارٍ تحميل الفصول...")}
               </p>
             )}

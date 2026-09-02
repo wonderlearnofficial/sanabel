@@ -1,0 +1,63 @@
+.todo-calendar {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #1f2937;
+}
+
+.todo-calendar .react-calendar__navigation {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.todo-calendar .react-calendar__navigation button {
+  min-width: 2.5rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+}
+
+.todo-calendar .react-calendar__navigation__label {
+  background: #f8fafc;
+}
+
+.todo-calendar .react-calendar__month-view__weekdays {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.todo-calendar .react-calendar__month-view__weekdays abbr {
+  text-decoration: none;
+}
+
+.todo-calendar .react-calendar__tile {
+  aspect-ratio: 1;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.todo-calendar .react-calendar__tile:enabled:hover,
+.todo-calendar .react-calendar__tile:enabled:focus {
+  background: #eaf7fc;
+}
+
+.todo-calendar .react-calendar__tile--now {
+  background: #eef8fc;
+  color: #2293c7;
+}
+
+.todo-calendar .react-calendar__tile--active,
+.todo-calendar .react-calendar__tile--active:enabled:hover,
+.todo-calendar .react-calendar__tile--active:enabled:focus {
+  background: #4dade0;
+  color: #fff;
+}
+
+.todo-calendar .react-calendar__tile:disabled {
+  background: transparent;
+  color: #cbd5e1;
+}

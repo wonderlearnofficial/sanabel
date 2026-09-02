@@ -4,6 +4,7 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import { FaChild, FaChalkboardTeacher, FaUserFriends, FaUserShield } from "react-icons/fa";
 import { useUserContext } from "../../context/StudentUserProvider";
+import { useTranslation } from "react-i18next";
 
 interface DevUser {
   id: number;
@@ -23,6 +24,7 @@ const ROLE_SECTIONS: { role: keyof Grouped; label: string; icon: React.ReactNode
 ];
 
 const DevLogin: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { refreshUserData } = useUserContext();
   const [grouped, setGrouped] = useState<Grouped | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,10 +36,10 @@ const DevLogin: React.FC = () => {
       .then((response) => setGrouped(response.data.data))
       .catch((error) => {
         console.error("Error fetching dev users:", error);
-        toast.error("تعذر تحميل قائمة المستخدمين — تأكد أن السيرفر يعمل في وضع التطوير");
+        toast.error(t("تعذر تحميل قائمة المستخدمين — تأكد أن السيرفر يعمل في وضع التطوير"));
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   const loginAs = async (devUser: DevUser) => {
     setLoggingInId(devUser.id);
@@ -57,7 +59,7 @@ const DevLogin: React.FC = () => {
       window.location.href = "/";
     } catch (error) {
       console.error("Error logging in as user:", error);
-      toast.error("تعذر تسجيل الدخول بهذا الحساب");
+      toast.error(t("تعذر تسجيل الدخول بهذا الحساب"));
       setLoggingInId(null);
     }
   };
@@ -67,30 +69,30 @@ const DevLogin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 p-6">
-      <ToastContainer position="top-center" autoClose={3000} rtl />
+    <div className="min-h-screen w-full bg-gray-50 p-6" dir={i18n.dir()}>
+      <ToastContainer position="top-center" autoClose={3000} rtl={i18n.dir() === "rtl"} />
 
       <div className="mx-auto max-w-4xl">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">تسجيل دخول سريع (وضع التطوير)</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t("تسجيل دخول سريع (وضع التطوير)")}</h1>
             <p className="text-sm text-gray-500">
-              اختر حسابًا لتسجيل الدخول به مباشرة بدون كلمة مرور — متاح فقط أثناء التطوير المحلي.
+              {t("اختر حسابًا لتسجيل الدخول به مباشرة بدون كلمة مرور — متاح فقط أثناء التطوير المحلي.")}
             </p>
           </div>
           <button
             onClick={openAppNormally}
             className="rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 font-semibold text-gray-600 transition-colors hover:bg-gray-50"
           >
-            فتح التطبيق بشكل طبيعي
+            {t("فتح التطبيق بشكل طبيعي")}
           </button>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-24 text-gray-400">جاري التحميل...</div>
+          <div className="flex items-center justify-center py-24 text-gray-400">{t("جاري التحميل...")}</div>
         ) : !grouped ? (
           <div className="rounded-2xl border-2 border-red-100 bg-red-50 p-6 text-center text-red-600">
-            تعذر تحميل المستخدمين. تأكد أن السيرفر يعمل محليًا (NODE_ENV غير production).
+            {t("تعذر تحميل المستخدمين. تأكد أن السيرفر يعمل محليًا (NODE_ENV غير production).")}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -102,12 +104,12 @@ const DevLogin: React.FC = () => {
                     <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${section.color}`}>
                       {section.icon}
                     </span>
-                    <h2 className="font-bold text-gray-800">{section.label}</h2>
+                    <h2 className="font-bold text-gray-800">{t(section.label)}</h2>
                     <span className="text-sm text-gray-400">({users.length})</span>
                   </div>
 
                   {users.length === 0 ? (
-                    <p className="py-4 text-center text-sm text-gray-300">لا يوجد حسابات</p>
+                    <p className="py-4 text-center text-sm text-gray-300">{t("لا يوجد حسابات")}</p>
                   ) : (
                     <div className="flex max-h-80 flex-col gap-1.5 overflow-y-auto">
                       {users.map((devUser) => (
@@ -126,7 +128,7 @@ const DevLogin: React.FC = () => {
                             </span>
                           </span>
                           <span className="text-xs font-semibold text-blueprimary">
-                            {loggingInId === devUser.id ? "..." : "دخول"}
+                            {loggingInId === devUser.id ? "..." : t("دخول")}
                           </span>
                         </button>
                       ))}

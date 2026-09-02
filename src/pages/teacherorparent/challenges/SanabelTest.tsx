@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "../../../config/api";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 
 interface Mission {
   id: number;
@@ -29,6 +30,7 @@ interface ExtractedData {
 }
 
 const SanabelDataExtractor: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const [extractedData, setExtractedData] = useState<ExtractedData>({
     categories: [],
   });
@@ -189,7 +191,7 @@ const SanabelDataExtractor: React.FC = () => {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(jsonOutput);
-    alert("Data copied to clipboard!");
+    alert(t("Data copied to clipboard!"));
   };
 
   // Create a flattened array of all text that needs translation
@@ -217,12 +219,11 @@ const SanabelDataExtractor: React.FC = () => {
   const translationArray = createTranslationArray();
 
   return (
-    <div className="max-w-4xl p-6 mx-auto">
+    <div className="max-w-4xl p-6 mx-auto" dir={i18n.dir()}>
       <div className="mb-6">
-        <h1 className="mb-4 text-2xl font-bold">Sanabel Data Extractor</h1>
+        <h1 className="mb-4 text-2xl font-bold">{t("Sanabel Data Extractor")}</h1>
         <p className="mb-4 text-gray-600">
-          This component extracts all categories, sanabel types, and missions
-          for translation.
+          {t("This component extracts all categories, sanabel types, and missions for translation.")}
         </p>
 
         <button
@@ -230,7 +231,7 @@ const SanabelDataExtractor: React.FC = () => {
           disabled={isLoading}
           className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600 disabled:bg-gray-400"
         >
-          {isLoading ? "Extracting..." : "Extract All Data"}
+          {isLoading ? t("Extracting...") : t("Extract All Data")}
         </button>
       </div>
 
@@ -244,17 +245,17 @@ const SanabelDataExtractor: React.FC = () => {
         <div className="space-y-6">
           {/* Summary */}
           <div className="p-4 bg-gray-100 rounded">
-            <h2 className="mb-2 text-lg font-semibold">Summary:</h2>
-            <p>Total Categories: {extractedData.categories.length}</p>
+            <h2 className="mb-2 text-lg font-semibold">{t("Summary:")}</h2>
+            <p>{t("Total Categories:")} {extractedData.categories.length}</p>
             <p>
-              Total Sanabel Types:{" "}
+              {t("Total Sanabel Types:")}{" "}
               {extractedData.categories.reduce(
                 (sum, cat) => sum + cat.sanabelTypes.length,
                 0
               )}
             </p>
             <p>
-              Total Missions:{" "}
+              {t("Total Missions:")}{" "}
               {extractedData.categories.reduce(
                 (sum, cat) =>
                   sum +
@@ -265,7 +266,7 @@ const SanabelDataExtractor: React.FC = () => {
                 0
               )}
             </p>
-            <p>Total Translation Items: {translationArray.length}</p>
+            <p>{t("Total Translation Items:")} {translationArray.length}</p>
           </div>
 
           {/* Action Buttons */}
@@ -274,21 +275,21 @@ const SanabelDataExtractor: React.FC = () => {
               onClick={downloadJson}
               className="px-4 py-2 text-white bg-green-500 rounded hover:bg-green-600"
             >
-              Download Full JSON
+              {t("Download Full JSON")}
             </button>
             <button
               onClick={copyToClipboard}
               className="px-4 py-2 text-white bg-purple-500 rounded hover:bg-purple-600"
             >
-              Copy JSON to Clipboard
+              {t("Copy JSON to Clipboard")}
             </button>
           </div>
 
           {/* Translation Array */}
           <div className="p-4 rounded bg-yellow-50">
-            <h2 className="mb-2 text-lg font-semibold">Translation Array:</h2>
+            <h2 className="mb-2 text-lg font-semibold">{t("Translation Array:")}</h2>
             <p className="mb-2 text-sm text-gray-600">
-              Here's a simple array of all text that needs translation:
+              {t("Here's a simple array of all text that needs translation:")}
             </p>
             <pre className="p-3 overflow-x-auto text-sm bg-black border rounded">
               {JSON.stringify(translationArray, null, 2)}
@@ -301,14 +302,14 @@ const SanabelDataExtractor: React.FC = () => {
               }
               className="px-3 py-1 mt-2 text-sm text-white bg-orange-500 rounded hover:bg-orange-600"
             >
-              Copy Translation Array
+              {t("Copy Translation Array")}
             </button>
           </div>
 
           {/* Hierarchical Display */}
           <div className="bg-white border rounded">
             <h2 className="p-4 text-lg font-semibold border-b">
-              Extracted Data Structure:
+              {t("Extracted Data Structure:")}
             </h2>
             <div className="p-4 overflow-y-auto max-h-96">
               {extractedData.categories.map((category, categoryIndex) => (
@@ -317,10 +318,10 @@ const SanabelDataExtractor: React.FC = () => {
                   className="pl-4 mb-4 border-l-4 border-blue-500"
                 >
                   <h3 className="font-bold text-blue-700">
-                    Category {categoryIndex + 1}: {category.title}
+                    {t("Category")} {categoryIndex + 1}: {t(category.title)}
                   </h3>
                   <p className="mb-2 text-sm text-gray-600">
-                    ID: {category.id}
+                    {t("ID:")} {category.id}
                   </p>
 
                   {category.sanabelTypes.map((sanabelType, typeIndex) => (
@@ -329,20 +330,20 @@ const SanabelDataExtractor: React.FC = () => {
                       className="pl-3 mb-3 ml-4 border-l-2 border-green-500"
                     >
                       <h4 className="font-semibold text-green-700">
-                        Sanabel Type: {sanabelType.name}
+                        {t("Sanabel Type:")} {t(sanabelType.name)}
                       </h4>
                       <p className="text-sm text-gray-600">
-                        Missions: {sanabelType.missions.length}
+                        {t("Missions:")} {sanabelType.missions.length}
                       </p>
 
                       <div className="mt-2 ml-4">
                         {sanabelType.missions.map((mission, missionIndex) => (
                           <div key={missionIndex} className="mb-1 text-sm">
                             <span className="text-gray-500">
-                              Mission {missionIndex + 1}:
+                              {t("Mission")} {missionIndex + 1}:
                             </span>{" "}
                             <span className="text-gray-800">
-                              {mission.title}
+                              {t(mission.title)}
                             </span>
                           </div>
                         ))}
@@ -357,7 +358,7 @@ const SanabelDataExtractor: React.FC = () => {
           {/* Raw JSON Output */}
           <details className="p-4 rounded bg-gray-50">
             <summary className="font-semibold cursor-pointer">
-              View Raw JSON Data
+              {t("View Raw JSON Data")}
             </summary>
             <pre className="p-3 mt-4 overflow-x-auto text-xs bg-white border rounded">
               {jsonOutput}

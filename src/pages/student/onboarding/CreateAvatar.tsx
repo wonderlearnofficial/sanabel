@@ -7,6 +7,7 @@ import { API_BASE_URL } from "../../../config/api";
 import PrimaryButton from "../../../components/PrimaryButton";
 import i18n from "../../../i18n";
 import Step1 from "../tutorial/ProfilePicture";
+import { localStore } from "../../../utils/safeStorage";
 
 const CreateAvatar: React.FC = () => {
   const { t } = useTranslation();
@@ -15,16 +16,20 @@ const CreateAvatar: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const handleContinue = async () => {
-    const authToken = localStorage.getItem("token");
-    const avatarDataString = localStorage.getItem("avatarData");
-    if (!authToken || !avatarDataString) {
+    const authToken = localStore.getItem("token");
+    const avatarData = localStore.getJson<Record<string, unknown> | null>(
+      "avatarData",
+      null,
+      (value): value is Record<string, unknown> =>
+        typeof value === "object" && value !== null && !Array.isArray(value),
+    );
+    if (!authToken || !avatarData) {
       history.push("/student/avatar-ready");
       return;
     }
 
     setIsSaving(true);
     try {
-      const avatarData = JSON.parse(avatarDataString);
       await axios.patch(
         `${API_BASE_URL}/students/update-profile-image`,
         {

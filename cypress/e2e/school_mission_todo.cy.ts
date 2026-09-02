@@ -46,7 +46,7 @@ describe('School Student persistent mission To-Do', () => {
     cy.contains(/No prior assignment/).should('be.visible');
 
     cy.get('[data-testid="complete-mission-1"]').click();
-    cy.get('[data-testid="mission-approver-select"]').select('teacher:5');
+    cy.get('[data-testid="approver-option-teacher:5"]').click();
     cy.get('[data-testid="confirm-mission-action"]').click();
     cy.wait('@requestApproval');
     cy.contains('Waiting for approval').should('be.visible');

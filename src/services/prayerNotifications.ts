@@ -18,6 +18,7 @@ import { Geolocation } from "@capacitor/geolocation";
 import { Coordinates, CalculationMethod, PrayerTimes } from "adhan";
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
+import { localStore } from "../utils/safeStorage";
 
 export const PRAYER_ENABLED_KEY = "prayerNotifications";
 const COORDS_KEY = "prayerNotificationsCoords";
@@ -27,6 +28,8 @@ const COORDS_KEY = "prayerNotificationsCoords";
 const PRAYER_ID_BASE = 510000;
 const DAYS_TO_SCHEDULE = 7;
 const ANDROID_CHANNEL_ID = "prayer-times";
+const NATIVE_RESYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
+let lastNativeResyncAt = 0;
 
 export interface ScheduledPrayer {
   id: number;
@@ -56,6 +59,12 @@ export interface PrayerCity extends Coords {
   arabicName: string;
   englishName: string;
 }
+
+type IOSNavigator = Pick<Navigator, "userAgent" | "platform" | "maxTouchPoints">;
+
+export const isIOSLikeDevice = (nav: IOSNavigator): boolean =>
+  /iPad|iPhone|iPod/i.test(nav.userAgent) ||
+  (nav.platform === "MacIntel" && nav.maxTouchPoints > 1);
 
 // Fallback when device location is denied or unavailable. GPS is always
 // preferred — prayer times from exact coordinates beat any city preset.
@@ -202,15 +211,15 @@ const enableNative = async (coords?: Coords): Promise<EnableResult> => {
   await scheduleNativePrayerNotifications(resolved.latitude, resolved.longitude);
 
   const nearestCity = findNearestCity(resolved.latitude, resolved.longitude);
-  localStorage.setItem(COORDS_KEY, JSON.stringify(resolved));
-  localStorage.setItem("userCity", nearestCity.arabicName);
-  localStorage.setItem("userLocation", JSON.stringify({
+  localStore.setItem(COORDS_KEY, JSON.stringify(resolved));
+  localStore.setItem("userCity", nearestCity.arabicName);
+  localStore.setItem("userLocation", JSON.stringify({
     latitude: resolved.latitude,
     longitude: resolved.longitude,
     cityName: nearestCity.arabicName,
     cityKey: nearestCity.key,
   }));
-  localStorage.setItem(PRAYER_ENABLED_KEY, "true");
+  localStore.setItem(PRAYER_ENABLED_KEY, "true");
   return { ok: true, city: nearestCity, coords: resolved };
 };
 
@@ -234,14 +243,27 @@ const getWebPosition = (): Promise<GeolocationPosition> =>
   });
 
 const enableWeb = async (coords?: Coords): Promise<EnableResult> => {
-  if (typeof window !== "undefined" && "Notification" in window) {
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      return {
-        ok: false,
-        message: "يجب الموافقة على الإشعارات لتفعيل هذه الخاصية.",
-      };
-    }
+  if (
+    typeof window === "undefined" ||
+    !("Notification" in window) ||
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window)
+  ) {
+    const isIOS = isIOSLikeDevice(navigator);
+    return {
+      ok: false,
+      message: isIOS
+        ? "على iPhone، أضف سنابل إلى الشاشة الرئيسية أولاً ثم افتحه من هناك لتفعيل الإشعارات."
+        : "متصفحك لا يدعم الإشعارات.",
+    };
+  }
+
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") {
+    return {
+      ok: false,
+      message: "يجب الموافقة على الإشعارات لتفعيل هذه الخاصية.",
+    };
   }
 
   let resolved = coords;
@@ -258,20 +280,19 @@ const enableWeb = async (coords?: Coords): Promise<EnableResult> => {
   }
 
   const nearestCity = findNearestCity(resolved.latitude, resolved.longitude);
-  localStorage.setItem(COORDS_KEY, JSON.stringify(resolved));
-  localStorage.setItem("userCity", nearestCity.arabicName);
-  localStorage.setItem("userLocation", JSON.stringify({
+  localStore.setItem(COORDS_KEY, JSON.stringify(resolved));
+  localStore.setItem("userCity", nearestCity.arabicName);
+  localStore.setItem("userLocation", JSON.stringify({
     latitude: resolved.latitude,
     longitude: resolved.longitude,
     cityName: nearestCity.arabicName,
     cityKey: nearestCity.key,
   }));
-  localStorage.setItem(PRAYER_ENABLED_KEY, "true");
+  localStore.setItem(PRAYER_ENABLED_KEY, "true");
 
-  if ("serviceWorker" in navigator) {
-    try {
+  try {
       const registration = await navigator.serviceWorker.register("/sw.js");
-      const token = localStorage.getItem("token");
+      const token = localStore.getItem("token");
       const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string;
 
       if (token && vapidKey && "PushManager" in window) {
@@ -289,9 +310,9 @@ const enableWeb = async (coords?: Coords): Promise<EnableResult> => {
           { headers: { Authorization: `Bearer ${token}` }, timeout: 15000 },
         ).catch(() => {});
       }
-    } catch (error) {
-      console.warn("Web push subscription attempt error:", error);
-    }
+  } catch (error) {
+    console.warn("Web push subscription attempt error:", error);
+    return { ok: false, message: "تعذر تفعيل الإشعارات على هذا الجهاز." };
   }
 
   return { ok: true, city: nearestCity, coords: resolved };
@@ -321,8 +342,8 @@ export const enablePrayerNotifications = async (
 };
 
 export const disablePrayerNotifications = async (): Promise<void> => {
-  localStorage.setItem(PRAYER_ENABLED_KEY, "false");
-  localStorage.removeItem(COORDS_KEY);
+  localStore.setItem(PRAYER_ENABLED_KEY, "false");
+  localStore.removeItem(COORDS_KEY);
 
   try {
     if (Capacitor.isNativePlatform()) {
@@ -332,7 +353,7 @@ export const disablePrayerNotifications = async (): Promise<void> => {
       const subscription = await registration?.pushManager?.getSubscription();
       await subscription?.unsubscribe();
 
-      const token = localStorage.getItem("token");
+      const token = localStore.getItem("token");
       if (token) {
         await axios.post(
           `${API_BASE_URL}/users/unsubscribe-push`,
@@ -408,8 +429,10 @@ export const sendTestPrayerNotification = async (): Promise<EnableResult> => {
 // scheduling window forward using the last known coordinates (refreshing
 // them silently when location permission is still granted).
 export const resyncPrayerNotificationsIfEnabled = async (): Promise<void> => {
-  if (localStorage.getItem(PRAYER_ENABLED_KEY) !== "true") return;
+  if (localStore.getItem(PRAYER_ENABLED_KEY) !== "true") return;
   if (!Capacitor.isNativePlatform()) return; // web is server-scheduled
+  const now = Date.now();
+  if (now - lastNativeResyncAt < NATIVE_RESYNC_INTERVAL_MS) return;
 
   try {
     let coords: { latitude: number; longitude: number } | null = null;
@@ -422,14 +445,22 @@ export const resyncPrayerNotificationsIfEnabled = async (): Promise<void> => {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
       };
-      localStorage.setItem(COORDS_KEY, JSON.stringify(coords));
+      localStore.setItem(COORDS_KEY, JSON.stringify(coords));
     } catch {
-      const saved = localStorage.getItem(COORDS_KEY);
-      coords = saved ? JSON.parse(saved) : null;
+      coords = localStore.getJson<Coords | null>(
+        COORDS_KEY,
+        null,
+        (value): value is Coords => {
+          if (typeof value !== "object" || value === null) return false;
+          const candidate = value as Partial<Coords>;
+          return Number.isFinite(candidate.latitude) && Number.isFinite(candidate.longitude);
+        },
+      );
     }
 
     if (coords) {
       await scheduleNativePrayerNotifications(coords.latitude, coords.longitude);
+      lastNativeResyncAt = now;
     }
   } catch (error) {
     console.error("Prayer notifications resync error:", error);

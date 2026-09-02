@@ -4,25 +4,25 @@ import Notification from "../../components/Notification";
 import Navbar from "../../components/navbar/TeacherNavbar";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
-import { IoMdSettings, IoMdMail } from "react-icons/io";
+import { IoMdSettings } from "react-icons/io";
 import {
   FaChalkboardTeacher,
   FaUserGraduate,
   FaTrophy,
   FaUserFriends,
-  FaUserPlus,
-  FaStar,
-  FaChartLine,
-  FaTasks, // Added for missions icon
+  FaClipboardCheck,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
+import { useNotifications } from "../Notifications/NotificationContext";
 
 const TeacherHome = () => {
   const history = useHistory();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language.startsWith("ar");
+  const { pendingApprovalRequests } = useNotifications();
 
   // State to store the actual counts
   const [stats, setStats] = useState({
@@ -225,6 +225,16 @@ const TeacherHome = () => {
       onclick: () => history.push("/teacher/challenges"),
     },
     {
+      title: "الموافقات",
+      description: "راجع طلبات الموافقة على مهام الطلاب",
+      bgColor: "bg-gradient-to-br from-purple-500 to-indigo-600",
+      hoverColor: "hover:from-purple-600 hover:to-indigo-700",
+      icon: <FaClipboardCheck className="text-purple-600" size={28} />,
+      badge: pendingApprovalRequests.length,
+      guideId: "approvals-card",
+      onclick: () => history.push("/approvals"),
+    },
+    {
       title: "الإعدادات",
       description: "إدارة إعدادات حسابك",
       bgColor: "bg-gradient-to-br from-gray-700 to-gray-800",
@@ -257,7 +267,10 @@ const TeacherHome = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-full gap-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-blue-50">
+    <div
+      className="flex flex-col items-center justify-start min-h-full gap-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-blue-50"
+      dir={isRTL ? "rtl" : "ltr"}
+    >
       {/* Header Section */}
       <motion.div
         className="relative flex flex-col items-center justify-between w-full p-5 overflow-hidden text-white bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700"
@@ -272,7 +285,9 @@ const TeacherHome = () => {
           <div className="absolute w-40 h-40 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-full top-1/2 left-1/2"></div>
         </div>
 
-        <div className="absolute z-10 top-4 left-4">
+        <div
+          className={`absolute z-10 top-4 ${isRTL ? "right-4" : "left-4"}`}
+        >
           <Notification />
         </div>
 
@@ -363,6 +378,11 @@ const TeacherHome = () => {
             }}
             whileTap={{ scale: 0.95 }}
           >
+            {(button as any).badge > 0 && (
+              <span className="absolute z-20 flex items-center justify-center min-w-6 h-6 px-1.5 text-xs font-bold text-purple-700 bg-white rounded-full top-3 end-3 shadow-sm">
+                {(button as any).badge > 99 ? "99+" : (button as any).badge}
+              </span>
+            )}
             {/* Background pattern */}
             <div className="absolute inset-0 opacity-10">
               <div className="absolute w-16 h-16 bg-white rounded-full -top-4 -right-4"></div>

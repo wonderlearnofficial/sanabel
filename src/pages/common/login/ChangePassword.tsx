@@ -17,6 +17,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { RiLockPasswordLine } from "react-icons/ri";
 import { getErrorMessage } from "../../../config/getErrorMessage";
+import { clearClientSession } from "../../../utils/session";
 
 const Toaster = () => (
   <ToastContainer
@@ -98,6 +99,9 @@ const ChangePassword: React.FC = () => {
       );
 
       if (response.status === 200) {
+        // Password reset invalidates all server sessions. Clear this browser's
+        // access, refresh, role, and any saved impersonation credentials now.
+        clearClientSession();
         setIsPasswordChanged(true);
         toast.success(t("passwordChangeSuccess"));
       }

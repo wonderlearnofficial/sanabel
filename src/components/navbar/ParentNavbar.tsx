@@ -59,9 +59,9 @@ function Navbar() {
       } justify-around w-full p-3`}
       dir="ltr"
     >
-      {navList.map((item, key) => (
-        <IonRouterLink routerLink={item.to}>
-          <div className="flex flex-col items-center gap-1 ">
+      {navList.map((item) => (
+        <IonRouterLink key={item.to} routerLink={item.to}>
+          <div className="flex min-w-11 min-h-11 flex-col items-center justify-center gap-1">
             <div
               className={` flex items-center justify-end ${
                 location.pathname === item.to

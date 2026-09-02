@@ -4,6 +4,7 @@ import { medalsData } from "./data/MedalsData";
 import { treeStages } from "./data/Tree";
 import sanabelType from "./data/SanabelTypeData";
 import { challengeData, treeData, TaskCategory } from "./data/SimulationData";
+import { useTranslation } from "react-i18next";
 
 import waterImg from "./assets/resources/ماء.png";
 import fertilizerImg from "./assets/resources/سماد.png";
@@ -121,6 +122,7 @@ const StatCard = ({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const Simulation: React.FC = () => {
+  const { t: translate, i18n } = useTranslation();
   const [tab, setTab] = useState<Tab>("xp");
 
   // XP tab
@@ -201,13 +203,14 @@ const Simulation: React.FC = () => {
     <div
       className="flex flex-col w-screen h-screen overflow-hidden bg-gray-50"
       style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+      dir={i18n.dir()}
     >
       {/* ── Header ── */}
       <header className="flex-shrink-0 bg-[#4AAAD6] text-white shadow-md">
         <div className="px-8 py-3">
-          <h1 className="text-xl font-bold">Sanabel — Simulation Dashboard</h1>
+          <h1 className="text-xl font-bold">{translate("Sanabel — Simulation Dashboard")}</h1>
           <p className="text-blue-100 text-xs mt-0.5">
-            Balance calculator · {challengeData.length} total challenge entries
+            {translate("Balance calculator · {{count}} total challenge entries", { count: challengeData.length })}
           </p>
         </div>
       </header>
@@ -225,7 +228,7 @@ const Simulation: React.FC = () => {
                   : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
             >
-              {t.label}
+              {translate(t.label)}
             </button>
           ))}
         </div>
@@ -243,7 +246,7 @@ const Simulation: React.FC = () => {
               <div className="space-y-4">
                 <div className="p-5 bg-white border border-gray-100 shadow-sm rounded-xl">
                   <h2 className="mb-4 text-base font-semibold text-gray-700">
-                    Input Total XP
+                    {translate("Input Total XP")}
                   </h2>
                   <input
                     type="number"
@@ -275,12 +278,12 @@ const Simulation: React.FC = () => {
                     className="w-14 h-14"
                   />
                   <div>
-                    <p className="text-xs text-gray-400">Current Medal</p>
+                    <p className="text-xs text-gray-400">{translate("Current Medal")}</p>
                     <p className="text-lg font-bold text-gray-800" dir="rtl">
                       {medal.title}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Unlocked at level {medal.level}
+                      {translate("Unlocked at level {{level}}", { level: medal.level })}
                     </p>
                   </div>
                 </div>
@@ -316,7 +319,7 @@ const Simulation: React.FC = () => {
 
                 <div className="p-5 bg-white border border-gray-100 shadow-sm rounded-xl">
                   <h3 className="mb-3 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                    XP Formula
+                    {translate("XP Formula")}
                   </h3>
                   <div className="p-3 space-y-1 font-mono text-sm text-gray-700 rounded-lg bg-gray-50">
                     <p>
@@ -336,7 +339,7 @@ const Simulation: React.FC = () => {
 
                 <div className="p-5 bg-white border border-gray-100 shadow-sm rounded-xl">
                   <h3 className="mb-3 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                    Medal Milestones
+                    {translate("Medal Milestones")}
                   </h3>
                   <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">
                     {medalsData.map((m, i) => (
@@ -373,7 +376,7 @@ const Simulation: React.FC = () => {
               <div className="space-y-4">
                 <div className="p-5 bg-white border border-gray-100 shadow-sm rounded-xl">
                   <h2 className="mb-4 text-base font-semibold text-gray-700">
-                    Complete Challenges
+                    {translate("Complete Challenges")}
                   </h2>
                   <div className="space-y-3">
                     {REWARDS.map((r, i) => (
@@ -392,7 +395,7 @@ const Simulation: React.FC = () => {
                             onClick={() => completeChallenge(i)}
                             className={`px-4 py-1.5 rounded-lg text-white text-xs font-semibold ${r.color} hover:opacity-90 transition-opacity`}
                           >
-                            +1 Complete
+                            +1 {translate("Complete")}
                           </button>
                         </div>
                         <div className="flex flex-wrap gap-3 text-xs text-gray-500">
@@ -421,7 +424,7 @@ const Simulation: React.FC = () => {
                   <div className="p-5 bg-white border border-gray-100 shadow-sm rounded-xl">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                        History ({history.length})
+                        {translate("History")} ({history.length})
                       </h3>
                       <button
                         onClick={() => {
@@ -430,7 +433,7 @@ const Simulation: React.FC = () => {
                         }}
                         className="text-xs text-red-400 hover:text-red-600"
                       >
-                        Reset all
+                        {translate("Reset all")}
                       </button>
                     </div>
                     <ul className="space-y-1 overflow-y-auto text-xs text-gray-500 max-h-52">
@@ -457,7 +460,7 @@ const Simulation: React.FC = () => {
               <div className="space-y-4">
                 <div className="p-5 bg-white border border-gray-100 shadow-sm rounded-xl">
                   <h2 className="mb-4 text-base font-semibold text-gray-700">
-                    Current Inventory
+                    {translate("Current Inventory")}
                   </h2>
                   <div className="grid grid-cols-2 gap-3">
                     {[
@@ -502,7 +505,7 @@ const Simulation: React.FC = () => {
                           </div>
                         )}
                         <div>
-                          <p className="text-xs text-gray-400">{item.label}</p>
+                          <p className="text-xs text-gray-400">{translate(item.label)}</p>
                           <p className={`text-2xl font-bold ${item.color}`}>
                             {item.count}
                           </p>
@@ -514,7 +517,7 @@ const Simulation: React.FC = () => {
 
                 <div className="p-5 bg-white border border-gray-100 shadow-sm rounded-xl">
                   <h3 className="mb-3 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                    Level from Inventory XP
+                    {translate("Level from Inventory XP")}
                   </h3>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -549,14 +552,14 @@ const Simulation: React.FC = () => {
                       />
                     </div>
                     <p className="text-xs text-gray-400">
-                      {invRemaining} / {invNeeded} XP in current level
+                      {invRemaining} / {invNeeded} {translate("XP in current level")}
                     </p>
                   </div>
                 </div>
 
                 <div className="p-5 bg-white border border-gray-100 shadow-sm rounded-xl">
                   <h3 className="mb-3 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                    Reward Rates per Type
+                    {translate("Reward Rates per Type")}
                   </h3>
                   <table className="w-full text-xs text-gray-600">
                     <thead>

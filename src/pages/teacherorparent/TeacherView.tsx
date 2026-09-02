@@ -388,8 +388,11 @@ const TeacherView: React.FC = () => {
         <div className="flex items-center justify-between w-full f">
           {/* Filter Menu */}
           <div className="relative">
-            <div
-              className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-xl "
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={showFilterDropdown}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-xl"
               onClick={() => setShowFilterDropdown(!showFilterDropdown)}
             >
               <FilterIcon />
@@ -401,20 +404,27 @@ const TeacherView: React.FC = () => {
                   ).find((opt) => opt.value === activeFilter)?.label || "فلتر",
                 )}
               </span>
-            </div>
+            </button>
 
-            {/* Dropdown Menu */}
+            {/* Dropdown Menu. Anchored to the button's start edge with a
+                logical offset, so it opens inside the screen in both
+                directions; `left-0` sent it off-canvas in RTL. */}
             {showFilterDropdown && (
-              <div className="absolute left-0 z-10 mt-2 text-black bg-white border shadow-lg rounded-xl min-w-max">
+              <div
+                role="menu"
+                className="absolute z-20 mt-2 text-black bg-white border shadow-lg start-0 rounded-xl min-w-max max-w-[70vw]">
                 {(selectViewType === "students"
                   ? filterOptions
                   : classFilterOptions
                 ).map((option) => (
-                  <div
+                  <button
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={activeFilter === option.value}
                     key={option.value}
-                    className={`px-4 py-2 hover:bg-gray-100 cursor-pointer ${
+                    className={`block w-full px-4 py-2.5 text-start whitespace-nowrap hover:bg-gray-100 ${
                       activeFilter === option.value
-                        ? "bg-gray-100 font-medium"
+                        ? "bg-gray-100 font-semibold text-blueprimary"
                         : ""
                     }`}
                     onClick={() => {
@@ -423,7 +433,7 @@ const TeacherView: React.FC = () => {
                     }}
                   >
                     {t(option.label)}
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -505,10 +515,13 @@ const TeacherView: React.FC = () => {
                         size={""}
                       />
                     </div>
-                    <div className="flex flex-col w-full ">
-                      <h1 className="text-black capitalize text-md">
+                    <div className="flex flex-col w-full text-end">
+                      <h1 className="font-semibold text-black capitalize text-md">
                         {item.className}
                       </h1>
+                      <p className="text-sm font-medium text-blueprimary">
+                        {item.grade ? t(item.grade) : t("لا يوجد صف")}
+                      </p>
                       <h1 className="text-sm text-gray-500 capitalize">
                         {item.organizationName}
                       </h1>

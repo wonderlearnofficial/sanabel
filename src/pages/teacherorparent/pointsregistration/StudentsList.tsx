@@ -2,13 +2,13 @@ import { API_BASE_URL } from "../../../config/api";
 import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useTheme } from "../../../context/ThemeContext";
 import TeacherNavbar from "../../../components/navbar/TeacherNavbar";
 import SearchIcon from "../../../icons/SearchIcon";
 import GoBackButton from "../../../components/GoBackButton";
 import PrimaryButton from "../../../components/PrimaryButton";
 import GetAvatar from "../../student/tutorial/GetAvatar";
-import { FaCheck, FaTimes } from "react-icons/fa";
+import { ToastContainer, toast } from "react-toastify";
+import { FaCheck, FaTimes, FaClipboardList } from "react-icons/fa";
 import { taskdata } from "../../../data/SanabelBackData";
 import { taskCategories } from "../../../data/SanabelTypeBackData";
 import { sanabelImgs } from "../../../data/SanabelDictionary";
@@ -40,12 +40,6 @@ interface StudentData {
   user: User;
   Class?: any;
   class?: any;
-}
-
-interface TaskCategory {
-  id: number;
-  title: string;
-  description: string;
 }
 
 interface Task {
@@ -215,31 +209,57 @@ const ConfirmationPopup = ({
         </div>
 
         {/* Selected Students */}
-        <div className="mb-5 ">
-          <h3 className="mb-2 font-medium text-right text-black ">
-            {t("الطلاب المختارين")}
-          </h3>
-          <div className="flex justify-center gap-3 py-2 overflow-x-auto ">
-            {selectedStudents.map((student: any) => (
-              <div
-                key={student.id}
-                className="relative flex flex-col items-center"
-              >
-                <div
-                  className="absolute z-10 flex items-center justify-center w-5 h-5 bg-red-500 rounded-full cursor-pointer -top-1 -right-1"
-                  onClick={() => onRemoveStudent(student.id)}
-                >
-                  <FaTimes className="text-xs text-white" />
-                </div>
-                <div className="overflow-hidden rounded-full w-14 h-14">
-                  <GetAvatar userAvatarData={student.user.profileImg} />
-                </div>
-                <span className="mt-1 text-xs font-medium text-center text-black">
-                  {`${student.user.firstName}`}
-                </span>
-              </div>
-            ))}
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="px-2 py-0.5 text-xs font-semibold text-slate-700 bg-slate-100 rounded-full">
+              {selectedStudents.length}
+            </span>
+            <h3 className="font-medium text-end text-black">
+              {t("الطلاب المختارين")}
+            </h3>
           </div>
+
+          {selectedStudents.length === 0 ? (
+            <p className="py-3 text-sm text-center text-gray-500 border border-dashed rounded-lg">
+              {t("لم يتم اختيار أي طالب")}
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2 overflow-y-auto max-h-56">
+              {selectedStudents.map((student: any) => (
+                <li
+                  key={student.id}
+                  className="flex items-center gap-3 p-2 border rounded-lg border-slate-200"
+                >
+                  <div className="flex-shrink-0 w-10 h-10 overflow-hidden rounded-full">
+                    <GetAvatar userAvatarData={student.user.profileImg} />
+                  </div>
+                  <div className="flex-1 min-w-0 text-end">
+                    <p className="text-sm font-semibold text-black truncate">
+                      {`${student.user.firstName} ${student.user.lastName || ""}`.trim()}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {[
+                        student.Class?.grade || student.class?.grade || student.grade,
+                        student.Class?.classname || student.class?.classname,
+                        student.organization?.name,
+                      ]
+                        .filter(Boolean)
+                        .map((part: string) => t(part))
+                        .join(" · ") || t("لا يوجد فصل")}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={t("إزالة")}
+                    className="flex items-center justify-center flex-shrink-0 w-11 h-11 text-white bg-red-500 rounded-full"
+                    onClick={() => onRemoveStudent(student.id)}
+                  >
+                    <FaTimes className="text-xs" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -254,6 +274,7 @@ const ConfirmationPopup = ({
             style="flex-1"
             text={t("تأكيد")}
             arrow="none"
+            disabled={selectedStudents.length === 0}
             onClick={onConfirm}
           />
         </div>
@@ -351,6 +372,180 @@ const CongratsPopup = ({
   );
 };
 
+const SelectedStudentsSummary = ({
+  students,
+  onRemove,
+  onChangeStudents,
+}: {
+  students: StudentData[];
+  onRemove: (studentId: number) => void;
+  onChangeStudents: () => void;
+}) => {
+  const { t } = useTranslation();
+  // Keep the summary to one compact row even when a whole class is selected.
+  const VISIBLE = 3;
+  const shown = students.slice(0, VISIBLE);
+  const overflow = students.length - shown.length;
+
+  return (
+    <section className="flex items-center w-full gap-2 py-2 border-b border-gray-100">
+      <div className="flex items-center min-w-0 gap-2 me-auto">
+        <h2 className="text-sm font-bold text-black whitespace-nowrap">
+          {t("الطلاب المختارون")}
+        </h2>
+        <span className="flex-center min-w-[22px] h-[22px] px-1.5 text-xs font-bold text-white rounded-full bg-blueprimary">
+          {students.length}
+        </span>
+      </div>
+
+      <ul className="flex items-center -space-x-1 rtl:space-x-reverse">
+        {shown.map((student: any) => (
+          <li key={student.id} className="relative shrink-0">
+            <button
+              type="button"
+              aria-label={`${t("إزالة")} ${student.user.firstName}`}
+              className="absolute z-10 flex-center w-4 h-4 text-white bg-red-500 border border-white rounded-full -top-1 -end-1"
+              onClick={() => onRemove(student.id)}
+            >
+              <FaTimes className="text-[8px]" aria-hidden="true" />
+            </button>
+            <div className="w-9 h-9 overflow-hidden bg-gray-50 border-2 border-white rounded-full">
+              <GetAvatar userAvatarData={student.user.profileImg} />
+            </div>
+            <span className="sr-only">
+              {student.user.firstName}
+            </span>
+          </li>
+        ))}
+        {overflow > 0 && (
+          <li className="shrink-0">
+            <span className="flex-center w-9 h-9 text-[11px] font-bold text-gray-600 bg-gray-100 border-2 border-white rounded-full">
+              {`+${overflow}`}
+            </span>
+          </li>
+        )}
+      </ul>
+
+      <button
+        type="button"
+        onClick={onChangeStudents}
+        className="px-2 py-1 text-xs font-semibold whitespace-nowrap text-blueprimary"
+      >
+        {t("تغيير الطلاب")}
+      </button>
+    </section>
+  );
+};
+
+const CATEGORY_ACCENTS = [
+  { title: "text-blueprimary", ring: "ring-blueprimary", tint: "bg-blue-50", art: "bg-blue-50" },
+  { title: "text-redprimary", ring: "ring-redprimary", tint: "bg-red-50", art: "bg-red-50" },
+  { title: "text-yellowprimary", ring: "ring-yellowprimary", tint: "bg-amber-50", art: "bg-amber-50" },
+  { title: "text-greenprimary", ring: "ring-greenprimary", tint: "bg-emerald-50", art: "bg-emerald-50" },
+];
+
+const CategoryCard = ({
+  title,
+  image,
+  accentIndex,
+  selected,
+  onSelect,
+}: {
+  title: string;
+  image: string;
+  accentIndex: number;
+  selected: boolean;
+  onSelect: () => void;
+}) => {
+  const { t } = useTranslation();
+  const accent = CATEGORY_ACCENTS[accentIndex % CATEGORY_ACCENTS.length];
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      className={`relative flex flex-col items-center w-full h-full gap-2 p-3 transition-all rounded-xl border active:scale-[0.98] ${
+        selected
+          ? `${accent.tint} border-transparent ring-2 ${accent.ring}`
+          : "bg-white border-gray-200"
+      }`}
+    >
+      {/* Selection is marked by a tick as well as colour, so it does not rely
+          on colour perception alone. */}
+      {selected && (
+        <span className={`absolute flex-center w-5 h-5 text-white rounded-full top-2 end-2 ${accent.title.replace("text-", "bg-")}`}>
+          <FaCheck size={11} aria-hidden="true" />
+        </span>
+      )}
+      <span className={`flex-center w-14 h-14 rounded-xl ${selected ? "bg-white/70" : accent.art}`}>
+        <img src={image} alt="" aria-hidden="true" className="object-contain w-12 h-12" loading="lazy" />
+      </span>
+      <h3 className={`${accent.title} text-sm font-bold text-center leading-5`}>
+        {t(title)}
+      </h3>
+    </button>
+  );
+};
+
+const ActionModeSelector = ({
+  value,
+  onChange,
+}: {
+  value: "assign" | "complete";
+  onChange: (mode: "assign" | "complete") => void;
+}) => {
+  const { t } = useTranslation();
+  const modes = [
+    {
+      key: "assign" as const,
+      label: "Assign Mission",
+      icon: <FaClipboardList aria-hidden="true" />,
+    },
+    {
+      key: "complete" as const,
+      label: "Register Completed Mission",
+      icon: <FaCheck aria-hidden="true" />,
+    },
+  ];
+
+  return (
+    <fieldset className="w-full">
+      <legend className="mb-2 text-sm font-bold text-black">
+        {t("نوع الإجراء")}
+      </legend>
+      <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl">
+        {modes.map((mode) => {
+          const selected = value === mode.key;
+          return (
+            // Both modes share one visual weight. Direct completion grants
+            // rewards, so it must not look like the recommended default.
+            <button
+              key={mode.key}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onChange(mode.key)}
+              className={`flex items-center justify-center w-full gap-2 px-2 py-2.5 text-center transition-all rounded-lg active:scale-[0.99] ${
+                selected
+                  ? "text-blueprimary bg-white shadow-sm"
+                  : "text-gray-500"
+              }`}
+            >
+              <span className="flex-center text-sm shrink-0">
+                {mode.icon}
+              </span>
+              <span className="text-xs font-bold leading-4">
+                {t(mode.label)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+};
+
 const StudentList = () => {
   const { t } = useTranslation();
   const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);
@@ -360,6 +555,11 @@ const StudentList = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
     null,
   );
+  // Holds the card the user has tapped but not yet confirmed. `selectedCategoryId`
+  // itself drives the step, so writing to it on tap would leave the step before
+  // any selected state could be seen. The value committed on Continue is the
+  // same category id the old tap-to-advance flow sent.
+  const [pendingCategoryId, setPendingCategoryId] = useState<number | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
@@ -449,6 +649,14 @@ const StudentList = () => {
     setSelectedStudentIds((prev) => prev.filter((id) => id !== userId));
   };
 
+  // Adds every student currently visible under the search, without dropping
+  // anyone selected under a previous search term.
+  const selectAllVisible = () => {
+    setSelectedStudentIds((prev) =>
+      Array.from(new Set([...prev, ...filteredStudents.map((student) => student.id)])),
+    );
+  };
+
   const getCurrentTime = () => {
     const now = new Date();
     const hours = String(now.getHours()).padStart(2, "0");
@@ -476,7 +684,7 @@ const StudentList = () => {
       // mismatch is at least caught rather than submitting a wrong/garbage id.
       const authoritativeTaskId = Number(selectedTask.id);
       if (!Number.isSafeInteger(authoritativeTaskId) || authoritativeTaskId <= 0) {
-        alert(t("تعذر تحديد هذه المهمة. حاول اختيارها من جديد."));
+        toast.error(t("تعذر تحديد هذه المهمة. حاول اختيارها من جديد."));
         return;
       }
       // Using fetch instead of axios
@@ -506,13 +714,33 @@ const StudentList = () => {
           const created = responseData.summary?.created || 0;
           const existing = responseData.summary?.existing || 0;
           const completed = responseData.summary?.already_completed || 0;
-          alert(t(`Mission assigned: ${created} new, ${existing} already active, ${completed} completed today`));
+          // Lead with the outcome that matters, and mention the skipped
+          // students only when there actually were some.
+          toast.success(
+            [
+              t("mission.assign.created", { count: created }),
+              existing ? t("mission.assign.existing", { count: existing }) : null,
+              completed ? t("mission.assign.completedToday", { count: completed }) : null,
+            ]
+              .filter(Boolean)
+              .join(" · "),
+          );
           handleCongratsClose();
         } else {
           const completed = responseData.summary?.completed || 0;
           const already = responseData.summary?.already_completed || 0;
           const failed = (responseData.summary?.failed || 0) + (responseData.summary?.unauthorized || 0) + (responseData.summary?.not_found || 0);
-          if (already || failed) alert(t(`Completion results: ${completed} completed, ${already} already completed, ${failed} failed`));
+          if (already || failed) {
+            toast.warning(
+              [
+                t("mission.complete.completed", { count: completed }),
+                already ? t("mission.complete.already", { count: already }) : null,
+                failed ? t("mission.complete.failed", { count: failed }) : null,
+              ]
+                .filter(Boolean)
+                .join(" · "),
+            );
+          }
           setShowCongrats(true);
         }
       } else {
@@ -529,7 +757,7 @@ const StudentList = () => {
           // This previously failed completely silently (console.error only)
           // — the teacher/parent had no way to know the tap did nothing.
           console.error("Error adding progress:", errorData.message);
-          alert(
+          toast.error(
             errorData.message ||
               t("حدث خطأ أثناء تسجيل المهمة. حاول مرة أخرى."),
           );
@@ -537,7 +765,7 @@ const StudentList = () => {
       }
     } catch (error) {
       console.error("Error adding progress:", error);
-      alert(t("تعذر الاتصال بالخادم. تحقق من اتصالك بالإنترنت وحاول مرة أخرى."));
+      toast.error(t("تعذر الاتصال بالخادم. تحقق من اتصالك بالإنترنت وحاول مرة أخرى."));
     }
   };
 
@@ -545,7 +773,7 @@ const StudentList = () => {
   const handleContinueAfterDuplicate = () => {
     // Remove existing student IDs from the selected IDs
     const filteredStudentIds = selectedStudentIds.filter(
-      (id) => !existingStudentIds.includes(id + 1),
+      (id) => !existingStudentIds.includes(id),
     );
     setSelectedStudentIds(filteredStudentIds);
     setShowDuplicateTask(false);
@@ -564,11 +792,8 @@ const StudentList = () => {
     // Remove from existingStudentIds
     setExistingStudentIds((prev) => prev.filter((id) => id !== studentId));
 
-    // Also remove from selectedStudentIds
-    const studentIndex = studentsData.findIndex((s) => s.id === studentId);
-    if (studentIndex !== -1) {
-      removeSelectedStudent(studentIndex);
-    }
+    // Also remove from selectedStudentIds, which holds real student ids.
+    removeSelectedStudent(studentId);
   };
 
   // Reset form after congratulations
@@ -589,9 +814,15 @@ const StudentList = () => {
       .includes(searchQuery.toLowerCase()),
   );
 
-  // Get selected student data
+  const allVisibleSelected =
+    filteredStudents.length > 0 &&
+    filteredStudents.every((student) => selectedStudentIds.includes(student.id));
+
+  // Get selected student data. Match on the student's real id: these are
+  // database ids, not positions, so a positional lookup silently resolves to
+  // nothing and the confirmation list renders empty.
   const selectedStudents = selectedStudentIds
-    .map((id) => studentsData.find((student, index) => index === id - 1))
+    .map((id) => studentsData.find((student) => student.id === id))
     .filter(Boolean) as StudentData[];
 
   const handleContinueClick = () => {
@@ -605,13 +836,6 @@ const StudentList = () => {
   const getTaskTypeImage = (type: string) => {
     return sanabelImgs[type] || null;
   };
-
-  const colors = [
-    "text-blueprimary",
-    "text-redprimary",
-    "text-yellowprimary",
-    "text-greenprimary",
-  ];
 
   const renderResources = (items: any) =>
     [
@@ -639,16 +863,27 @@ const StudentList = () => {
     return t("اختر المهمة");
   };
 
-  // Get current step number for progress indicator
-  const getCurrentStep = () => {
-    if (!isStudentsSelected) return 1;
-    if (selectedCategoryId === null) return 2;
-    if (selectedType === null) return 3;
-    return 4;
-  };
-
   const handleTaskRegister = () => {
     setShowConfirmation(true);
+  };
+
+  // Single back path for the whole wizard, so the header button and the old
+  // full-width "رجوع" button no longer offer two competing ways back.
+  const handleStepBack = () => {
+    if (!isStudentsSelected) {
+      window.history.back();
+      return;
+    }
+    if (selectedTaskId !== null) {
+      setSelectedTaskId(null);
+    } else if (selectedType !== null) {
+      setSelectedType(null);
+    } else if (selectedCategoryId !== null) {
+      setSelectedCategoryId(null);
+      setPendingCategoryId(null);
+    } else {
+      setIsStudentsSelected(false);
+    }
   };
 
   const getSelectedTask = () => {
@@ -656,181 +891,184 @@ const StudentList = () => {
   };
 
   return (
+    // The page itself owns scrolling. Keeping every section in normal flow
+    // prevents the detached header/progress strip and nested mobile scrollbars.
     <div
-      className="flex flex-col items-center justify-between gap-5 p-4"
+      className="flex flex-col items-center gap-3 px-4 pt-3 pb-4 overflow-x-hidden overflow-y-auto overscroll-contain"
       id="page-height"
     >
-      {/* Header and Search */}
       <div className="flex-col w-full gap-3 flex-center">
-        <div className="flex flex-row-reverse items-center justify-between w-full">
-          <div className="w-16 h-16"></div>
-          <h1 className="text-2xl font-bold text-black">
-            {getCurrentStepTitle()}
-          </h1>
-          <GoBackButton />
+        <div className="flex items-center w-full gap-3">
+          <GoBackButton onClick={handleStepBack} />
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-bold leading-tight text-black text-start">
+              {getCurrentStepTitle()}
+            </h1>
+          </div>
         </div>
         {!isStudentsSelected && (
-          <div className="flex flex-row-reverse items-center justify-between w-full px-2 py-1 border-2 rounded-xl">
-            <div className="w-10 h-10 bg-blueprimary rounded-xl flex-center">
-              <SearchIcon className="text-white" size={20} />
+          <>
+            <div className="flex flex-row-reverse items-center justify-between w-full px-2 py-1 border-2 rounded-xl">
+              <div className="w-10 h-10 bg-blueprimary rounded-xl flex-center">
+                <SearchIcon className="text-white" size={20} />
+              </div>
+              <input
+                type="text"
+                placeholder={t("ابحث عن طالب")}
+                className="w-full py-3 text-black bg-transparent drop-shadow-sm text-start"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  aria-label={t("مسح البحث")}
+                  className="px-2 text-gray-400"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <FaTimes />
+                </button>
+              )}
             </div>
-            <input
-              type="text"
-              placeholder={t("ابحث عن طالب")}
-              className="w-full py-3 text-black bg-transparent drop-shadow-sm text-start"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+
+            <div className="flex flex-row-reverse items-center justify-between w-full">
+              <span className="text-sm text-gray-500">
+                {t("students.selectedOfTotal", {
+                  selected: selectedStudentIds.length,
+                  total: filteredStudents.length,
+                })}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={selectAllVisible}
+                  disabled={allVisibleSelected || filteredStudents.length === 0}
+                  className="px-3 py-1 text-xs font-semibold rounded-full text-blueprimary bg-blue-50 disabled:opacity-40"
+                >
+                  {t("تحديد الكل")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedStudentIds([])}
+                  disabled={selectedStudentIds.length === 0}
+                  className="px-3 py-1 text-xs font-semibold text-gray-600 rounded-full bg-gray-100 disabled:opacity-40"
+                >
+                  {t("مسح الكل")}
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
-      {/* Selected Students Horizontal List - Always show when students are selected */}
       {isStudentsSelected && (
-        <div className="w-full ">
-          {/* Selected Students Row */}
-          <div className="flex flex-row w-full gap-3 p-2 overflow-x-auto">
-            {selectedStudents.map((student) => (
-              <div
-                key={student.id}
-                className="relative flex flex-col items-center"
-              >
-                <div
-                  className="absolute z-10 flex items-center justify-center w-5 h-5 bg-red-500 rounded-full cursor-pointer -top-1 -right-1"
-                  onClick={() =>
-                    removeSelectedStudent(
-                      studentsData.findIndex((s) => s.id === student.id),
-                    )
-                  }
-                >
-                  <FaTimes className="text-xs text-white" />
-                </div>
-                <div className="overflow-hidden rounded-full w-14 h-14">
-                  <GetAvatar userAvatarData={student.user.profileImg} />
-                </div>
-                <span className="mt-1 text-xs font-medium text-center text-black">
-                  {`${student.user.firstName}`}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Step Indicator - Show only when in task selection mode */}
-          {isStudentsSelected && (
-            <div className="flex items-center justify-between w-full px-2">
-              <div className="flex items-center justify-between w-full">
-                <div
-                  className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                    getCurrentStep() >= 2
-                      ? "bg-blueprimary text-white"
-                      : "bg-gray-200 text-gray-500"
-                  }`}
-                ></div>
-                <div
-                  className={`flex-1 h-1 mx-1 ${
-                    getCurrentStep() >= 3 ? "bg-blueprimary" : "bg-gray-200"
-                  }`}
-                ></div>
-                <div
-                  className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                    getCurrentStep() >= 3
-                      ? "bg-blueprimary text-white"
-                      : "bg-gray-200 text-gray-500"
-                  }`}
-                ></div>
-                <div
-                  className={`flex-1 h-1 mx-1 ${
-                    getCurrentStep() >= 4 ? "bg-blueprimary" : "bg-gray-200"
-                  }`}
-                ></div>
-                <div
-                  className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                    getCurrentStep() >= 4
-                      ? "bg-blueprimary text-white"
-                      : "bg-gray-200 text-gray-500"
-                  }`}
-                ></div>
-              </div>
-            </div>
-          )}
-        </div>
+        <SelectedStudentsSummary
+          students={selectedStudents}
+          onRemove={removeSelectedStudent}
+          onChangeStudents={() => {
+            setPendingCategoryId(null);
+            setIsStudentsSelected(false);
+          }}
+        />
       )}
 
       {/* Main Content Area */}
       {!isStudentsSelected ? (
         // Student List View
-        <div className="flex flex-col justify-start w-full h-full gap-2 overflow-y-auto">
-          {filteredStudents.map((student, index) => (
-            <div
-              className="flex flex-row-reverse items-center justify-between w-full p-3 border-2 rounded-xl"
-              key={student.id}
-            >
-              <div
-                className={`w-10 h-10 flex-center rounded-xl ${
-                  selectedStudentIds.includes(student.id)
-                    ? "bg-blueprimary border-0"
-                    : "bg-transparent border-2"
-                }`}
-                onClick={() => toggleStudentSelection(student.id)}
-              >
-                <FaCheck />
-              </div>
-              <div className="flex-row-reverse gap-3 flex-center">
-                <div className="flex flex-col gap-0">
-                  <h1 className="text-black">
-                    {`${student.user.firstName} ${student.user.lastName}`}
-                  </h1>
-
-                  <div className="flex justify-end text-blueprimary">
-                    <h1 className="text-[#B3B3B3] capitalize">
-                      {" "}
-                      {student.Class?.classname || student.class?.classname}
-                    </h1>
-
-                    {(student.Class || student.class) && <h1>-</h1>}
-                    <h1 className="text-[#B3B3B3] capitalize">
-                      {" "}
-                      {student.Class?.grade ? t(student.Class.grade) : student.class?.grade ? t(student.class.grade) : null}
-                    </h1>
-                  </div>
-                </div>
-                <div className="w-12 h-12">
-                  <GetAvatar userAvatarData={student.user.profileImg} />
-                </div>
-              </div>
+        <div className="flex flex-col justify-start w-full gap-2">
+          {filteredStudents.length === 0 ? (
+            <div className="py-10 text-center text-gray-500">
+              <p>{t("لا يوجد طالب بهذا الاسم")}</p>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="px-4 py-2 mt-3 text-sm border rounded-lg text-blueprimary border-blueprimary"
+                >
+                  {t("مسح البحث")}
+                </button>
+              )}
             </div>
-          ))}
+          ) : (
+            filteredStudents.map((student) => {
+              const isSelected = selectedStudentIds.includes(student.id);
+              const grade = student.Class?.grade || student.class?.grade;
+              const className = student.Class?.classname || student.class?.classname;
+              return (
+                // The whole row toggles: a 10px checkbox was the only hit
+                // target before, which is hard to tap and easy to miss.
+                <button
+                  type="button"
+                  key={student.id}
+                  role="checkbox"
+                  aria-checked={isSelected}
+                  onClick={() => toggleStudentSelection(student.id)}
+                  className={`flex flex-row-reverse items-center justify-between w-full p-3 text-end transition-colors border-2 rounded-xl ${
+                    isSelected
+                      ? "border-blueprimary bg-blue-50"
+                      : "border-gray-200 bg-white"
+                  }`}
+                >
+                  {/* Empty when unselected. Previously the tick was always
+                      drawn, so every row read as already selected. */}
+                  <span
+                    className={`w-7 h-7 flex-center rounded-lg flex-shrink-0 ${
+                      isSelected
+                        ? "bg-blueprimary border-0 text-white"
+                        : "bg-white border-2 border-gray-300 text-transparent"
+                    }`}
+                  >
+                    {isSelected && <FaCheck size={14} />}
+                  </span>
+
+                  <div className="flex flex-row-reverse items-center min-w-0 gap-3">
+                    <div className="flex flex-col min-w-0">
+                      <h1 className="font-semibold text-black truncate">
+                        {`${student.user.firstName} ${student.user.lastName || ""}`.trim()}
+                      </h1>
+                      <p className="text-xs text-[#B3B3B3] capitalize truncate">
+                        {[grade ? t(grade) : null, className]
+                          .filter(Boolean)
+                          .join(" · ") || t("لا يوجد فصل")}
+                      </p>
+                    </div>
+                    <div className="flex-shrink-0 w-12 h-12">
+                      <GetAvatar userAvatarData={student.user.profileImg} />
+                    </div>
+                  </div>
+                </button>
+              );
+            })
+          )}
         </div>
       ) : (
         // Task Selection Views
-        <div className="w-full h-full overflow-y-auto">
+        <div className="w-full pb-1">
           {selectedCategoryId === null ? (
             // Category Selection View
-            <div className="w-full">
-              <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col w-full gap-3">
+              <div
+                role="radiogroup"
+                aria-label={t("اختر فئة المهمة")}
+                className="grid grid-cols-2 gap-2"
+              >
                 {taskCategories.map((category, index) => (
-                  <div
+                  <CategoryCard
                     key={category.id}
-                    className="flex flex-col items-center p-3 border-2 cursor-pointer rounded-xl"
-                    onClick={() => setSelectedCategoryId(category.id)}
-                  >
-                    <img
-                      src={sanabelTypeImg[index]}
-                      alt={category.title}
-                      className="object-contain w-16 h-16"
-                    />
-                    <h3
-                      className={`${colors[index]} font-bold text-center mt-2`}
-                    >
-                      {t(category.title)}
-                    </h3>
-                  </div>
+                    title={category.title}
+                    image={sanabelTypeImg[index]}
+                    accentIndex={index}
+                    selected={pendingCategoryId === category.id}
+                    onSelect={() => setPendingCategoryId(category.id)}
+                  />
                 ))}
               </div>
+
+              <ActionModeSelector value={missionAction} onChange={setMissionAction} />
             </div>
           ) : selectedType === null ? (
             // Type Selection View
-            <div className="w-full h-full overflow-y-auto">
+            <div className="w-full">
               <div className="grid grid-cols-2 gap-3">
                 {availableTypes.map((type, index) => (
                   <div
@@ -852,7 +1090,7 @@ const StudentList = () => {
             </div>
           ) : (
             // Task Selection View
-            <div className="w-full h-full overflow-y-auto">
+            <div className="w-full">
               <div className="flex flex-col gap-3">
                 {filteredTasks.map((task, index) => (
                   <div
@@ -876,56 +1114,53 @@ const StudentList = () => {
         </div>
       )}
 
-      {/* Action Buttons */}
-      {isStudentsSelected && (
-        <div className="grid w-full grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl">
-          <button type="button" onClick={() => setMissionAction("assign")}
-            className={`p-3 text-sm font-bold rounded-lg ${missionAction === "assign" ? "text-white bg-blueprimary" : "text-gray-700 bg-white"}`}>
-            {t("Assign Mission")}
-          </button>
-          <button type="button" onClick={() => setMissionAction("complete")}
-            className={`p-3 text-sm font-bold rounded-lg ${missionAction === "complete" ? "text-white bg-green-600" : "text-gray-700 bg-white"}`}>
-            {t("Register Completed Mission")}
-          </button>
-        </div>
-      )}
-      {!isStudentsSelected && selectedStudentIds.length > 0 && (
-        <PrimaryButton
-          style=""
-          text={t("متابعة")}
-          arrow="none"
-          onClick={handleContinueClick}
-        />
-      )}
-
-      {isStudentsSelected && (
-        <div className="flex w-full gap-3">
-          <PrimaryButton
-            style="stroke"
-            text={t("رجوع")}
-            arrow="none"
-            onClick={() => {
-              if (selectedTaskId !== null) {
-                setSelectedTaskId(null);
-              } else if (selectedType !== null) {
-                setSelectedType(null);
-              } else if (selectedCategoryId !== null) {
-                setSelectedCategoryId(null);
-              } else {
-                setIsStudentsSelected(false);
-              }
-            }}
-          />
-          {selectedTaskId !== null && (
+      <div className="w-full bg-white">
+        {!isStudentsSelected && selectedStudentIds.length > 0 && (
+          <div className="w-full pt-3 border-t border-gray-100">
             <PrimaryButton
-              style="flex-1"
+              style=""
+              text={`${t("متابعة")} (${selectedStudentIds.length})`}
+              arrow="none"
+              onClick={handleContinueClick}
+            />
+          </div>
+        )}
+
+        {/* Category step: one primary action, disabled until a category is
+            chosen. Its label states what happens next for the chosen mode. */}
+        {isStudentsSelected && selectedCategoryId === null && (
+          <div className="w-full pt-3 border-t border-gray-100">
+            <PrimaryButton
+              style=""
+              text={t(
+                missionAction === "assign"
+                  ? "متابعة لاختيار المهمة"
+                  : "متابعة لتسجيل المهمة",
+              )}
+              arrow="none"
+              disabled={pendingCategoryId === null}
+              onClick={() => {
+                if (pendingCategoryId === null) return;
+                setSelectedCategoryId(pendingCategoryId);
+              }}
+            />
+          </div>
+        )}
+
+        {/* Later steps keep their own register action; going back is the
+            header button, so there is no second full-width back control. */}
+        {isStudentsSelected && selectedCategoryId !== null && selectedTaskId !== null && (
+          <div className="w-full pt-3 border-t border-gray-100">
+            <PrimaryButton
+              style=""
               text={t("تسجيل")}
               arrow="none"
+              disabled={showConfirmation}
               onClick={handleTaskRegister}
             />
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* Duplicate Task Popup */}
       <DuplicateTaskPopup
@@ -944,14 +1179,7 @@ const StudentList = () => {
         onConfirm={addProgress}
         selectedTask={getSelectedTask()}
         selectedStudents={selectedStudents}
-        onRemoveStudent={(studentId: any) => {
-          const studentIndex = studentsData.findIndex(
-            (s) => s.id === studentId,
-          );
-          if (studentIndex !== -1) {
-            removeSelectedStudent(studentIndex);
-          }
-        }}
+        onRemoveStudent={(studentId: number) => removeSelectedStudent(studentId)}
         action={missionAction}
       />
 
@@ -961,6 +1189,15 @@ const StudentList = () => {
         onClose={handleCongratsClose}
         selectedTask={getSelectedTask()}
         selectedStudents={selectedStudents}
+      />
+
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        theme="light"
       />
 
       {/* Navigation */}

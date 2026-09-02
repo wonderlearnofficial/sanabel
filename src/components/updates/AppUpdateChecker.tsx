@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
+import type { PluginListenerHandle } from "@capacitor/core";
 import { API_BASE_URL } from "../../config/api";
 import {
   getInstalledAppInfo,
@@ -12,6 +13,8 @@ import { UpdatePromptModal } from "./UpdatePromptModal";
 import { ForceUpdateScreen } from "./ForceUpdateScreen";
 import { MaintenanceScreen } from "./MaintenanceScreen";
 import i18n from "../../i18n";
+import { sessionStore } from "../../utils/safeStorage";
+import { resyncPrayerNotificationsIfEnabled } from "../../services/prayerNotifications";
 
 interface VersionResponse {
   success: boolean;
@@ -100,7 +103,7 @@ export const AppUpdateChecker: React.FC = () => {
 
       // 3. Check Soft Update (if not already dismissed in this session)
       const hasNewer = isVersionLower(installedVer, remoteLatest);
-      const sessionDismissed = sessionStorage.getItem(`update_dismissed_${remoteLatest}`);
+      const sessionDismissed = sessionStore.getItem(`update_dismissed_${remoteLatest}`);
 
       if (hasNewer && !sessionDismissed) {
         setSoftUpdate(true);
@@ -118,21 +121,23 @@ export const AppUpdateChecker: React.FC = () => {
     checkVersion();
 
     // Listen for native app foreground/resume events
-    let handler: any;
+    let handler: PluginListenerHandle | undefined;
+    let disposed = false;
     if (Capacitor.isNativePlatform()) {
       CapacitorApp.addListener("appStateChange", (state) => {
         if (state.isActive) {
-          checkVersion();
+          void checkVersion();
+          void resyncPrayerNotificationsIfEnabled();
         }
       }).then((h) => {
-        handler = h;
-      });
+        if (disposed) void h.remove();
+        else handler = h;
+      }).catch((error) => console.warn("Native lifecycle listener unavailable", error));
     }
 
     return () => {
-      if (handler && typeof handler.remove === "function") {
-        handler.remove();
-      }
+      disposed = true;
+      if (handler) void handler.remove();
     };
   }, [checkVersion]);
 
@@ -141,7 +146,7 @@ export const AppUpdateChecker: React.FC = () => {
   };
 
   const handleDismissSoftUpdate = () => {
-    sessionStorage.setItem(`update_dismissed_${latestVersion}`, "true");
+    sessionStore.setItem(`update_dismissed_${latestVersion}`, "true");
     setSoftUpdate(false);
   };
 

@@ -41,7 +41,7 @@ function AdminNavbar() {
     >
       {navList.map((item, key) => (
         <IonRouterLink key={key} routerLink={item.to}>
-          <div className="flex flex-col items-center gap-1 ">
+          <div className="flex min-w-11 min-h-11 flex-col items-center justify-center gap-1">
             <div
               className={` flex items-center justify-end ${
                 location.pathname === item.to

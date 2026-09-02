@@ -1,4 +1,5 @@
 import NotificationIcon from "../icons/NotificationIcon";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { useNotifications } from "../pages/Notifications/NotificationContext";
@@ -6,19 +7,34 @@ import { useNotifications } from "../pages/Notifications/NotificationContext";
 function Notification() {
   const { t } = useTranslation();
   const history = useHistory();
-  const { unreadCount } = useNotifications();
+  const { unreadCount, refreshNotifications } = useNotifications();
+  const role = localStorage.getItem("role");
+
+  useEffect(() => {
+    refreshNotifications();
+  }, []);
 
   return (
-    <div
+    <button
+      type="button"
+      aria-label={`${t("الإشعارات")} (${unreadCount})`}
       data-guide-id="notifications-bell"
       className="flex-center p-2 border-2 border-[#EAECF0] rounded-xl relative cursor-pointer"
-      onClick={() => history.push("/notifications")}
+      onClick={() =>
+        history.push(
+          role === "Parent" || role === "Teacher"
+            ? "/approvals"
+            : "/notifications",
+        )
+      }
     >
       <NotificationIcon />
       {unreadCount > 0 && (
-        <div className="w-2 h-2 rounded-full bg-red-500 absolute right-1 top-1"></div>
+        <span className="absolute flex items-center justify-center min-w-4 h-4 px-1 text-[10px] font-bold text-white bg-red-500 rounded-full -top-1 -right-1">
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </span>
       )}
-    </div>
+    </button>
   );
 }
 export default Notification;

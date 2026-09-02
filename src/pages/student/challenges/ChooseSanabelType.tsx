@@ -111,8 +111,11 @@ const SanabelType: React.FC = () => {
 
   const currentLanguage = localStorage.getItem("language");
   return (
+    // One scroll region only. The page box is a fixed-height flex column that
+    // does not scroll; the card list below is the single scrolling area. Both
+    // scrolling produced two stacked scrollbars in the header corner.
     <motion.div
-      className="flex flex-col items-center justify-between w-full p-4 px-3 overflow-y-auto"
+      className="flex flex-col items-center w-full px-3 pt-4 overflow-hidden"
       id="page-height"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -121,7 +124,10 @@ const SanabelType: React.FC = () => {
       {/* Popup */}
       {reminderPopup && (
         <motion.div
-          className="flex-col flex items-center  overflow-y-auto justify-between w-screen h-[9vh]  absolute bottom-0 rounded-t-3xl border-t-2  bg-white z-30 p-4"
+          // Was h-[9vh] with the content scrolling inside a ~90px sliver, and
+          // w-screen forced a horizontal scrollbar. Sizes to its content now,
+          // capped so it can never exceed the viewport.
+          className="fixed inset-x-0 bottom-0 z-30 flex flex-col items-center justify-between gap-3 p-4 overflow-y-auto bg-white border-t-2 max-h-[85vh] max-h-[85dvh] rounded-t-3xl"
           initial="hidden"
           animate="visible"
           exit="exit"
@@ -217,7 +223,7 @@ const SanabelType: React.FC = () => {
         </div>
       </div>
       <motion.div
-        className="flex flex-col items-center justify-center w-full h-full gap-4 overflow-y-auto "
+        className="flex flex-col items-center w-full gap-4 pt-1 pb-4 overflow-y-auto flex-1 min-h-0"
         initial="hidden"
         animate="visible"
         variants={{

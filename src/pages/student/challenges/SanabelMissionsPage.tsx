@@ -191,8 +191,6 @@ const SanabelMissionsPage: React.FC = () => {
     return () => { active = false; };
   }, [index, subIndex, APIIndex, refreshUserData]);
 
-  const getTodayDateOnly = () => new Date().toISOString().split("T")[0];
-
   // Pull the student's approval state — who can approve, and the latest
   // request per mission — so buttons render the right one of the 4 states
   // (Link Parent / Request Approval / Waiting for Approval / Completed)
@@ -212,15 +210,16 @@ const SanabelMissionsPage: React.FC = () => {
         setApproverNames(approvers || []);
       }
 
-      const today = getTodayDateOnly();
       const statusEntries = await Promise.all(
         (missions as any[]).map(async (mission) => {
           try {
+            // No missionDate: the server's canonical day decides which day's
+            // request this is. A wrong device clock must not shift it.
             const statusResponse = await axios.get(
               `${API_BASE_URL}/mission/myRequestStatus`,
               {
                 headers: { Authorization: `Bearer ${authToken}` },
-                params: { taskId: mission.id, missionDate: today },
+                params: { taskId: mission.id },
               }
             );
             const latest = statusResponse.data.data;
@@ -274,8 +273,9 @@ const SanabelMissionsPage: React.FC = () => {
         const response = await axios.post(
           `${API_BASE_URL}/mission/requestApproval`,
           {
+            // No missionDate: the server dates the request from its own
+            // canonical day. A device clock never decides a reward's day.
             taskId: selectedMissionId,
-            missionDate: getTodayDateOnly(),
             approverId: selectedApprover?.id,
             approverType: selectedApprover?.type,
           },

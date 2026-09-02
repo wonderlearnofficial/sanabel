@@ -266,7 +266,7 @@ const Shop: React.FC = () => {
                     type="button"
                     aria-label={t("تقليل السماد")}
                     disabled={!user || isUserLoading || isBuying || isGrowing}
-                    className="w-6 h-6 rounded-full flex-center bg-blueprimary text-white select-none active:scale-90 transition-transform cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                    className="w-11 h-11 rounded-full flex-center bg-blueprimary text-white select-none active:scale-90 transition-transform cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                     onClick={() => changeBuyFertilizerCount("-")}
                   >
                     <span className="text-white font-bold select-none text-xs">-</span>
@@ -276,7 +276,7 @@ const Shop: React.FC = () => {
                     type="button"
                     aria-label={t("زيادة السماد")}
                     disabled={!user || isUserLoading || isBuying || isGrowing}
-                    className="w-6 h-6 rounded-full flex-center bg-blueprimary text-white select-none active:scale-90 transition-transform cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                    className="w-11 h-11 rounded-full flex-center bg-blueprimary text-white select-none active:scale-90 transition-transform cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                     onClick={() => changeBuyFertilizerCount("+")}
                   >
                     <span className="text-white font-bold select-none text-xs">+</span>
@@ -290,7 +290,7 @@ const Shop: React.FC = () => {
                     type="button"
                     aria-label={t("تقليل الماء")}
                     disabled={!user || isUserLoading || isBuying || isGrowing}
-                    className="w-6 h-6 rounded-full flex-center bg-blueprimary text-white select-none active:scale-90 transition-transform cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                    className="w-11 h-11 rounded-full flex-center bg-blueprimary text-white select-none active:scale-90 transition-transform cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                     onClick={() => changeBuyWaterCount("-")}
                   >
                     <span className="text-white font-bold select-none text-xs">-</span>
@@ -301,7 +301,7 @@ const Shop: React.FC = () => {
                     aria-label={t("زيادة الماء")}
                     disabled={!user || isUserLoading || isBuying || isGrowing}
                     data-testid="shop-add-water"
-                    className="w-6 h-6 rounded-full flex-center bg-blueprimary text-white select-none active:scale-90 transition-transform cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                    className="w-11 h-11 rounded-full flex-center bg-blueprimary text-white select-none active:scale-90 transition-transform cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                     onClick={() => changeBuyWaterCount("+")}
                   >
                     <span className="text-white font-bold select-none text-xs">+</span>

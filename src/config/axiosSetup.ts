@@ -1,6 +1,7 @@
 import axios from "axios";
 import { API_BASE_URL } from "./api";
 import { clearClientSession } from "../utils/session";
+import { localStore, sessionStore } from "../utils/safeStorage";
 
 // Single-flight guard so a burst of concurrent 401s triggers only one refresh.
 let refreshing: Promise<string> | null = null;
@@ -16,6 +17,13 @@ class SessionExpiredError extends Error {
   }
 }
 
+export const TERMINAL_SESSION_CODES = new Set([
+  "ACCOUNT_DELETED",
+  "ACCOUNT_DISABLED",
+  "ACCOUNT_CHANGED",
+  "SESSION_REVOKED",
+]);
+
 function endExpiredSession(
   reason: "expired" | "accountDeleted" = "expired",
 ): void {
@@ -23,7 +31,7 @@ function endExpiredSession(
   if (redirectingToLogin || window.location.pathname === "/login") return;
 
   redirectingToLogin = true;
-  sessionStorage.setItem(
+  sessionStore.setItem(
     reason === "accountDeleted" ? "accountDeleted" : "sessionExpired",
     "true",
   );
@@ -31,20 +39,22 @@ function endExpiredSession(
 }
 
 async function doRefresh(): Promise<string> {
-  const refreshToken = localStorage.getItem("refreshToken");
+  const refreshToken = localStore.getItem("refreshToken");
   if (!refreshToken) throw new SessionExpiredError();
 
   try {
-    const resp = await axios.post(`${API_BASE_URL}/users/refresh`, {
-      refreshToken,
-    });
+    const resp = await axios.post(
+      `${API_BASE_URL}/users/refresh`,
+      { refreshToken },
+      { timeout: 15000 },
+    );
     const newToken = resp?.data?.data?.token;
     const nextRefreshToken = resp?.data?.data?.refreshToken;
     if (!newToken) throw new SessionExpiredError();
 
-    localStorage.setItem("token", newToken);
+    localStore.setItem("token", newToken);
     if (nextRefreshToken) {
-      localStorage.setItem("refreshToken", nextRefreshToken);
+      localStore.setItem("refreshToken", nextRefreshToken);
     }
     return newToken;
   } catch (error) {
@@ -81,12 +91,13 @@ export function setupAxiosAuth(): void {
       const isAuthCall =
         url.includes("/users/refresh") || url.includes("/users/login");
       const isDeletedAccount = code === "ACCOUNT_DELETED";
+      const isTerminalSession = TERMINAL_SESSION_CODES.has(code);
       const canRefresh =
         (status === 401 && code === "TOKEN_EXPIRED") ||
         (status === 403 && code === "TOKEN_INVALID");
 
-      if (isDeletedAccount) {
-        endExpiredSession("accountDeleted");
+      if (isTerminalSession) {
+        endExpiredSession(isDeletedAccount ? "accountDeleted" : "expired");
         return Promise.reject(error);
       }
 

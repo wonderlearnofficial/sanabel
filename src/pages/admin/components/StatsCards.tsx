@@ -220,7 +220,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
           className="flex items-center justify-between w-full px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <span>{t("admin.chart.distribution")} & Analytics</span>
+            <span>{t("admin.chart.distributionAndAnalytics")}</span>
           </div>
           <motion.span
             animate={{ rotate: showCharts ? 180 : 0 }}
@@ -286,7 +286,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
                     </div>
                   ) : (
                     <div className="h-20 flex items-center justify-center text-xs text-slate-400">
-                      No Data
+                      {t("admin.noData")}
                     </div>
                   )}
                 </div>
@@ -357,7 +357,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
                 {/* Chart 3: Spark Stats */}
                 <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col gap-2">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Overview Summary
+                    {t("admin.chart.overviewSummary")}
                   </p>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     {[

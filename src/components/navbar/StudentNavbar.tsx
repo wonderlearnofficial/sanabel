@@ -8,8 +8,6 @@ import ProgressIcon from "../../icons/navbar/ProgressIcon";
 import ProfileIcon from "../../icons/navbar/ProfileIcon";
 
 import { useTranslation } from "react-i18next";
-import i18n from "i18next";
-
 import { useLocation } from "react-router-dom";
 import { useUserContext } from "../../context/StudentUserProvider";
 
@@ -38,8 +36,8 @@ const navList = [
 ];
 
 function Navbar() {
-  const { t } = useTranslation();
-  const currentLanguage = i18n.language;
+  const { t, i18n } = useTranslation();
+  const isRtl = (i18n.resolvedLanguage || i18n.language || "ar").startsWith("ar");
   const location = useLocation();
   const { user } = useUserContext();
 
@@ -52,17 +50,15 @@ function Navbar() {
 
   return (
    <div
-      className={`flex h-20 bg-white dark:bg-[#121212] absolute bottom-0 ${
-        currentLanguage === "ar" ? "flex-row-reverse" : "flex-row"
-      } justify-around w-full p-3`}
-      dir="ltr"
+      className="absolute bottom-0 flex flex-row justify-around w-full h-20 p-3 bg-white dark:bg-[#121212]"
+      dir={isRtl ? "rtl" : "ltr"}
     >
       {visibleNavList.map((item, key) => {
         const isActive = location.pathname === item.to;
         return (
           <IonRouterLink routerLink={item.to} key={key}>
             <div
-              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-2xl transition-all duration-200 ${
+              className={`flex min-w-11 min-h-11 flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-2xl transition-all duration-200 ${
                 isActive ? "bg-blue-50" : ""
               }`}
             >

@@ -59,7 +59,7 @@ const SanabelType: React.FC = () => {
       {/* Popup */}
       {reminderPopup && (
         <motion.div
-          className="absolute bottom-0 z-30 flex flex-col items-center justify-between w-full h-screen p-4 bg-white rounded-t-3xl"
+          className="fixed inset-x-0 bottom-0 z-30 flex flex-col items-center justify-between w-full max-h-[85vh] max-h-[85dvh] p-4 overflow-y-auto bg-white rounded-t-3xl"
           initial="hidden"
           animate="visible"
           exit="exit"

@@ -1,232 +1,408 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  FaUsers,
-  FaChild,
-  FaChalkboardTeacher,
-  FaUserFriends,
-  FaUserShield,
-  FaSchool,
+  FaAngleDoubleLeft,
+  FaAngleDoubleRight,
   FaBuilding,
+  FaChalkboardTeacher,
+  FaChartLine,
+  FaChild,
+  FaClipboardCheck,
   FaGraduationCap,
-  FaSignOutAlt,
-  FaQuestionCircle,
-  FaTrophy,
   FaHistory,
   FaMobileAlt,
-  FaChartLine,
+  FaQuestionCircle,
+  FaRegCheckSquare,
+  FaSchool,
+  FaSignOutAlt,
+  FaTachometerAlt,
+  FaTasks,
+  FaTrophy,
+  FaUserFriends,
+  FaUserShield,
+  FaUsers,
 } from "react-icons/fa";
 import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
 import { useGuide } from "../../../guides/GuideProvider";
+import {
+  AnalyticsSection,
+  NavGroup,
+  NavIcon,
+  NavItem,
+  NAV_GROUPS,
+  Tab,
+} from "../navigation";
+import { BRAND, RADIUS, SHADOW, SHELL, cx } from "../theme";
+import { Tooltip } from "./ui/Tooltip";
 
-type Tab =
-  | "users"
-  | "students"
-  | "teachers"
-  | "parents"
-  | "admins"
-  | "classes"
-  | "organizations"
-  | "grades"
-  | "scores"
-  | "history"
-  | "app_version"
-  | "analytics";
-
-interface SidebarProps {
-  activeTab: Tab;
-  onTabChange: (tab: Tab) => void;
-  onLogout: () => void;
-  totalCounts: Record<Tab, number>;
-  accentColor: string;
-  /** Tabs to omit entirely (e.g. organizations/admins for school-scoped admins). */
-  hiddenTabs?: Tab[];
-}
-
-const TAB_ICONS: Record<Tab, React.ReactNode> = {
-  users: <FaUsers size={16} />,
-  students: <FaChild size={16} />,
-  teachers: <FaChalkboardTeacher size={16} />,
-  parents: <FaUserFriends size={16} />,
-  admins: <FaUserShield size={16} />,
-  classes: <FaSchool size={16} />,
-  organizations: <FaBuilding size={16} />,
-  grades: <FaGraduationCap size={16} />,
-  scores: <FaTrophy size={16} />,
-  history: <FaHistory size={16} />,
-  app_version: <FaMobileAlt size={16} />,
-  analytics: <FaChartLine size={16} />,
+const ICONS: Record<NavIcon, React.ReactNode> = {
+  dashboard: <FaTachometerAlt size={15} />,
+  users: <FaUsers size={15} />,
+  student: <FaChild size={15} />,
+  teacher: <FaChalkboardTeacher size={15} />,
+  parent: <FaUserFriends size={15} />,
+  shield: <FaUserShield size={15} />,
+  school: <FaBuilding size={15} />,
+  class: <FaSchool size={15} />,
+  grade: <FaGraduationCap size={15} />,
+  trophy: <FaTrophy size={15} />,
+  history: <FaHistory size={15} />,
+  chart: <FaChartLine size={15} />,
+  mission: <FaTasks size={15} />,
+  approval: <FaClipboardCheck size={15} />,
+  assignment: <FaRegCheckSquare size={15} />,
+  organization: <FaBuilding size={15} />,
+  app: <FaMobileAlt size={15} />,
 };
 
-const TAB_I18N: Record<Tab, string> = {
-  users: "admin.tab.users",
-  students: "admin.tab.students",
-  teachers: "admin.tab.teachers",
-  parents: "admin.tab.parents",
-  admins: "admin.tab.admins",
-  classes: "admin.tab.classes",
-  organizations: "admin.tab.organizations",
-  grades: "admin.tab.grades",
-  scores: "admin.tab.scores",
-  history: "admin.tab.history",
-  app_version: "admin.tab.app_version",
-  analytics: "admin.analytics.title",
+/**
+ * Actionable counts only. A badge means "there is a queue here"; it never
+ * restates a population size, because a permanent "23 users" chip trains the
+ * admin to ignore every badge in the rail.
+ *
+ * `null` = not yet loaded or not measurable. It renders nothing rather than 0.
+ */
+export interface SidebarBadges {
+  pendingApprovals?: number | null;
+}
+
+export interface SidebarProps {
+  activeTab: Tab;
+  activeSection?: AnalyticsSection;
+  onNavigate: (item: NavItem) => void;
+  onLogout: () => void;
+  badges?: SidebarBadges;
+  /** Tabs to omit entirely, e.g. Super-Admin-only pages for a School Admin. */
+  hiddenTabs?: Tab[];
+  /** Desktop: rail mode. */
+  isCollapsed: boolean;
+  /** Viewport is narrow, so the sidebar is an overlay rather than docked. */
+  isDrawerLayout: boolean;
+  isDrawerOpen: boolean;
+  onToggle: () => void;
+  onCloseDrawer: () => void;
+}
+
+const resolveBadge = (
+  item: NavItem,
+  badges: SidebarBadges | undefined,
+): number | null => {
+  if (!item.badge || !badges) return null;
+  const value = badges[item.badge];
+  return typeof value === "number" && value > 0 ? value : null;
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
-  onTabChange,
+  activeSection,
+  onNavigate,
   onLogout,
-  totalCounts,
-  accentColor,
+  badges,
   hiddenTabs = [],
+  isCollapsed,
+  isDrawerLayout,
+  isDrawerOpen,
+  onToggle,
+  onCloseDrawer,
 }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
   const { replayGuide } = useGuide();
   useAutoStartGuide("admin-home", true);
 
-  const renderTabButton = (tabKey: Tab) => {
-    if (hiddenTabs.includes(tabKey)) return null;
-    const isActive = activeTab === tabKey;
+  // The rail only collapses on desktop. Inside the overlay the sidebar is
+  // always full width, because an icon rail in a drawer helps nobody.
+  const showLabels = isDrawerLayout || !isCollapsed;
+
+  const visibleGroups: NavGroup[] = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !hiddenTabs.includes(item.tab)),
+  })).filter((group) => group.items.length > 0);
+
+  const isItemActive = (item: NavItem): boolean => {
+    if (item.tab !== activeTab) return false;
+    if (item.section) return item.section === activeSection;
+    return true;
+  };
+
+  const renderItem = (item: NavItem) => {
+    const active = isItemActive(item);
+    const label = t(item.labelKey);
+    const badge = resolveBadge(item, badges);
+
     return (
-      <button
-        key={tabKey}
-        onClick={() => onTabChange(tabKey)}
-        className={`relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-start transition-all duration-200 w-full group ${
-          isActive
-            ? "bg-white/10 text-white font-medium shadow-sm"
-            : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
-        }`}
-      >
-        {isActive && (
-          <motion.div
-            layoutId="sidebar-active-indicator"
-            className="absolute inset-y-2 start-0 w-1 rounded-full"
-            style={{ backgroundColor: accentColor }}
-            transition={{ type: "spring", stiffness: 380, damping: 30 }}
-          />
-        )}
-        <span
-          className={`flex items-center justify-center flex-shrink-0 rounded-lg w-7 h-7 transition-colors ${
-            isActive
-              ? "bg-white/10"
-              : "bg-white/5 group-hover:bg-white/10"
-          }`}
-          style={{ color: isActive ? accentColor : undefined }}
+      <Tooltip key={item.id} label={label} enabled={!showLabels}>
+        <button
+          type="button"
+          onClick={() => onNavigate(item)}
+          aria-current={active ? "page" : undefined}
+          title={showLabels ? undefined : label}
+          className={cx(
+            "relative flex items-center w-full gap-3 py-2.5 transition-colors",
+            RADIUS.sm,
+            showLabels ? "px-3 text-start" : "px-0 justify-center",
+            active
+              ? "bg-white/10 text-white font-semibold"
+              : "text-slate-400 hover:text-slate-100 hover:bg-white/5",
+          )}
         >
-          {TAB_ICONS[tabKey]}
-        </span>
-        <span className="flex-1 text-sm">{t(TAB_I18N[tabKey])}</span>
-        {totalCounts[tabKey] > 0 && (
+          {active && (
+            <motion.span
+              layoutId="admin-sidebar-active"
+              className="absolute inset-y-1.5 start-0 w-[3px] rounded-full"
+              style={{ backgroundColor: BRAND.primary }}
+              transition={{ type: "spring", stiffness: 380, damping: 30 }}
+            />
+          )}
+
           <span
-            className={`text-xs px-2 py-0.5 rounded-full font-semibold transition-colors ${
-              isActive ? "bg-white/20 text-white" : "bg-white/5 text-slate-500"
-            }`}
+            className={cx(
+              "relative flex items-center justify-center w-7 h-7 shrink-0 transition-colors",
+              RADIUS.sm,
+              active ? "bg-white/10" : "bg-white/5",
+            )}
+            style={active ? { color: BRAND.primary } : undefined}
           >
-            {totalCounts[tabKey]}
+            {ICONS[item.icon]}
+            {/* Collapsed rail has no room for a number, so the queue becomes a
+                dot. The count itself is still read out by the label below. */}
+            {badge !== null && !showLabels && (
+              <span
+                className="absolute -top-0.5 -end-0.5 w-2 h-2 rounded-full bg-amber-400 ring-2 ring-slate-900"
+                aria-hidden="true"
+              />
+            )}
           </span>
-        )}
-      </button>
+
+          {showLabels && (
+            <>
+              <span className="flex-1 min-w-0 text-sm truncate">{label}</span>
+              {badge !== null && (
+                <span className="px-2 py-0.5 text-[11px] font-bold leading-none tabular-nums rounded-full bg-amber-400/15 text-amber-300">
+                  {badge.toLocaleString()}
+                </span>
+              )}
+            </>
+          )}
+
+          {!showLabels && badge !== null && (
+            <span className="sr-only">
+              {label}: {badge.toLocaleString()}
+            </span>
+          )}
+        </button>
+      </Tooltip>
     );
   };
 
-  return (
-    <aside
-      className="flex flex-col min-h-screen w-64 shrink-0 bg-slate-950 border-slate-900"
-      style={{
-        borderRightWidth: isRTL ? 0 : "1px",
-        borderLeftWidth: isRTL ? "1px" : 0,
-      }}
-    >
-      {/* Brand Header */}
-      <div className="px-6 py-6 flex flex-col gap-4 border-b border-slate-900">
-        <div className="flex items-center gap-3">
-          <div
-            className="flex items-center justify-center w-9 h-9 text-white rounded-xl shadow-md"
-            style={{ backgroundColor: accentColor }}
-          >
-            <FaUsers size={16} />
-          </div>
-          <div>
-            <h1 className="text-base font-bold leading-tight text-white">
-              {t("admin.userDataTitle")}
-            </h1>
-            <p className="text-xs text-slate-500 font-medium">{t("admin.panelName")}</p>
-          </div>
-        </div>
+  const renderGroup = (group: NavGroup) => (
+    <div key={group.id} className="space-y-1.5">
+      {showLabels ? (
+        <p className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-500">
+          {t(group.labelKey)}
+        </p>
+      ) : (
+        // Collapsed: a rule keeps the grouping readable without any text.
+        <div className="mx-3 border-t border-slate-800" aria-hidden="true" />
+      )}
+      <div
+        className="space-y-1"
+        data-guide-id={group.id === "people" ? "admin-tabs" : undefined}
+      >
+        {group.items.map(renderItem)}
       </div>
+    </div>
+  );
 
-      {/* Navigation Groups */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
-        {/* Group: Analytics — Super Admin only. renderTabButton returns null
-            when the tab is in hiddenTabs, so a school admin never sees this
-            group at all (and the API refuses them regardless). */}
-        {!hiddenTabs.includes("analytics") && (
-          <div className="space-y-1.5">
-            <p className="px-3.5 text-[10px] font-bold tracking-wider uppercase text-indigo-400">
-              {t("admin.analytics.title")}
+  const collapseIcon = isRTL ? (
+    isCollapsed ? <FaAngleDoubleLeft size={13} /> : <FaAngleDoubleRight size={13} />
+  ) : isCollapsed ? (
+    <FaAngleDoubleRight size={13} />
+  ) : (
+    <FaAngleDoubleLeft size={13} />
+  );
+
+  const panel = (
+    <>
+      {/* Brand */}
+      <div
+        className={cx(
+          "flex items-center gap-3 border-b border-slate-800 py-5",
+          showLabels ? "px-4" : "px-0 justify-center",
+        )}
+      >
+        <span
+          className={cx(
+            "flex items-center justify-center w-9 h-9 shrink-0 text-white",
+            RADIUS.sm,
+          )}
+          style={{ backgroundColor: BRAND.primary }}
+        >
+          <FaUsers size={15} />
+        </span>
+        {showLabels && (
+          <div className="min-w-0">
+            <p className="text-sm font-bold leading-tight text-white truncate">
+              {t("admin.userDataTitle")}
             </p>
-            <div className="space-y-1">{renderTabButton("analytics")}</div>
+            <p className="text-[11px] font-medium text-slate-500 truncate">
+              {t("admin.panelName")}
+            </p>
           </div>
         )}
-
-        {/* Group: Scores & Activity */}
-        <div className="space-y-1.5">
-          <p className="px-3.5 text-[10px] font-bold tracking-wider uppercase text-amber-400">
-            {isRTL ? "النشاط والتقدم" : "Scores & Activity"}
-          </p>
-          <div className="space-y-1">
-            {renderTabButton("scores")}
-            {renderTabButton("history")}
-          </div>
-        </div>
-
-        {/* Group: People */}
-        <div className="space-y-1.5" data-guide-id="admin-tabs">
-          <p className="px-3.5 text-[10px] font-bold tracking-wider uppercase text-slate-500">
-            {t("People")}
-          </p>
-          <div className="space-y-1">
-            {renderTabButton("users")}
-            {renderTabButton("students")}
-            {renderTabButton("teachers")}
-            {renderTabButton("parents")}
-            {renderTabButton("admins")}
-          </div>
-        </div>
-
-        {/* Group: Academics */}
-        <div className="space-y-1.5">
-          <p className="px-3.5 text-[10px] font-bold tracking-wider uppercase text-slate-500">
-            {t("Academics")}
-          </p>
-          <div className="space-y-1">
-            {renderTabButton("organizations")}
-            {renderTabButton("classes")}
-            {renderTabButton("grades")}
-          </div>
-        </div>
       </div>
 
-      {/* Footer System Panel */}
-      <div className="p-4 space-y-2 border-t border-slate-900">
-        <button
-          onClick={() => replayGuide("admin-home")}
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-colors border border-transparent"
-        >
-          <FaQuestionCircle size={14} />
-          <span>{t("مساعدة هذه الصفحة")}</span>
-        </button>
-        <button
-          onClick={onLogout}
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/20"
-        >
-          <FaSignOutAlt size={14} />
-          <span>{t("تسجيل الخروج")}</span>
-        </button>
+      {/* Navigation */}
+      <nav
+        className={cx(
+          "flex-1 py-4 space-y-5 overflow-y-auto overflow-x-hidden",
+          showLabels ? "px-3" : "px-2",
+        )}
+        aria-label={t("admin.panelName")}
+      >
+        {visibleGroups.map(renderGroup)}
+      </nav>
+
+      {/* Footer */}
+      <div
+        className={cx(
+          "py-3 space-y-1 border-t border-slate-800",
+          showLabels ? "px-3" : "px-2",
+        )}
+      >
+        {/* Desktop only: an overlay drawer is dismissed, not collapsed. */}
+        {!isDrawerLayout && (
+          <Tooltip
+            label={t(isCollapsed ? "admin.shell.expand" : "admin.shell.collapse")}
+            enabled={!showLabels}
+          >
+            <button
+              type="button"
+              onClick={onToggle}
+              aria-expanded={!isCollapsed}
+              className={cx(
+                "flex items-center w-full gap-3 py-2.5 text-slate-400",
+                "hover:text-slate-100 hover:bg-white/5 transition-colors",
+                RADIUS.sm,
+                showLabels ? "px-3 text-start" : "px-0 justify-center",
+              )}
+            >
+              <span className="flex items-center justify-center w-7 h-7 shrink-0">
+                {collapseIcon}
+              </span>
+              {showLabels && (
+                <span className="flex-1 min-w-0 text-sm font-medium truncate">
+                  {t("admin.shell.collapse")}
+                </span>
+              )}
+            </button>
+          </Tooltip>
+        )}
+
+        <Tooltip label={t("admin.shell.pageHelp")} enabled={!showLabels}>
+          <button
+            type="button"
+            onClick={() => replayGuide("admin-home")}
+            className={cx(
+              "flex items-center w-full gap-3 py-2.5 text-slate-400",
+              "hover:text-slate-100 hover:bg-white/5 transition-colors",
+              RADIUS.sm,
+              showLabels ? "px-3 text-start" : "px-0 justify-center",
+            )}
+          >
+            <span className="flex items-center justify-center w-7 h-7 shrink-0">
+              <FaQuestionCircle size={14} />
+            </span>
+            {showLabels && (
+              <span className="flex-1 min-w-0 text-sm font-medium truncate">
+                {t("admin.shell.pageHelp")}
+              </span>
+            )}
+          </button>
+        </Tooltip>
+
+        <Tooltip label={t("admin.shell.logout")} enabled={!showLabels}>
+          <button
+            type="button"
+            onClick={onLogout}
+            className={cx(
+              "flex items-center w-full gap-3 py-2.5 text-slate-400",
+              "hover:text-red-300 hover:bg-red-500/10 transition-colors",
+              RADIUS.sm,
+              showLabels ? "px-3 text-start" : "px-0 justify-center",
+            )}
+          >
+            <span className="flex items-center justify-center w-7 h-7 shrink-0">
+              <FaSignOutAlt size={14} />
+            </span>
+            {showLabels && (
+              <span className="flex-1 min-w-0 text-sm font-medium truncate">
+                {t("admin.shell.logout")}
+              </span>
+            )}
+          </button>
+        </Tooltip>
       </div>
-    </aside>
+    </>
+  );
+
+  // ── Overlay drawer (tablet and phone) ──────────────────────────────────────
+  // Rendered as a fixed layer so the content area keeps its full width and
+  // nothing is squeezed or hidden underneath the sidebar.
+  if (isDrawerLayout) {
+    return (
+      <AnimatePresence>
+        {isDrawerOpen && (
+          <>
+            <motion.div
+              key="admin-sidebar-scrim"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onCloseDrawer}
+              className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm"
+            />
+            <motion.aside
+              key="admin-sidebar-drawer"
+              // Slides in from the inline start, which is the right in RTL.
+              initial={{ x: isRTL ? "100%" : "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: isRTL ? "100%" : "-100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 32 }}
+              className={cx(
+                "fixed inset-y-0 start-0 z-50 flex flex-col",
+                "w-[min(84vw,300px)] bg-slate-900",
+                SHADOW.overlay,
+              )}
+              aria-label={t("admin.panelName")}
+            >
+              {panel}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+    );
+  }
+
+  // ── Docked rail (desktop) ──────────────────────────────────────────────────
+  return (
+    <motion.aside
+      className={cx(
+        // `overflow-hidden` keeps labels from spilling out mid-animation while
+        // the width interpolates. Tooltips are position-fixed, so this does not
+        // clip them.
+        "sticky top-0 flex flex-col h-screen shrink-0 overflow-hidden bg-slate-900",
+        isRTL ? "border-s border-slate-800" : "border-e border-slate-800",
+      )}
+      initial={false}
+      animate={{
+        width: isCollapsed ? SHELL.sidebarCollapsed : SHELL.sidebarExpanded,
+      }}
+      transition={{ type: "spring", stiffness: 320, damping: 34 }}
+      aria-label={t("admin.panelName")}
+    >
+      {panel}
+    </motion.aside>
   );
 };

@@ -18,6 +18,7 @@ import { useUserContext } from "../../../context/StudentUserProvider";
 import { getErrorMessage } from "../../../config/getErrorMessage";
 import { AudioManager } from "../../../utils/AudioManager";
 import { initAppNotificationsOnStartup } from "../../../services/appNotificationManager";
+import { localStore, sessionStore } from "../../../utils/safeStorage";
 
 const Toaster = () => (
   <ToastContainer
@@ -49,8 +50,8 @@ const Login: React.FC = () => {
   const history = useHistory();
 
   useEffect(() => {
-    if (sessionStorage.getItem("accountDeleted") === "true") {
-      sessionStorage.removeItem("accountDeleted");
+    if (sessionStore.getItem("accountDeleted") === "true") {
+      sessionStore.removeItem("accountDeleted");
       toast.error(t("account_deleted_message"));
     }
   }, [t]);
@@ -70,39 +71,43 @@ const Login: React.FC = () => {
       if (response.status === 200) {
         AudioManager.play("success");
         // Store auth token
-        localStorage.setItem(
+        const sessionStored = localStore.setItem(
           "token",
           `${response.data.data.user.token.toString()}`,
         );
+        if (!sessionStored) {
+          toast.error(t("تعذر حفظ جلسة تسجيل الدخول على هذا الجهاز"));
+          return;
+        }
 
         // Store refresh token for silent access-token renewal
         if (response.data.data.user.refreshToken) {
-          localStorage.setItem(
+          localStore.setItem(
             "refreshToken",
             response.data.data.user.refreshToken,
           );
         }
 
         // Store Role preference
-        localStorage.setItem("role", response.data.data.user.role.toString());
+        localStore.setItem("role", response.data.data.user.role.toString());
 
         // Store keepLoggedIn preference
-        localStorage.setItem("keepLoggedIn", "true");
+        localStore.setItem("keepLoggedIn", "true");
 
         // Trigger notification check & setup in the background for this user
         initAppNotificationsOnStartup().catch(() => {});
 
         // Check if this user has logged in before
-        const hasCompletedTutorial = localStorage.getItem(
+        const hasCompletedTutorial = localStore.getItem(
           `tutorialComplete-${email}`,
         );
 
         // Only set firstTimer to true if they haven't completed the tutorial before
         if (!hasCompletedTutorial) {
-          localStorage.setItem("firstTimer", "true");
+          localStore.setItem("firstTimer", "true");
         } else {
           // Make sure firstTimer is set to false for returning users
-          localStorage.setItem("firstTimer", "false");
+          localStore.setItem("firstTimer", "false");
         }
 
         // Load the role-specific account data into the shared context before navigating

@@ -9,32 +9,20 @@ import { OtherTrophies } from "../../data/OtherTrophies";
 import { SanabelTrophies } from "../../data/SanabelTrophies";
 import { useNotifications } from "./NotificationContext";
 import GetAvatar from "../student/tutorial/GetAvatar";
+import { sanabelImgs } from "../../data/SanabelDictionary";
 
-// Sanabel type icons — same 4 categories/colors used in ChooseSanabel,
-// ChooseSanabelType and the student's SanabelMissionsPage, indexed by
-// Task.categoryId (1-based) so approval cards match the mission's own look.
-import sanabelType1Img from "../../assets/sanabeltype/سنابل-الإحسان-في-العلاقة-مع-الله.png";
-import sanabelType2Img from "../../assets/sanabeltype/سنابل الإحسان في العلاقة مع النفس.png";
-import sanabelType3Img from "../../assets/sanabeltype/سنابل الإحسان في العلاقة مع الأسرة والمجتمع.png";
-import sanabelType4Img from "../../assets/sanabeltype/سنابل-الإحسان-في-العلاقة-مع-الأرض-والكون.png";
-
-const sanabelTypeImgs = [
-  sanabelType1Img,
-  sanabelType2Img,
-  sanabelType3Img,
-  sanabelType4Img,
-];
-const sanabelTypeColors = [
-  "blueprimary",
-  "redprimary",
-  "yellowprimary",
-  "greenprimary",
+const approvalCategoryVisuals = [
+  { border: "border-t-blueprimary", text: "text-blueprimary" },
+  { border: "border-t-redprimary", text: "text-redprimary" },
+  { border: "border-t-yellowprimary", text: "text-yellowprimary" },
+  { border: "border-t-greenprimary", text: "text-greenprimary" },
 ];
 
 // Parent/Teacher: mission approval requests, reusing the same bell/route as
 // student trophy notifications rather than building a separate page.
 const ApprovalRequestsView: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const isRTL = i18n.language.startsWith("ar");
   const {
     pendingApprovalRequests,
     isLoading,
@@ -58,6 +46,13 @@ const ApprovalRequestsView: React.FC = () => {
       day: "numeric",
       month: "short",
     });
+  };
+  const formatRequestAge = (dateString: string) => {
+    const elapsedMinutes = Math.max(0, Math.floor((Date.now() - new Date(dateString).getTime()) / 60000));
+    if (elapsedMinutes < 60) return t("منذ {{count}} دقيقة", { count: elapsedMinutes });
+    const hours = Math.floor(elapsedMinutes / 60);
+    if (hours < 24) return t("منذ {{count}} ساعة", { count: hours });
+    return t("منذ {{count}} يوم", { count: Math.floor(hours / 24) });
   };
 
   const handleDecision = async (
@@ -84,7 +79,11 @@ const ApprovalRequestsView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full h-full bg-gray-50" dir="rtl">
+    <div
+      data-testid="approval-requests-page"
+      className="flex flex-col w-full h-full bg-gray-50"
+      dir={isRTL ? "rtl" : "ltr"}
+    >
       <div className="flex items-center justify-between px-4 pt-4 pb-3 bg-white shadow-sm">
         <GoBackButton />
         <h1 className="text-xl font-bold text-gray-900">
@@ -118,20 +117,24 @@ const ApprovalRequestsView: React.FC = () => {
           <div className="space-y-3">
             <AnimatePresence>
               {pendingApprovalRequests.map((request: any) => {
-                const studentName = `${
-                  request.Student?.User?.firstName || ""
-                } ${request.Student?.User?.lastName || ""}`.trim();
-                const studentClassName = request.Student?.Class?.classname;
+                const studentUser =
+                  request.Student?.user ?? request.Student?.User;
+                const studentClass =
+                  request.Student?.Class ?? request.Student?.class;
+                const studentName = `${studentUser?.firstName || ""} ${
+                  studentUser?.lastName || ""
+                }`.trim();
+                const studentClassName = studentClass?.classname;
                 const studentGrade =
-                  request.Student?.Class?.grade || request.Student?.grade;
+                  studentClass?.grade || request.Student?.grade;
                 const isActioning = actioningId === request.id;
                 const error = errorByRequest[request.id];
 
                 const catIndex =
                   ((request.Mission?.categoryId || 1) - 1) %
-                  sanabelTypeColors.length;
-                const colorName = sanabelTypeColors[catIndex];
-                const typeImg = sanabelTypeImgs[catIndex];
+                  approvalCategoryVisuals.length;
+                const categoryVisual = approvalCategoryVisuals[catIndex];
+                const typeImg = sanabelImgs[request.Mission?.type];
 
                 const resources = [
                   { icon: blueSanabel, value: request.Mission?.snabelBlue },
@@ -143,48 +146,58 @@ const ApprovalRequestsView: React.FC = () => {
                 return (
                   <motion.div
                     key={request.id}
+                    data-testid={`approval-request-${request.id}`}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -20 }}
-                    className={`w-full bg-white border-t-2 border-t-${colorName} sanabel-shadow-bottom rounded-xl p-4`}
+                    className={`w-full bg-white border-t-2 ${categoryVisual.border} sanabel-shadow-bottom rounded-xl p-4`}
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center flex-1 min-w-0 gap-2">
                         <div className="flex-shrink-0 w-10 h-10">
                           <GetAvatar
-                            userAvatarData={request.Student?.User?.profileImg}
+                            userAvatarData={studentUser?.profileImg}
                           />
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-gray-800">
-                            {studentName}
+                        <div className="min-w-0 text-start">
+                          <p className="text-sm font-bold text-gray-800 truncate">
+                            <bdi>{studentName || t("طالب")}</bdi>
                           </p>
                           {(studentClassName || studentGrade) && (
                             <p className="text-xs text-gray-400">
                               {[studentClassName, studentGrade]
                                 .filter(Boolean)
-                                .map((v) => t(v))
-                                .join(" · ")}
+                                .map((v) => t(String(v)))
+                                .map((value, index) => (
+                                  <span key={`${value}-${index}`}>
+                                    {index > 0 && " · "}
+                                    <bdi>{value}</bdi>
+                                  </span>
+                                ))}
                             </p>
                           )}
                         </div>
                       </div>
-                      <span className="text-xs text-gray-400">
-                        {formatMissionDate(request.missionDate)}
-                      </span>
+                      <div className="flex flex-col items-end flex-shrink-0 gap-0.5 text-xs">
+                        <span className="font-semibold text-gray-600">{t("تاريخ المهمة")}: {formatMissionDate(request.missionDate)}</span>
+                        <span className="text-gray-400">{t("طُلبت")} {formatMissionDate(request.createdAt)} · {formatRequestAge(request.createdAt)}</span>
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between gap-3 mb-3">
-                      <img
-                        src={typeImg}
-                        alt=""
-                        className="flex-shrink-0 object-contain w-12 h-12"
-                        loading="lazy"
-                      />
-                      <div className="flex-1 min-w-0">
+                      {typeImg && (
+                        <img
+                          src={typeImg}
+                          alt=""
+                          aria-hidden="true"
+                          className="flex-shrink-0 object-contain w-12 h-12"
+                          loading="lazy"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0 text-start">
                         {request.Mission?.type && (
                           <h2
-                            className={`text-xs font-bold text-${colorName} mb-0.5`}
+                            className={`text-xs font-bold ${categoryVisual.text} mb-0.5`}
                           >
                             {t(request.Mission.type)}
                           </h2>
@@ -219,18 +232,20 @@ const ApprovalRequestsView: React.FC = () => {
                     )}
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleDecision(request.id, "approve")}
-                        disabled={isActioning}
-                        className="flex-1 py-2 text-sm font-bold text-white transition-colors rounded-lg bg-greenprimary hover:opacity-80 disabled:opacity-50"
-                      >
-                        {t("موافقة")}
-                      </button>
-                      <button
+                        type="button"
                         onClick={() => handleDecision(request.id, "deny")}
                         disabled={isActioning}
                         className="flex-1 py-2 text-sm font-bold text-white transition-colors bg-red-500 rounded-lg hover:opacity-80 disabled:opacity-50"
                       >
                         {t("رفض")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDecision(request.id, "approve")}
+                        disabled={isActioning}
+                        className="flex-1 py-2 text-sm font-bold text-white transition-colors rounded-lg bg-greenprimary hover:opacity-80 disabled:opacity-50"
+                      >
+                        {t("موافقة")}
                       </button>
                     </div>
                   </motion.div>

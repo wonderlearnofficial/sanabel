@@ -27,6 +27,7 @@ const Profile: React.FC = () => {
   // Update the recentActivity type to include the correct key type
   interface Activity {
     createdAt: string;
+    missionDate?: string;
     type: string;
     title: any;
   }
@@ -123,8 +124,13 @@ const Profile: React.FC = () => {
       groups[dateKey].push(activity);
     });
 
+    // Sort by the first item's ISO createdAt. Re-parsing a
+    // toDateString() key is not spec-guaranteed and WebKit is the engine
+    // most likely to reject a non-ISO string.
     return Object.entries(groups).sort(
-      (a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime()
+      (a, b) =>
+        new Date(b[1][0].createdAt).getTime() -
+        new Date(a[1][0].createdAt).getTime()
     );
   }, [filteredActivities]);
 
@@ -261,7 +267,7 @@ const Profile: React.FC = () => {
                 className={`mb-2 pb-1 border-b ${"border-gray-200"}`}
               >
                 <h2 className={`text-sm ${"text-gray-600"}`}>
-                  {new Date(dateKey).toLocaleDateString(savedLanguage, {
+                  {new Date(activities[0].createdAt).toLocaleDateString(savedLanguage, {
                     weekday: "long",
                     year: "numeric",
                     month: "long",
@@ -301,6 +307,9 @@ const Profile: React.FC = () => {
                     <p className={`text-sm ${"text-gray-700"}`}>
                       {t(activity.title)}
                     </p>
+                    {activity.missionDate && activity.missionDate !== activity.createdAt.slice(0, 10) && (
+                      <p className="text-xs text-gray-400">{t("تاريخ المهمة")}: {new Date(`${activity.missionDate}T12:00:00Z`).toLocaleDateString(savedLanguage)}</p>
+                    )}
                   </div>
 
                   {/* Activity Time */}

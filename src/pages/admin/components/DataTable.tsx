@@ -366,7 +366,7 @@ export const DataTable: React.FC<DataTableProps> = ({
             {row.xp || 0} XP
           </span>,
           <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-semibold text-xs border border-emerald-100/80">
-            🌳 Stage {row.treeProgress || row.Tree?.stage || 1}
+            🌳 {t("admin.treeStage")} {row.treeProgress || row.Tree?.stage || 1}
           </span>,
           <span className="font-bold text-amber-600 text-xs">
             🌾 {row.snabelYellow || 0}
@@ -439,7 +439,7 @@ export const DataTable: React.FC<DataTableProps> = ({
             </span>
           ) : (
             <span className="text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-              ✓ Completed
+              ✓ {t("admin.completed")}
             </span>
           ),
         ];

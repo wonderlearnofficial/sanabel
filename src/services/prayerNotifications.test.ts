@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPrayerSchedule, EGYPT_CITIES } from "./prayerNotifications";
+import { buildPrayerSchedule, EGYPT_CITIES, isIOSLikeDevice } from "./prayerNotifications";
 
 // Alexandria, Egypt
 const LAT = 31.2001;
@@ -84,5 +84,23 @@ describe("buildPrayerSchedule", () => {
     // Near Aswan coordinates (24.1, 32.9)
     const aswanMatch = findNearestCity(24.1, 32.9);
     expect(aswanMatch.key).toBe("aswan");
+  });
+});
+
+describe("iOS web-push capability messaging", () => {
+  it("recognizes iPadOS when Safari exposes its desktop Mac user agent", () => {
+    expect(isIOSLikeDevice({
+      userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)",
+      platform: "MacIntel",
+      maxTouchPoints: 5,
+    })).toBe(true);
+  });
+
+  it("does not classify an ordinary Mac as iOS", () => {
+    expect(isIOSLikeDevice({
+      userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)",
+      platform: "MacIntel",
+      maxTouchPoints: 0,
+    })).toBe(false);
   });
 });

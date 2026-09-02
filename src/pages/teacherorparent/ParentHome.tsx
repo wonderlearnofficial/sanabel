@@ -8,12 +8,14 @@ import {
   FaTrophy,
   FaUserFriends,
   FaUserPlus,
+  FaClipboardCheck,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 import ParentNavbar from "../../components/navbar/ParentNavbar";
 import Notification from "../../components/Notification";
 import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
+import { useNotifications } from "../Notifications/NotificationContext";
 
 type LinkedChildrenStatus = "checking" | "empty" | "ready";
 
@@ -21,6 +23,7 @@ const ParentHome = () => {
   const history = useHistory();
   const { t, i18n } = useTranslation();
   const pageDir = i18n.language === "ar" ? "rtl" : "ltr";
+  const { pendingApprovalRequests } = useNotifications();
   const [linkedChildrenStatus, setLinkedChildrenStatus] =
     useState<LinkedChildrenStatus>("checking");
   useAutoStartGuide("parent-home", linkedChildrenStatus === "ready");
@@ -115,6 +118,16 @@ const ParentHome = () => {
       hoverColor: "hover:from-yellowprimary hover:to-yellowprimary/60",
       icon: <FaTrophy className="text-yellowprimary" size={28} />,
       onclick: () => history.push("/teacher/challenges"),
+    },
+    {
+      title: "الموافقات",
+      description: "راجع طلبات الموافقة على مهام الأبناء",
+      bgColor: "bg-gradient-to-br from-purple-500 to-indigo-600",
+      hoverColor: "hover:from-purple-600 hover:to-indigo-700",
+      icon: <FaClipboardCheck className="text-purple-600" size={28} />,
+      badge: pendingApprovalRequests.length,
+      guideId: "approvals-card",
+      onclick: () => history.push("/approvals"),
     },
     {
       title: "الإعدادات",
@@ -238,6 +251,11 @@ const ParentHome = () => {
                 }}
                 whileTap={{ scale: 0.95 }}
               >
+                {(button as any).badge > 0 && (
+                  <span className="absolute z-20 flex items-center justify-center min-w-6 h-6 px-1.5 text-xs font-bold text-purple-700 bg-white rounded-full top-3 end-3 shadow-sm">
+                    {(button as any).badge > 99 ? "99+" : (button as any).badge}
+                  </span>
+                )}
                 {/* Background pattern */}
                 <div className="absolute inset-0 opacity-10">
                   <div className="absolute w-16 h-16 bg-white rounded-full -top-4 -right-4"></div>

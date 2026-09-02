@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../config/api";
+import { localStore } from "../../utils/safeStorage";
 
 export interface TrophyNotification {
   id: string;
@@ -55,24 +56,22 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
   // Initialize read IDs from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem("read_trophy_challenge_ids");
-    if (stored) {
-      try {
-        setReadChallengeIds(JSON.parse(stored));
-      } catch (e) {
-        console.error("Failed to parse read trophy ids", e);
-      }
-    }
+    setReadChallengeIds(localStore.getJson<number[]>(
+      "read_trophy_challenge_ids",
+      [],
+      (value): value is number[] =>
+        Array.isArray(value) && value.every((id) => Number.isInteger(id)),
+    ));
   }, []);
 
   const saveReadChallengeIds = (ids: number[]) => {
     setReadChallengeIds(ids);
-    localStorage.setItem("read_trophy_challenge_ids", JSON.stringify(ids));
+    localStore.setItem("read_trophy_challenge_ids", JSON.stringify(ids));
   };
 
   const refreshNotifications = async () => {
-    const authToken = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+    const authToken = localStore.getItem("token");
+    const role = localStore.getItem("role");
     if (!authToken) {
       setAllTrophies([]);
       setPendingApprovalRequests([]);
@@ -134,8 +133,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
     requestId: number,
     decision: "approve" | "deny"
   ) => {
-    const authToken = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+    const authToken = localStore.getItem("token");
+    const role = localStore.getItem("role");
     if (!authToken || (role !== "Parent" && role !== "Teacher")) return;
 
     const endpoint =
@@ -172,7 +171,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
     // Parents/teachers can receive new requests, or lose one to another
     // approver, at any time — poll so the bell badge doesn't go stale.
-    const role = localStorage.getItem("role");
+    const role = localStore.getItem("role");
     let interval: number | undefined;
     if (role === "Parent" || role === "Teacher") {
       interval = window.setInterval(refreshNotifications, 20000);

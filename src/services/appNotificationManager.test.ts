@@ -70,9 +70,10 @@ describe("appNotificationManager", () => {
     expect(localStorage.getItem(APP_NOTIFICATIONS_ENABLED_KEY)).toBe("true");
   });
 
-  it("initializes notifications on startup for any user", async () => {
+  it("does not prompt for notifications automatically on startup", async () => {
     await initAppNotificationsOnStartup();
-    expect(localStorage.getItem(APP_NOTIFICATIONS_ENABLED_KEY)).toBe("true");
+    expect(localStorage.getItem(APP_NOTIFICATIONS_ENABLED_KEY)).toBeNull();
+    expect(localNotificationMocks.permissionStatus.display).toBe("prompt");
   });
 
   it("schedules a local notification with custom options", async () => {

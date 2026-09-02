@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { Wifi, WifiOff, RefreshCw, Globe, Frown } from "lucide-react";
 import sanabelLogo from "../../assets/onboarding/logo.png";
+import { useTranslation } from "react-i18next";
 
 const NoInternetPage = () => {
+  const { t, i18n } = useTranslation();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [animationPhase, setAnimationPhase] = useState(0);
 
@@ -40,14 +42,14 @@ const NoInternetPage = () => {
         ...style,
       }}
     >
-      {children}u
+      {children}
     </div>
   );
 
   return (
     <div
-      className="relative flex items-center justify-center min-h-screen p-4 overflow-hidden bg-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-700"
-      dir="rtl"
+      className="relative flex items-center justify-center min-h-[100vh] min-h-[100dvh] p-4 overflow-hidden bg-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-700"
+      dir={i18n.dir()}
     >
       {/* Floating Background Icons */}
       <FloatingIcon delay={0} style={{ top: "10%", right: "10%" }}>
@@ -114,19 +116,19 @@ const NoInternetPage = () => {
         {/* Arabic Text */}
         <div className="mb-8 space-y-4">
           <h1 className="mb-2 text-3xl font-bold text-gray-800 dark:text-white animate-fade-in">
-            لا يوجد اتصال بالإنترنت
+            {t("لا يوجد اتصال بالإنترنت")}
           </h1>
           <p
             className="text-lg text-gray-600 dark:text-slate-300 animate-fade-in"
             style={{ animationDelay: "0.2s" }}
           >
-            يبدو أن اتصالك بالإنترنت منقطع
+            {t("يبدو أن اتصالك بالإنترنت منقطع")}
           </p>
           <p
             className="text-base text-gray-500 dark:text-slate-400 animate-fade-in"
             style={{ animationDelay: "0.4s" }}
           >
-            تأكد من اتصالك وحاول مرة أخرى
+            {t("تأكد من اتصالك وحاول مرة أخرى")}
           </p>
         </div>
 
@@ -136,19 +138,19 @@ const NoInternetPage = () => {
           style={{ animationDelay: "0.6s" }}
         >
           <h3 className="mb-3 text-lg font-semibold text-gray-700 dark:text-slate-200">
-            نصائح للحل:
+            {t("نصائح للحل:")}
           </h3>
-          <ul className="space-y-2 text-right text-gray-600 dark:text-slate-300">
+          <ul className="space-y-2 text-end text-gray-600 dark:text-slate-300">
             <li className="flex items-center justify-end space-x-2 space-x-reverse">
-              <span>تحقق من اتصال الواي فاي</span>
+              <span>{t("تحقق من اتصال الواي فاي")}</span>
               <Wifi className="w-4 h-4" />
             </li>
             <li className="flex items-center justify-end space-x-2 space-x-reverse">
-              <span>أعد تشغيل جهاز التوجيه</span>
+              <span>{t("أعد تشغيل جهاز التوجيه")}</span>
               <RefreshCw className="w-4 h-4" />
             </li>
             <li className="flex items-center justify-end space-x-2 space-x-reverse">
-              <span>تحقق من البيانات المحمولة</span>
+              <span>{t("تحقق من البيانات المحمولة")}</span>
               <Globe className="w-4 h-4" />
             </li>
           </ul>
@@ -170,7 +172,7 @@ const NoInternetPage = () => {
               }`}
             />
             <span className="text-lg">
-              {isRefreshing ? "جاري التحديث..." : "إعادة المحاولة"}
+              {isRefreshing ? t("جاري التحديث...") : t("إعادة المحاولة")}
             </span>
           </div>
 

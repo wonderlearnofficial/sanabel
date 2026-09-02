@@ -12,6 +12,7 @@ import { API_BASE_URL } from "../config/api";
 import { useUserContext } from "../context/StudentUserProvider";
 import { ALL_GUIDES } from "./guideConfigs";
 import { GuideConfig, GuideStepConfig } from "./types";
+import { localStore, sessionStore } from "../utils/safeStorage";
 
 interface GuideContextValue {
   activeGuide: GuideConfig | null;
@@ -56,12 +57,12 @@ export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({
       setSeenGuides(new Set());
       return;
     }
-    let cached: string[] = [];
-    try {
-      cached = JSON.parse(localStorage.getItem(storageKey(user.email)) || "[]");
-    } catch {
-      cached = [];
-    }
+    const cached = localStore.getJson<string[]>(
+      storageKey(user.email),
+      [],
+      (value): value is string[] =>
+        Array.isArray(value) && value.every((guideId) => typeof guideId === "string"),
+    );
     setSeenGuides(new Set([...cached, ...(user.seenGuides || [])]));
   }, [user?.email, user?.seenGuides]);
 
@@ -87,10 +88,10 @@ export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({
         if (prev.has(guideId)) return prev;
         const next = new Set(prev);
         next.add(guideId);
-        localStorage.setItem(storageKey(user.email), JSON.stringify(Array.from(next)));
+        localStore.setItem(storageKey(user.email), JSON.stringify(Array.from(next)));
         return next;
       });
-      const token = localStorage.getItem("token");
+      const token = localStore.getItem("token");
       if (!token) return;
       axios
         .patch(
@@ -118,10 +119,10 @@ export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({
     (guideId: string) => {
       if (activeGuideIdRef.current || seenGuides.has(guideId)) return;
       if (!user?.email) return;
-      if (sessionStorage.getItem(sessionAutoKey(user.email))) return;
+      if (sessionStore.getItem(sessionAutoKey(user.email))) return;
       const guide = ALL_GUIDES.find((g) => g.id === guideId);
       if (!guide || guide.steps.length === 0) return;
-      sessionStorage.setItem(sessionAutoKey(user.email), guideId);
+      sessionStore.setItem(sessionAutoKey(user.email), guideId);
       startGuide(guideId, true);
     },
     [seenGuides, startGuide, user?.email]

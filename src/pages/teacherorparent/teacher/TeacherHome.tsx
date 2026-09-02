@@ -83,7 +83,7 @@ const TeacherHome: React.FC = () => {
       <Navbar />
 
       {openInvite && (
-        <div className="absolute flex-col w-screen h-screen flex-center ">
+        <div className="fixed inset-0 z-40 flex-col w-full h-[100vh] h-[100dvh] flex-center">
           <div className="w-full bg-black h-1/3 opacity-10"></div>
           <div className="w-full p-4 bg-white h-2/3 flex-center">
             <div

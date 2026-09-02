@@ -210,7 +210,7 @@ const Step1: React.FC = () => {
         <select
           id="grades"
           className={`w-full ${
-            i18n.language === "ar" ? "text-right" : "text-left"
+            i18n.language === "ar" ? "text-end" : "text-start"
           } bg-white border py-4 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 CustomFont`}
           dir={`${i18n.language === "ar" ? "rtl" : "ltr"}`}
         >

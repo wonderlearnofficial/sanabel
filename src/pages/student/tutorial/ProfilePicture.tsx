@@ -574,7 +574,7 @@ const Step1 = () => {
           transition={{ duration: 0.3 }}
         >
           <h3 className="mb-3 text-lg font-bold text-blueprimary">
-            نمط الخلفية
+            {t("نمط الخلفية")}
           </h3>
           <div className="grid grid-cols-4 gap-3 mb-5">
             {backgroundPatterns.map((pattern) => (

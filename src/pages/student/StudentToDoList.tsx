@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "../../config/api";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { AudioManager } from "../../utils/AudioManager";
@@ -10,9 +10,15 @@ import ParentNavbar from "../../components/navbar/ParentNavbar";
 import SearchIcon from "../../icons/SearchIcon";
 import GoBackButton from "../../components/GoBackButton";
 import PrimaryButton from "../../components/PrimaryButton";
-import { FaCheck, FaTimes, FaPlus, FaTrash } from "react-icons/fa";
+import { FaCheck, FaTimes, FaPlus, FaTrash, FaRegClock, FaEllipsisV, FaGripVertical, FaChevronDown, FaSortAmountDown, FaChevronLeft, FaChevronRight, FaCalendarAlt } from "react-icons/fa";
+import { getCategoryVisual, getSourceVisual, getStatusVisual } from "../../utils/todoVisuals";
+import { DndContext, PointerSensor, TouchSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
+import type { DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { AnimatePresence, motion } from "framer-motion";
 import Tickcircle from "../../icons/Sanabel/Tickcircle";
+import GetAvatar from "./tutorial/GetAvatar";
 import { useUserContext } from "../../context/StudentUserProvider";
 
 // Import resource images
@@ -29,6 +35,11 @@ import sanabelType4Img from "../../assets/sanabeltype/سنابل-الإحسان-
 import { sanabelImgs } from "../../data/SanabelDictionary";
 import { toFiniteNumber } from "../../utils/numericData";
 import { describeApiError } from "../../utils/apiError";
+import { ToastContainer, toast } from "react-toastify";
+import { localStore } from "../../utils/safeStorage";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+import "./StudentToDoList.css";
 
 // Define types
 interface Task {
@@ -49,13 +60,93 @@ interface TodoItem {
   id: any;
   task: Task;
   completed: boolean;
-  addedDate: string;
+  addedDate?: string;
   status?: "todo" | "pending_approval" | "completed";
   sources?: Array<{ sourceType: "student" | "teacher" | "parent"; sourceId: number; name?: string }>;
   approvalRequests?: Array<{ id: number; status: string; approvedByType?: string; approvedById?: number }>;
   completionSource?: string | null;
   completedByName?: string | null;
+  position?: number | null;
+  missionDate?: string;
+  dayId?: number;
+  completedAt?: string | null;
 }
+
+export type TodoSourceKind = "self" | "teacher" | "parent" | "multi" | "none";
+
+// Which single identity a card belongs to for filtering/grouping. An item
+// assigned by more than one actor is its own bucket — never silently
+// collapsed onto whichever source happened to come first.
+export const todoSourceKind = (item: TodoItem, isPersonal: boolean): TodoSourceKind => {
+  if (isPersonal) return "self";
+  const sources = item.sources || [];
+  if (sources.length === 0) return "none";
+  const kinds = new Set(sources.map((source) => source.sourceType));
+  if (kinds.size > 1) return "multi";
+  const only = [...kinds][0];
+  return only === "student" ? "self" : (only as TodoSourceKind);
+};
+
+// Pure reorder step, unit-testable without pointer events: the moved ids of
+// the actionable block plus the API payload the server expects.
+export const computeReorder = (
+  actionableIds: number[],
+  activeId: number,
+  overId: number,
+): { ids: number[]; payload: Array<{ id: number; position: number }> } | null => {
+  const from = actionableIds.indexOf(activeId);
+  const to = actionableIds.indexOf(overId);
+  if (from === -1 || to === -1 || from === to) return null;
+  const ids = arrayMove(actionableIds, from, to);
+  return { ids, payload: ids.map((id, index) => ({ id, position: index })) };
+};
+
+// ISO in, locale-formatted out. Backend always sends ISO timestamps, so no
+// engine-specific date-string guessing is involved.
+export const formatTodoDate = (iso: string | undefined, language: string, withTime = false): string => {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const locale = language === "en" ? "en-US" : "ar-EG";
+  const day = date.toLocaleDateString(locale, { day: "numeric", month: "long" });
+  if (!withTime) return day;
+  return `${day} · ${date.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" })}`;
+};
+
+const dateKeyToLocalDate = (value: string) => new Date(`${value}T12:00:00`);
+const localDateToDateKey = (value: Date) => [
+  value.getFullYear(),
+  String(value.getMonth() + 1).padStart(2, "0"),
+  String(value.getDate()).padStart(2, "0"),
+].join("-");
+
+const SOURCE_OPTIONS = [
+  { key: "all", label: "todo.source.all" },
+  { key: "self", label: "todo.source.self" },
+  { key: "teacher", label: "todo.source.teacher" },
+  { key: "parent", label: "todo.source.parent" },
+  { key: "multi", label: "todo.source.multiple" },
+] as const;
+
+const SORT_LABELS = {
+  manual: "todo.sort.manual",
+  newest: "todo.sort.newest",
+  oldest: "todo.sort.oldest",
+  source: "todo.sort.bySource",
+} as const;
+
+const isTodoItemArray = (value: unknown): value is TodoItem[] =>
+  Array.isArray(value) && value.every((item) => {
+    if (!item || typeof item !== "object") return false;
+    const candidate = item as Partial<TodoItem>;
+    return Boolean(
+      candidate.task
+      && typeof candidate.task === "object"
+      && typeof candidate.task.title === "string"
+      && typeof candidate.completed === "boolean"
+      && (candidate.addedDate === undefined || typeof candidate.addedDate === "string"),
+    );
+  });
 
 interface TaskCategory {
   id: number;
@@ -68,6 +159,248 @@ interface TaskType {
   type: string;
   categoryId: number;
 }
+
+// Someone who can approve this student's mission. Teachers carry the class
+// they teach the student in, which is how a student actually recognises them.
+interface Approver {
+  id: number;
+  type: "parent" | "teacher";
+  name: string;
+  profileImg?: any;
+  subject?: string | null;
+  className?: string | null;
+  grade?: string | null;
+}
+
+const renderTaskResources = (task: Task) =>
+  [
+    { icon: blueSanabel, value: task.snabelBlue, label: "سنبلة زرقاء" },
+    { icon: redSanabel, value: task.snabelRed, label: "سنبلة حمراء" },
+    { icon: yellowSanabel, value: task.snabelYellow, label: "سنبلة صفراء" },
+    { icon: xpIcon, value: task.xp, label: "نقاط الخبرة" },
+  ].map((resource, index) => (
+    <div key={index} className="flex flex-col items-center min-w-[18px]">
+      <span className="flex items-end justify-center h-4">
+        <img src={resource.icon} alt={resource.label} className="w-auto max-h-4" loading="lazy" />
+      </span>
+      <h1 className="text-xs font-semibold leading-4 text-black">{resource.value}</h1>
+    </div>
+  ));
+
+// One mission card. Sortable when the list is in manual order; the drag
+// listeners are attached ONLY to the grip, so scrolling a finger anywhere else
+// on the card can never start a drag.
+const TodoCard = ({
+  item,
+  isPersonal,
+  dragEnabled,
+  busy,
+  language,
+  onToggleComplete,
+  onMenu,
+  isHistorical = false,
+}: {
+  item: TodoItem;
+  isPersonal: boolean;
+  dragEnabled: boolean;
+  busy: boolean;
+  language: string;
+  onToggleComplete: (id: number) => void;
+  onMenu: (item: TodoItem) => void;
+  isHistorical?: boolean;
+}) => {
+  const { t } = useTranslation();
+  const sortable = useSortable({ id: Number(item.id), disabled: !dragEnabled || item.completed });
+  const style = {
+    transform: CSS.Transform.toString(sortable.transform),
+    transition: sortable.transition ?? undefined,
+  };
+
+  const sources = item.sources || [];
+  const kind = todoSourceKind(item, isPersonal);
+  const taskTypeIcon = sanabelImgs[item.task.type];
+  const pending = (item.approvalRequests || []).find((request) => request.status === "pending") as any;
+  const pendingNames = (pending?.pendingWith || []).map((target: any) => target.name).filter(Boolean);
+
+  // The date must survive any width: the metadata line wraps to a second
+  // line instead of ellipsizing, and name/date live in separate bidi
+  // isolates so an English name cannot scramble the Arabic date.
+  const metadata = (() => {
+    if (isPersonal || kind === "self") {
+      return <>{t("todo.source.self")} · {formatTodoDate((sources[0] as any)?.createdAt || item.addedDate, language, true)}</>;
+    }
+    if (kind === "multi") {
+      const latest = sources.reduce((max, source: any) =>
+        (source.createdAt && source.createdAt > max ? source.createdAt : max), item.addedDate || "");
+      return <>{t("todo.multiSourceLine", { count: sources.length, date: formatTodoDate(latest, language) })}</>;
+    }
+    const source = sources[0] as any;
+    if (!source) return <>{formatTodoDate(item.addedDate, language, true)}</>;
+    return <><bdi>{source.name || t(source.sourceType)}</bdi> · {formatTodoDate(source.createdAt || item.addedDate, language, true)}</>;
+  })();
+
+  return (
+    <div
+      ref={sortable.setNodeRef}
+      style={style}
+      data-testid={`todo-card-${item.task.id}`}
+      className={`border rounded-[20px] px-4 py-3 shadow-sm ${
+        sortable.isDragging ? "shadow-lg ring-2 ring-blueprimary z-10 relative" : ""
+      } ${
+        item.completed
+          ? "bg-green-50/50 border-green-100 opacity-90"
+          : item.status === "pending_approval"
+            ? "bg-amber-50/40 border-amber-200"
+            : "bg-white border-gray-100"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0 pt-1">
+          <span
+            data-testid={`category-chip-${item.task.id}`}
+            className={`flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-full ${getCategoryVisual(item.task.categoryId).chip}`}
+          >
+            {taskTypeIcon && (
+              <img
+                src={taskTypeIcon}
+                alt=""
+                aria-hidden="true"
+                className="object-contain w-3 h-3 shrink-0"
+              />
+            )}
+            {t(item.task.type)}
+          </span>
+          {item.status === "pending_approval" && (
+            <span className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-full text-amber-700 bg-amber-50">
+              <FaRegClock size={10} aria-hidden="true" />
+              {pendingNames.length > 0
+                ? <>{t("todo.approval.waitingForPrefix")} <bdi>{pendingNames.join("، ")}</bdi></>
+                : t("todo.approval.waiting")}
+            </span>
+          )}
+          {item.status === "completed" && (
+            <span className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold text-green-700 rounded-full bg-green-50">
+              <FaCheck size={9} aria-hidden="true" />
+              {t("todo.status.completed")}
+            </span>
+          )}
+          {isHistorical && item.status === "todo" && (
+            <span className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold text-gray-600 rounded-full bg-gray-100">
+              <FaTimes size={9} aria-hidden="true" />{t("todo.status.notCompleted")}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center shrink-0">
+          {dragEnabled && !item.completed && (
+            <button
+              type="button"
+              aria-label={t("اسحب لإعادة الترتيب")}
+              data-testid={`todo-drag-${item.task.id}`}
+              className="flex-center w-8 h-10 text-gray-300 cursor-grab active:cursor-grabbing touch-none"
+              {...sortable.attributes}
+              {...sortable.listeners}
+            >
+              <FaGripVertical size={13} />
+            </button>
+          )}
+          <button
+            type="button"
+            aria-label={t("خيارات المهمة")}
+            aria-haspopup="menu"
+            data-testid={`todo-menu-${item.task.id}`}
+            onClick={() => onMenu(item)}
+            className="flex-center w-10 h-10 text-gray-400 rounded-full hover:bg-gray-100"
+          >
+            <FaEllipsisV size={15} />
+          </button>
+        </div>
+      </div>
+
+      <h3 dir="auto" className={`mt-1 text-[16px] font-bold leading-6 line-clamp-2 text-start ${item.completed ? "text-gray-500" : "text-gray-900"}`}>
+        <bdi>{t(item.task.title)}</bdi>
+      </h3>
+
+      <p className="mt-1 text-xs leading-5 text-gray-500 text-start line-clamp-2">
+        <span className={`inline-flex align-middle me-1 ${getSourceVisual(kind === "none" ? "all" : kind).iconClass}`}>
+          {getSourceVisual(kind === "none" ? "all" : kind).icon}
+        </span>
+        {metadata}
+        {item.status === "completed" && item.completedByName && (
+          <> · {t("todo.approval.approvedBy")}: <bdi className="font-medium text-green-700">{item.completedByName}</bdi></>
+        )}
+        {isHistorical && item.status === "completed" && item.completedAt && (
+          <> · {t("تم الاعتماد")}: {formatTodoDate(item.completedAt, language, true)}</>
+        )}
+      </p>
+
+      <div className="flex items-end justify-between gap-3 mt-2">
+        <div className="flex gap-2.5">{renderTaskResources(item.task)}</div>
+        <button
+          type="button"
+          aria-label={t(item.completed ? "todo.status.completed" : isHistorical ? "todo.status.notCompleted" : "تأكيد الإنجاز")}
+          aria-pressed={item.completed}
+          disabled={isHistorical || item.completed || item.status === "pending_approval" || busy}
+          data-testid={`complete-mission-${item.task.id}`}
+          data-guide-id="mission-action"
+          onClick={() => onToggleComplete(item.id)}
+          className={`w-11 h-11 rounded-full flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
+            item.completed
+              ? "bg-green-500 border border-green-500 text-white"
+              : item.status === "pending_approval"
+                ? "bg-amber-50 border border-amber-300 text-amber-500"
+                : "bg-white border-2 border-blue-300 hover:border-blueprimary"
+          }`}
+        >
+          {item.completed && <FaCheck size={14} />}
+          {!item.completed && item.status === "pending_approval" && <FaRegClock size={16} />}
+          {!item.completed && item.status !== "pending_approval" && isHistorical && <FaTimes size={14} className="text-gray-400" />}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Reusable bottom sheet: slides from the bottom edge, dark scrim, safe-area
+// padding, closes on scrim tap.
+const BottomSheet = ({
+  open,
+  onClose,
+  label,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  label: string;
+  children: ReactNode;
+}) => (
+  <AnimatePresence>
+    {open && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-end justify-center bg-black bg-opacity-50"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          role="dialog"
+          aria-label={label}
+          className="w-full max-w-md bg-white rounded-t-3xl p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="w-10 h-1 mx-auto mb-3 bg-gray-200 rounded-full" />
+          <h2 className="mb-3 text-base font-bold text-black text-start">{label}</h2>
+          {children}
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
 
 // Add Mission Modal Component
 const AddMissionModal = ({
@@ -116,11 +449,11 @@ const AddMissionModal = ({
   }, [isOpen]);
 
   const fetchCategories = async () => {
-    const authToken = localStorage.getItem("token");
+    const authToken = localStore.getItem("token");
     if (!authToken) return;
 
     try {
-      setLoading(true);
+      setLoading(true)
       setLoadError(null);
       const response = await axios.get(
         `${API_BASE_URL}/students/tasks-category`,
@@ -158,7 +491,7 @@ const AddMissionModal = ({
   }, [selectedCategoryId]);
 
   const fetchAvailableTypes = async (categoryId: number) => {
-    const authToken = localStorage.getItem("token");
+    const authToken = localStore.getItem("token");
     if (!authToken) return;
 
     try {
@@ -175,7 +508,6 @@ const AddMissionModal = ({
       );
 
       if (response.status === 200) {
-        // Extract unique types
         const uniqueTypes: string[] = [];
         const taskTypes = Array.isArray(response.data.data)
           ? response.data.data
@@ -216,7 +548,7 @@ const AddMissionModal = ({
   }, [selectedType, selectedCategoryId]);
 
   const fetchTasksForType = async (categoryId: number, type: string) => {
-    const authToken = localStorage.getItem("token");
+    const authToken = localStore.getItem("token");
     if (!authToken) return;
 
     try {
@@ -332,7 +664,7 @@ const AddMissionModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="flex flex-col w-11/12 max-w-2xl max-h-[90vh] bg-white rounded-xl p-5 shadow-xl">
+      <div className="flex flex-col w-11/12 max-w-2xl max-h-[90vh] max-h-[90dvh] bg-white rounded-xl p-5 shadow-xl">
         <h2 className="flex-shrink-0 mb-3 text-xl font-bold text-center text-black">
           {t("إضافة مهمة جديدة")}
         </h2>
@@ -374,7 +706,7 @@ const AddMissionModal = ({
           {/* Category Selection */}
           {!loading && !loadError && selectedCategoryId === null && (
             <div className="mb-4">
-              <h3 className="mb-3 text-lg font-semibold text-right text-black">
+              <h3 className="mb-3 text-lg font-semibold text-end text-black">
                 {t("اختر الفئة")}
               </h3>
               <div className="grid grid-cols-2 gap-3">
@@ -414,7 +746,7 @@ const AddMissionModal = ({
                 >
                   ← {t("العودة للفئات")}
                 </button>
-                <h3 className="text-lg font-semibold text-right text-black">
+                <h3 className="text-lg font-semibold text-end text-black">
                   {t("اختر النوع")}
                 </h3>
               </div>
@@ -454,7 +786,15 @@ const AddMissionModal = ({
                   ← {t("العودة للأنواع")}
                 </button>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blueprimary font-bold">
+                  <span className="flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blueprimary font-bold">
+                    {getTaskTypeImage(selectedType) && (
+                      <img
+                        src={getTaskTypeImage(selectedType)}
+                        alt=""
+                        aria-hidden="true"
+                        className="object-contain w-5 h-5"
+                      />
+                    )}
                     {t(selectedType)}
                   </span>
                 </div>
@@ -505,7 +845,7 @@ const AddMissionModal = ({
                           {renderResources(task)}
                         </div>
                         <div className="flex flex-col items-end gap-0.5">
-                          <h3 className="text-sm font-bold text-right text-black" dir="rtl">
+                          <h3 className="text-sm font-bold text-end text-black" dir="auto">
                             {t(task.title)}
                           </h3>
                         </div>
@@ -518,7 +858,7 @@ const AddMissionModal = ({
                 {alreadyAddedTasks.length > 0 && (
                   <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-gray-100">
                     {!allTasksAdded && (
-                      <p className="text-xs font-bold text-gray-500 text-right mb-1">
+                      <p className="text-xs font-bold text-gray-500 text-end mb-1">
                         {t("مهام مضافة بالفعل")} ({alreadyAddedTasks.length})
                       </p>
                     )}
@@ -536,7 +876,7 @@ const AddMissionModal = ({
                               <FaCheck size={10} />
                               <span>{t("مضافة بالفعل في قائمتك")}</span>
                             </div>
-                            <h3 className="text-sm font-medium text-right text-gray-600" dir="rtl">
+                            <h3 className="text-sm font-medium text-end text-gray-600" dir="auto">
                               {t(task.title)}
                             </h3>
                           </div>
@@ -572,25 +912,51 @@ const AddMissionModal = ({
   );
 };
 
-const TodoList = () => {
-  const { t } = useTranslation();
+const LegacyTodoList = () => {
+  const { t, i18n } = useTranslation();
   const { user, refreshUserData, mutateStudent } = useUserContext();
   const [storedItems, setTodoItems] = useState<TodoItem[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [serverToday, setServerToday] = useState(() => new Date().toISOString().slice(0, 10));
+  const [earliestDate, setEarliestDate] = useState<string | undefined>();
+  const [historyBoundaryAttempted, setHistoryBoundaryAttempted] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [historicalPendingCount, setHistoricalPendingCount] = useState(0);
+  const [oldestHistoricalPendingDate, setOldestHistoricalPendingDate] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [filter, setFilter] = useState<"all" | "active" | "completed" | "pending">("all");
+  const [sourceFilter, setSourceFilter] = useState<"all" | TodoSourceKind>("all");
+  const [sortMode, setSortMode] = useState<"manual" | "newest" | "oldest" | "source">("manual");
+  const [menuItem, setMenuItem] = useState<TodoItem | null>(null);
+  const [detailsItem, setDetailsItem] = useState<TodoItem | null>(null);
+  const [retargetItem, setRetargetItem] = useState<TodoItem | null>(null);
+  const [showSortSheet, setShowSortSheet] = useState(false);
+  const [showSourceSheet, setShowSourceSheet] = useState(false);
+  // Distinguishes "still loading" from a genuine empty list, so the summary
+  // never shows fake zeros and failures get a retry state instead of a blank.
+  const [isListLoading, setIsListLoading] = useState(true);
+  const [listError, setListError] = useState(false);
+  const retargetBusy = useRef(false);
+  // The first School request deliberately omits a date. This ref records the
+  // user for whom serverToday has been learned, so a fast/future device clock
+  // can never make the bootstrap request ask the server for a future day.
+  const schoolDateBootstrappedFor = useRef<number | null>(null);
 
   // State to manage the confirmation popup for marking complete
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<TodoItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedMissionId, setSelectedMissionId] = useState<number | null>(
     null,
   );
   const [showCongratsPopup, setShowCongratsPopup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [approvers, setApprovers] = useState<Array<{ id: number; type: "parent" | "teacher"; name: string }>>([]);
-  const [selectedApprover, setSelectedApprover] = useState<{ id: number; type: "parent" | "teacher"; name: string } | null>(null);
+  const [approvers, setApprovers] = useState<Approver[]>([]);
+  const [selectedApprover, setSelectedApprover] = useState<Approver | null>(null);
 
-  const role = localStorage.getItem("role");
+  const role = localStore.getItem("role");
 
   const grade = user?.grade;
 
@@ -609,13 +975,31 @@ const TodoList = () => {
   }));
 
   const fetchSchoolTodo = async () => {
-    const authToken = localStorage.getItem("token");
+    const authToken = localStore.getItem("token");
     if (!authToken) return;
+    setListError(false);
+    const hasServerDate = schoolDateBootstrappedFor.current === user?.id;
     const [todoResponse, approverResponse] = await Promise.all([
-      axios.get(`${API_BASE_URL}/mission/todo`, { headers: { Authorization: `Bearer ${authToken}` } }),
+      axios.get(`${API_BASE_URL}/mission/todo`, {
+        ...(hasServerDate ? { params: { date: selectedDate } } : {}),
+        headers: { Authorization: `Bearer ${authToken}` },
+      }),
       axios.get(`${API_BASE_URL}/mission/myApprovers`, { headers: { Authorization: `Bearer ${authToken}` } }),
     ]);
-    const items = Array.isArray(todoResponse.data.data) ? todoResponse.data.data : [];
+    const payload = todoResponse.data.data;
+    const items = Array.isArray(payload) ? payload : (Array.isArray(payload?.items) ? payload.items : []);
+    if (!Array.isArray(payload)) {
+      const authoritativeToday = typeof payload?.serverToday === "string" ? payload.serverToday : null;
+      if (authoritativeToday) {
+        const wasViewingToday = !hasServerDate || selectedDate === serverToday;
+        schoolDateBootstrappedFor.current = user?.id ?? null;
+        if (wasViewingToday && authoritativeToday !== selectedDate) setSelectedDate(authoritativeToday);
+        setServerToday(authoritativeToday);
+      }
+      setEarliestDate(payload?.earliestDate || undefined);
+      setHistoricalPendingCount(Number(payload?.historicalPendingCount) || 0);
+      setOldestHistoricalPendingDate(payload?.oldestHistoricalPendingDate || null);
+    }
     setTodoItems(items.map((item: any) => ({
       id: item.id,
       task: item.Task,
@@ -626,6 +1010,10 @@ const TodoList = () => {
       approvalRequests: item.ApprovalRequests || [],
       completionSource: item.completionSource,
       completedByName: item.completedByName,
+      position: item.position,
+      missionDate: item.missionDate,
+      dayId: item.dayId,
+      completedAt: item.completedAt,
     })));
     setApprovers(approverResponse.data?.data?.approvers || []);
   };
@@ -633,36 +1021,58 @@ const TodoList = () => {
   useEffect(() => {
     if (!user) return;
     if (!isPersonal) {
-      void fetchSchoolTodo().catch((error) => {
-        console.error("Error loading School Student To-Do:", error);
-        setTodoItems([]);
-      });
+      setIsListLoading(true);
+      void fetchSchoolTodo()
+        .catch((error) => {
+          console.error("Error loading School Student To-Do:", error);
+          setTodoItems([]);
+          setListError(true);
+        })
+        .finally(() => setIsListLoading(false));
       setLoadedFor(user.id);
       return;
     }
+    setIsListLoading(false);
     try {
       const key = `sanabel:todos:${user.id}`;
-      let selections = localStorage.getItem(key);
+      let selections = localStore.getItem(key);
       // Adopt the legacy shared selection list once for the signed-in user.
       // Its cached completion flags are deliberately never trusted.
-      if (selections === null && !localStorage.getItem("sanabel:legacy-todos-migrated")) {
-        selections = localStorage.getItem("todoList");
-        if (selections) localStorage.setItem(key, selections);
-        localStorage.setItem("sanabel:legacy-todos-migrated", String(user.id));
+      if (selections === null && !localStore.getItem("sanabel:legacy-todos-migrated")) {
+        selections = localStore.getItem("todoList");
+        if (selections) localStore.setItem(key, selections);
+        localStore.setItem("sanabel:legacy-todos-migrated", String(user.id));
       }
-      const saved = JSON.parse(selections || "[]");
-      setTodoItems(Array.isArray(saved) ? saved : []);
+      const saved = selections === null
+        ? []
+        : localStore.getJson<TodoItem[]>(key, [], isTodoItemArray);
+      setTodoItems(saved);
     } catch {
       setTodoItems([]);
     }
     setLoadedFor(user.id);
     void refreshUserData();
-  }, [user?.id, isPersonal, refreshUserData]);
+  }, [user?.id, isPersonal, refreshUserData, selectedDate]);
+
+  // Resume/focus is the reliable mobile day-boundary trigger. The next API
+  // response supplies serverToday; the phone's clock never chooses reward day.
+  useEffect(() => {
+    if (!user || isPersonal) return;
+    const refreshOnResume = () => {
+      if (document.visibilityState === "visible") void fetchSchoolTodo().catch(() => setListError(true));
+    };
+    window.addEventListener("focus", refreshOnResume);
+    document.addEventListener("visibilitychange", refreshOnResume);
+    return () => {
+      window.removeEventListener("focus", refreshOnResume);
+      document.removeEventListener("visibilitychange", refreshOnResume);
+    };
+  }, [user?.id, isPersonal, selectedDate, serverToday]);
 
   useEffect(() => {
     if (!user || !isPersonal || loadedFor !== user.id) return;
     try {
-      localStorage.setItem(`sanabel:todos:${user.id}`, JSON.stringify(storedItems.map(item => ({ ...item, completed: false }))));
+      localStore.setItem(`sanabel:todos:${user.id}`, JSON.stringify(storedItems.map(item => ({ ...item, completed: false }))));
     } catch {
       // Selections remain usable in memory when browser storage is unavailable.
     }
@@ -670,7 +1080,7 @@ const TodoList = () => {
 
   const addMission = async (task: Task) => {
     if (!isPersonal) {
-      const authToken = localStorage.getItem("token");
+      const authToken = localStore.getItem("token");
       if (!authToken || submitting.current) return;
       submitting.current = true;
       try {
@@ -727,7 +1137,7 @@ const TodoList = () => {
       if (!selectedItem) return;
       if (!isPersonal) {
         if (!selectedApprover) return;
-        const authToken = localStorage.getItem("token");
+        const authToken = localStore.getItem("token");
         await axios.post(`${API_BASE_URL}/mission/requestApproval`, {
           taskId: selectedItem.task.id,
           todoItemId: selectedItem.id,
@@ -771,12 +1181,12 @@ const TodoList = () => {
 
   const deleteTodo = async (id: number) => {
     if (!isPersonal) {
-      const authToken = localStorage.getItem("token");
+      const authToken = localStore.getItem("token");
       try {
         await axios.delete(`${API_BASE_URL}/mission/todo/${id}`, { headers: { Authorization: `Bearer ${authToken}` } });
         await fetchSchoolTodo();
       } catch (error) {
-        alert(t(describeApiError(error)));
+        toast.error(t(describeApiError(error)));
       }
       return;
     }
@@ -784,6 +1194,19 @@ const TodoList = () => {
       const updated = prev.filter((item) => item.id !== id);
       return updated;
     });
+  };
+
+  // Deleting is destructive and the trash sits a thumb-width from the
+  // completion circle, so it always passes through an explicit confirmation.
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await deleteTodo(confirmDelete.id);
+    } finally {
+      setIsDeleting(false);
+      setConfirmDelete(null);
+    }
   };
 
   const getTaskTypeImage = (type: string) => {
@@ -809,225 +1232,407 @@ const TodoList = () => {
       </div>
     ));
 
-  // Filter todos based on search and completion status
+  // Filter todos: status tab + source + search all combine.
   const filteredTodos = todoItems.filter((item) => {
+    const query = searchQuery.toLowerCase();
     const matchesSearch =
-      item.task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t(item.task.title).toLowerCase().includes(searchQuery.toLowerCase());
+      !query ||
+      item.task.title.toLowerCase().includes(query) ||
+      t(item.task.title).toLowerCase().includes(query) ||
+      t(item.task.type).toLowerCase().includes(query) ||
+      (item.sources || []).some((source) => (source.name || "").toLowerCase().includes(query));
+    if (!matchesSearch) return false;
 
-    if (filter === "completed") return matchesSearch && item.completed;
-    if (filter === "pending") return matchesSearch && item.status === "pending_approval";
-    if (filter === "active") return matchesSearch && !item.completed && item.status !== "pending_approval";
-    return matchesSearch;
+    if (sourceFilter !== "all" && todoSourceKind(item, isPersonal) !== sourceFilter) return false;
+
+    if (filter === "completed") return item.completed;
+    if (filter === "pending") return !isPersonal && item.status === "pending_approval";
+    if (filter === "active") return !item.completed && item.status !== "pending_approval";
+    return true;
   });
+
+  const addedTime = (item: TodoItem) => new Date(item.addedDate || 0).getTime();
+
+  // "My order" keeps the incoming order: the server already sorts by the
+  // persisted position for school students, and the solo list's array order IS
+  // the manual order. Completed history always sorts by recency — nobody
+  // should have to hand-sort what is already done.
+  const actionableTodos = filteredTodos.filter((item) => !item.completed);
+  const completedTodos = filteredTodos
+    .filter((item) => item.completed)
+    .sort((a, b) => addedTime(b) - addedTime(a));
+
+  const sortedActionable = (() => {
+    if (sortMode === "newest") return [...actionableTodos].sort((a, b) => addedTime(b) - addedTime(a));
+    if (sortMode === "oldest") return [...actionableTodos].sort((a, b) => addedTime(a) - addedTime(b));
+    return actionableTodos;
+  })();
+
+  // Grouped view for "by source". Multi-source items form their own group.
+  const SOURCE_GROUPS: Array<{ key: TodoSourceKind; label: string }> = [
+    { key: "self", label: "أضفتها أنا" },
+    { key: "teacher", label: "من المعلمين" },
+    { key: "parent", label: "من أولياء الأمور" },
+    { key: "multi", label: "مصادر متعددة" },
+  ];
+  const sourceGroups = SOURCE_GROUPS
+    .map((group) => ({ ...group, items: sortedActionable.filter((item) => todoSourceKind(item, isPersonal) === group.key) }))
+    .filter((group) => group.items.length > 0);
+
+  // Manual drag exists only when what the student sees is the complete
+  // actionable set in their own order — otherwise a drop would silently
+  // rewrite the order of items that are not on screen.
+  const dragEnabled =
+    !isPersonal ? selectedDate === serverToday &&
+    sortMode === "manual" &&
+    sourceFilter === "all" &&
+    searchQuery === "" &&
+    (filter === "all" || filter === "active" || filter === "pending") :
+    sortMode === "manual" && sourceFilter === "all" && searchQuery === "" && (filter === "all" || filter === "active" || filter === "pending");
+
+  const sensors = useSensors(
+    // Small activation distance/delay so vertical scrolling never turns into
+    // an accidental drag on touch screens.
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const persistReorder = async (payload: Array<{ id: number; position: number }>) => {
+    if (isPersonal) return; // the storage effect persists the array order
+    const authToken = localStore.getItem("token");
+    if (!authToken) return;
+    try {
+      await axios.patch(`${API_BASE_URL}/mission/todo/reorder`, { items: payload }, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+    } catch {
+      // Roll back to the authoritative order rather than leaving the client
+      // and server disagreeing about positions.
+      toast.error(t("تعذر حفظ ترتيب المهام"));
+      await fetchSchoolTodo().catch(() => undefined);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const actionableIds = sortedActionable.map((item) => Number(item.id));
+    const result = computeReorder(actionableIds, Number(active.id), Number(over.id));
+    if (!result) return;
+    // Optimistic: rebuild the base list with the actionable block in its new
+    // order; completed rows keep their place after it.
+    setTodoItems((prev) => {
+      const byId = new Map(prev.map((item) => [Number(item.id), item]));
+      const reordered = result.ids.map((id) => byId.get(id)).filter(Boolean) as TodoItem[];
+      const rest = prev.filter((item) => !result.ids.includes(Number(item.id)));
+      return [...reordered, ...rest];
+    });
+    void persistReorder(result.payload);
+  };
+
+  const pendingRequestOf = (item: TodoItem) =>
+    (item.approvalRequests || []).find((request) => request.status === "pending");
+
+  const retargetTo = async (approver: Approver) => {
+    if (!retargetItem || retargetBusy.current) return;
+    const request = pendingRequestOf(retargetItem);
+    if (!request) { setRetargetItem(null); return; }
+    retargetBusy.current = true;
+    const authToken = localStore.getItem("token");
+    try {
+      await axios.post(`${API_BASE_URL}/mission/approval/${request.id}/retarget`,
+        { approverType: approver.type, approverId: approver.id },
+        { headers: { Authorization: `Bearer ${authToken}` } });
+      toast.success(`${t("تم إرسال الطلب إلى")} ${approver.name}`);
+      setRetargetItem(null);
+      await fetchSchoolTodo();
+    } catch (error) {
+      toast.error(t(describeApiError(error)));
+    } finally {
+      retargetBusy.current = false;
+    }
+  };
 
   const getStats = () => {
     const total = todoItems.length;
     const completed = todoItems.filter((item) => item.completed).length;
-    const pending = todoItems.filter((item) => item.status === "pending_approval").length;
+    const pending = isPersonal ? 0 : todoItems.filter((item) => item.status === "pending_approval").length;
     const active = total - completed - pending;
     return { total, completed, pending, active };
   };
 
   const stats = getStats();
+  const isHistorical = !isPersonal && selectedDate < serverToday;
+  const shiftSelectedDate = (days: number) => {
+    const date = new Date(`${selectedDate}T12:00:00.000Z`);
+    date.setUTCDate(date.getUTCDate() + days);
+    const next = date.toISOString().slice(0, 10);
+    if (earliestDate && next < earliestDate) {
+      setHistoryBoundaryAttempted(true);
+      return;
+    }
+    if (next <= serverToday) {
+      setHistoryBoundaryAttempted(false);
+      setSelectedDate(next);
+    }
+  };
+  const yesterday = (() => { const date = new Date(`${serverToday}T12:00:00.000Z`); date.setUTCDate(date.getUTCDate() - 1); return date.toISOString().slice(0, 10); })();
+  const selectedDateLabel = selectedDate === serverToday
+    ? t("todo.date.today")
+    : selectedDate === yesterday ? t("todo.date.yesterday")
+      : new Date(`${selectedDate}T12:00:00.000Z`).toLocaleDateString(i18n.language === "en" ? "en-US" : "ar-EG", { weekday: "long" });
+  const selectedDateCaption = new Date(`${selectedDate}T12:00:00.000Z`).toLocaleDateString(i18n.language === "en" ? "en-US" : "ar-EG", { day: "numeric", month: "short" });
+  const isRtl = (i18n.resolvedLanguage || i18n.language || "ar").startsWith("ar");
 
   return (
+    // One natural scroll region: the page itself. No nested fixed-height list
+    // with its own scrollbar.
     <div
-      className="flex flex-col items-center justify-between gap-5 p-4 overflow-y-auto"
+      className="flex flex-col items-center gap-3 px-4 pt-3 pb-4 overflow-y-auto no-scrollbar"
       id="page-height"
+      dir={isRtl ? "rtl" : "ltr"}
+      lang={isRtl ? "ar" : "en"}
     >
       {/* Header */}
-      <div className="flex-col w-full gap-3 flex-center">
+      <div className="flex-col w-full gap-2.5 flex-center">
         <div className="flex flex-row-reverse items-center justify-between w-full">
           <div className="w-16 h-16"></div>
-          <h1 className="text-2xl font-bold text-black" dir="ltr">
-            {t("قائمة المهام")}
+          <h1 className="text-2xl font-bold text-black">
+            {t("todo.page.title")}
           </h1>
           <GoBackButton />
         </div>
 
-        {/* Search Bar */}
-        <div className="flex items-center justify-between w-full px-2 py-1 border-2 rounded-xl">
-          <input
-            type="text"
-            placeholder={t("ابحث عن مهمة")}
-            className="w-full py-3 text-black bg-transparent drop-shadow-sm text-start"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <div className="w-10 h-10 bg-blueprimary rounded-xl flex-center">
-            <SearchIcon className="text-white" size={20} />
+        <div className="flex items-center w-full gap-2">
+              <button type="button" aria-label={t("todo.date.previous")} onClick={() => shiftSelectedDate(-1)}
+                className="w-10 h-10 text-gray-600 bg-gray-100 rounded-xl flex-center">
+                {isRtl ? <FaChevronRight size={13} /> : <FaChevronLeft size={13} />}
+              </button>
+              <button
+                type="button"
+                aria-label={t("todo.date.select")}
+                aria-haspopup="dialog"
+                aria-expanded={showDatePicker}
+                onClick={() => setShowDatePicker(true)}
+                className="relative flex items-center justify-center flex-1 h-10 gap-2 text-sm font-bold text-gray-800 bg-white border border-gray-200 rounded-xl cursor-pointer"
+              >
+                <FaCalendarAlt size={13} className="text-blueprimary" />
+                <span className="flex flex-col leading-tight text-center"><span>{selectedDateLabel}</span><span className="text-[10px] font-medium text-gray-400">{selectedDateCaption}</span></span>
+              </button>
+              <button type="button" aria-label={t("todo.date.next")} onClick={() => shiftSelectedDate(1)}
+                disabled={selectedDate >= serverToday} className="w-10 h-10 text-gray-600 bg-gray-100 rounded-xl flex-center disabled:opacity-30">
+                {isRtl ? <FaChevronLeft size={13} /> : <FaChevronRight size={13} />}
+              </button>
+              <button type="button" aria-label={searchOpen ? t("إغلاق البحث") : t("todo.search")} onClick={() => {
+                setSearchOpen((open) => !open); if (searchOpen) setSearchQuery("");
+              }} className="w-10 h-10 text-white rounded-xl bg-blueprimary flex-center">
+                {searchOpen ? <FaTimes size={16} /> : <SearchIcon className="text-white" size={17} />}
+              </button>
+            </div>
+            {selectedDate !== serverToday && (
+              <button type="button" onClick={() => { setHistoryBoundaryAttempted(false); setSelectedDate(serverToday); }} className="self-start text-xs font-semibold text-blueprimary">{t("todo.date.backToToday")}</button>
+            )}
+            {historyBoundaryAttempted && selectedDate !== serverToday && (
+              <p data-testid="todo-history-boundary" className="w-full text-center text-[11px] leading-4 text-gray-400">
+                {t("todo.date.firstDay")}
+              </p>
+            )}
+        {!isPersonal && selectedDate === serverToday && historicalPendingCount > 0 && (
+          <button type="button" onClick={() => { setHistoryBoundaryAttempted(false); if (oldestHistoricalPendingDate) setSelectedDate(oldestHistoricalPendingDate); }}
+            className="w-full px-3 py-2 text-xs font-semibold text-amber-800 bg-amber-50 rounded-xl text-start">
+            {t("todo.historical.pending", { count: historicalPendingCount })}
+          </button>
+        )}
+        {searchOpen && (
+          <div className="flex items-center justify-between w-full px-2 py-1 border-2 rounded-xl">
+            <input type="text" placeholder={t("todo.searchPlaceholder")}
+              className="w-full py-2.5 text-black bg-transparent drop-shadow-sm text-start" value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)} autoFocus={!isPersonal} />
+            <div className="w-10 h-10 bg-blueprimary rounded-xl flex-center"><SearchIcon className="text-white" size={20} /></div>
           </div>
+        )}
+
+        {/* Status summary — one compact line per tab: label + count badge. */}
+        <div className={`grid w-full ${isPersonal ? "grid-cols-3" : "grid-cols-4"} gap-1.5`} role="tablist" aria-label={t("todo.status.label")}>
+          {([
+            { key: "all" as const, label: "todo.status.all", count: stats.total },
+            { key: "active" as const, label: "todo.status.inProgress", count: stats.active },
+            ...(!isPersonal ? [{ key: "pending" as const, label: "todo.status.pending", count: stats.pending }] : []),
+            { key: "completed" as const, label: "todo.status.completed", count: stats.completed },
+          ]).map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={filter === tab.key}
+              data-testid={`status-tab-${tab.key}`}
+              onClick={() => setFilter(tab.key)}
+              className={`flex items-center justify-center gap-1 h-11 px-1 rounded-xl text-[11px] font-bold transition-colors ${
+                filter === tab.key
+                  ? "bg-blueprimary text-white shadow-sm"
+                  : "bg-gray-100 text-gray-600"
+              }`}
+            >
+              <span className={filter === tab.key ? "text-white" : getStatusVisual(tab.key).iconClass}>
+                {getStatusVisual(tab.key).icon}
+              </span>
+              {t(tab.label)}
+              <span className={`flex-center min-w-[18px] h-[18px] px-1 text-[10px] rounded-full ${
+                filter === tab.key ? "bg-white text-blueprimary" : "bg-white text-gray-500"
+              }`}>
+                {isListLoading ? "…" : tab.count}
+              </span>
+            </button>
+          ))}
         </div>
 
-        {/* Filter Buttons */}
-        <div className="grid w-full grid-cols-4 gap-2">
-          <div
-            className={`flex-center py-2 px-2 gap-1 rounded-xl text-xs font-medium cursor-pointer ${
-              filter === "all"
-                ? "bg-blueprimary text-white"
-                : "bg-gray-100 text-gray-700"
-            }`}
-            onClick={() => setFilter("all")}
+        {/* Source + sort: two compact dropdowns instead of a chip row, so the
+            Parent option can never scroll out of reach on narrow screens. */}
+        <div className="flex items-center justify-between w-full gap-2">
+          {!isPersonal ? (
+            <button
+              type="button"
+              data-testid="todo-source-button"
+              aria-haspopup="dialog"
+              onClick={() => setShowSourceSheet(true)}
+              className={`flex items-center gap-1.5 px-3 h-9 text-xs font-semibold rounded-full ${getSourceVisual(sourceFilter === "none" ? "all" : sourceFilter).triggerClass}`}
+            >
+              <span className={getSourceVisual(sourceFilter === "none" ? "all" : sourceFilter).iconClass}>
+                {getSourceVisual(sourceFilter === "none" ? "all" : sourceFilter).icon}
+              </span>
+              {t("todo.source.label")}: {t(SOURCE_OPTIONS.find((option) => option.key === sourceFilter)?.label || "todo.source.all")}
+              <FaChevronDown size={10} aria-hidden="true" />
+            </button>
+          ) : <span />}
+          <button
+            type="button"
+            data-testid="todo-sort-button"
+            aria-haspopup="dialog"
+            onClick={() => setShowSortSheet(true)}
+            className="flex items-center gap-1.5 px-3 h-9 text-xs font-semibold text-gray-700 bg-gray-100 rounded-full shrink-0"
           >
-            {t("الكل")}
-            <span className="w-4 h-4 bg-white rounded-full flex-center text-blueprimary">
-              {stats.total}
-            </span>
-          </div>
-          <div
-            className={`flex-center py-2 px-2 gap-1 rounded-xl text-xs font-medium cursor-pointer ${
-              filter === "active"
-                ? "bg-blueprimary text-white"
-                : "bg-gray-100 text-gray-700"
-            }`}
-            onClick={() => setFilter("active")}
-          >
-            {t("To Do")}
-            <span className="w-4 h-4 bg-white rounded-full flex-center text-blueprimary">
-              {stats.active}
-            </span>
-          </div>
-          <div
-            className={`flex-center py-2 px-2 gap-1 rounded-xl text-xs font-medium cursor-pointer ${
-              filter === "pending"
-                ? "bg-blueprimary text-white"
-                : "bg-gray-100 text-gray-700"
-            }`}
-            onClick={() => setFilter("pending")}
-          >
-            {t("معلقة")}
-            <span className="w-4 h-4 bg-white rounded-full flex-center text-blueprimary">
-              {stats.pending}
-            </span>
-          </div>
-          <div
-            className={`flex-center py-2 px-2 gap-1 rounded-xl text-xs font-medium cursor-pointer ${
-              filter === "completed"
-                ? "bg-blueprimary text-white"
-                : "bg-gray-100 text-gray-700"
-            }`}
-            onClick={() => setFilter("completed")}
-          >
-            {t("مكتملة")}
-            <span className="w-4 h-4 bg-white rounded-full flex-center text-blueprimary">
-              {stats.completed}
-            </span>
-          </div>
+            <FaSortAmountDown size={11} className="text-gray-500" aria-hidden="true" />
+            {t(SORT_LABELS[sortMode])}
+            <FaChevronDown size={10} aria-hidden="true" />
+          </button>
         </div>
       </div>
 
       {/* Todo List */}
-      <div className="flex flex-col justify-start w-full h-full gap-3 overflow-y-auto">
-        {filteredTodos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500">
-            <div className="mb-4 text-6xl">📝</div>
-            <div className="text-lg font-medium">{t("لا توجد مهام")}</div>
-            <div className="text-sm">
-              {t("اضغط على زر الإضافة لإنشاء مهمة جديدة")}
-            </div>
-          </div>
-        ) : (
-          filteredTodos.map((item: TodoItem, index) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 50, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{
-                duration: 0.5,
-                delay: index * 0.1,
-                type: "spring",
-                stiffness: 100,
-              }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className={`border-2 rounded-xl p-3 ${
-                item.completed
-                  ? "bg-green-50 border-green-200"
-                  : "bg-white border-gray-200"
-              }`}
-            >
-              <div className="flex items-start justify-between w-full h-full overflow-y-auto">
-                <div className="flex-1 ">
-                  <div className="flex items-center justify-between w-full h-full">
-                    {(isPersonal || (item.status === "todo" && !(item.sources || []).some((source) => source.sourceType !== "student"))) && (
-                      <button
-                        onClick={() => deleteTodo(item.id)}
-                        className="flex items-center justify-center w-6 h-6 text-white bg-red-500 rounded-full hover:bg-red-600"
-                      >
-                        <FaTrash size={10} />
-                      </button>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-600">
-                        {t(item.task.type)}
-                      </span>
-                    </div>
-
-                    {(
-                        <button
-                          type="button"
-                          aria-label={t(item.completed ? "مكتملة" : "تأكيد الإنجاز")}
-                          aria-pressed={item.completed}
-                          disabled={item.completed || item.status === "pending_approval" || isLoading || !user}
-                          data-testid={`complete-mission-${item.task.id}`}
-                          data-guide-id="mission-action"
-                          onClick={() =>
-                            handleToggleCompleteClick(item.id)
-                          }
-                          className={`w-8 h-8 rounded-full border-2 flex items-center justify-center cursor-pointer ${
-                            item.completed
-                              ? "bg-green-500 border-green-500 text-white"
-                              : "border-gray-300 hover:border-green-500"
-                          }`}
-                        >
-                          {item.completed && <FaCheck size={12} />}
-                        </button>
-                      )}
-                  </div>
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex w-1/4 gap-1">
-                      {renderResources(item.task)}
-                    </div>
-                    <h3
-                      className={`font-medium text-sm ${
-                        item.completed ? "text-gray-500" : "text-black"
-                      }`}
-                    >
-                      {t(item.task.title)}
-                    </h3>
-                  </div>
-                  {!isPersonal && (
-                    <div className="mt-2 text-xs text-gray-600 text-end">
-                      {(item.sources || []).length > 0 ? (
-                        <span>{(item.sources || []).map((source) => source.sourceType === "student"
-                          ? t("Added by you")
-                          : `${t("Assigned by")}: ${source.name || t(source.sourceType)}`).join(" • ")}</span>
-                      ) : <span>{t("No prior assignment")}</span>}
-                      {item.status === "pending_approval" && <span className="block font-semibold text-amber-600">{t("Waiting for approval")}</span>}
-                      {item.status === "completed" && (
-                        <span className="block font-semibold text-green-700">
-                          {t("Completed")}{item.completedByName ? ` — ${t("Confirmed by")}: ${item.completedByName}` : ""}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
+      <div className="flex flex-col justify-start w-full gap-3 pb-2">
+        {isListLoading ? (
+          <div className="flex flex-col gap-3" aria-label={t("todo.loading")}>
+            {[0, 1, 2].map((skeleton) => (
+              <div key={skeleton} className="p-4 bg-white border border-gray-100 shadow-sm rounded-[20px] animate-pulse">
+                <div className="w-16 h-4 bg-gray-100 rounded-full" />
+                <div className="w-3/4 h-5 mt-3 bg-gray-100 rounded" />
+                <div className="w-1/2 h-3 mt-2 bg-gray-100 rounded" />
               </div>
-            </motion.div>
-          ))
+            ))}
+          </div>
+        ) : listError ? (
+          <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+            <div className="mb-3 text-5xl">⚠️</div>
+            <p className="text-sm">{t("todo.loadError")}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setIsListLoading(true);
+                void fetchSchoolTodo().catch(() => setListError(true)).finally(() => setIsListLoading(false));
+              }}
+              className="px-5 py-2 mt-4 text-sm font-semibold border rounded-xl text-blueprimary border-blueprimary"
+            >
+              {t("todo.retry")}
+            </button>
+          </div>
+        ) : filteredTodos.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+            <div className="mb-4 text-6xl">📝</div>
+            <div className="text-lg font-medium">
+              {searchQuery
+                ? t("todo.empty.results")
+                : filter === "active"
+                  ? t("todo.empty.inProgress")
+                  : filter === "pending"
+                    ? t("todo.empty.pending")
+                    : filter === "completed"
+                      ? t("todo.empty.completed")
+                      : t("todo.empty.all")}
+            </div>
+            <div className="text-sm">{t("اضغط على زر الإضافة لإنشاء مهمة جديدة")}</div>
+          </div>
+        ) : sortMode === "source" ? (
+          <>
+            {sourceGroups.map((group) => (
+              <section key={group.key}>
+                <h2 className="flex items-center justify-between mb-2 text-sm font-bold text-gray-700 text-start">
+                  {t(group.label)}
+                  <span className="px-2 py-0.5 text-xs text-gray-500 bg-gray-100 rounded-full">{group.items.length}</span>
+                </h2>
+                <div className="flex flex-col gap-3">
+                  {group.items.map((item) => (
+                    <TodoCard key={item.id} item={item} isPersonal={isPersonal} isHistorical={isHistorical} dragEnabled={false}
+                      busy={isLoading || !user} language={i18n.language}
+                      onToggleComplete={handleToggleCompleteClick} onMenu={setMenuItem} />
+                  ))}
+                </div>
+              </section>
+            ))}
+            {completedTodos.length > 0 && (filter === "all" || filter === "completed") && (
+              <section>
+                <h2 className="mb-2 text-sm font-bold text-gray-500 text-start">{t("todo.status.completed")}</h2>
+                <div className="flex flex-col gap-3">
+                  {completedTodos.map((item) => (
+                    <TodoCard key={item.id} item={item} isPersonal={isPersonal} isHistorical={isHistorical} dragEnabled={false}
+                      busy={isLoading || !user} language={i18n.language}
+                      onToggleComplete={handleToggleCompleteClick} onMenu={setMenuItem} />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        ) : (
+          <>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={sortedActionable.map((item) => Number(item.id))} strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-3">
+                  {sortedActionable.map((item) => (
+                    <TodoCard key={item.id} item={item} isPersonal={isPersonal} isHistorical={isHistorical} dragEnabled={dragEnabled}
+                      busy={isLoading || !user} language={i18n.language}
+                      onToggleComplete={handleToggleCompleteClick} onMenu={setMenuItem} />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+            {completedTodos.length > 0 && (filter === "all" || filter === "completed") && (
+              <div className="flex flex-col gap-3">
+                {sortedActionable.length > 0 && (
+                  <h2 className="mt-1 text-sm font-bold text-gray-500 text-start">{t("todo.status.completed")}</h2>
+                )}
+                {completedTodos.map((item) => (
+                  <TodoCard key={item.id} item={item} isPersonal={isPersonal} isHistorical={isHistorical} dragEnabled={false}
+                    busy={isLoading || !user} language={i18n.language}
+                    onToggleComplete={handleToggleCompleteClick} onMenu={setMenuItem} />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* Add Mission Button */}
-      <div className="w-full">
-        <PrimaryButton
-          style="w-full bg-blueprimary"
-          text={t("إضافة مهمة جديدة")}
-          arrow="none"
+      {/* Add Mission CTA — pinned above the bottom navigation, clear of the
+          iOS home indicator via the shell's safe-area padding. */}
+      {!isHistorical && <div className="sticky bottom-0 z-20 flex justify-center w-full pt-2 pb-1 bg-gradient-to-t from-white via-white to-transparent">
+        <button
+          type="button"
           onClick={() => setShowAddModal(true)}
-        />
-      </div>
+          className="flex items-center justify-center gap-2 px-8 h-[52px] text-lg font-bold text-white rounded-full shadow-md bg-gradient-to-r from-[#2293c7] to-blueprimary active:scale-[0.98] transition-transform"
+        >
+          <FaPlus size={15} aria-hidden="true" />
+          {t("todo.addMission")}
+        </button>
+      </div>}
 
       {/* Add Mission Modal */}
       <AddMissionModal
@@ -1036,6 +1641,221 @@ const TodoList = () => {
         onAddMission={addMission}
         existingTaskIds={todoItems.map((item) => item.task.id)}
       />
+
+      {/* Card menu — only semantically valid actions are rendered. */}
+      <BottomSheet open={!!menuItem} onClose={() => setMenuItem(null)} label={t("خيارات المهمة")}>
+        {menuItem && (() => {
+          const kind = todoSourceKind(menuItem, isPersonal);
+          const canRemove = isPersonal || (!isHistorical && menuItem.status === "todo" && kind === "self");
+          const pending = pendingRequestOf(menuItem);
+          const currentTargets = ((pending as any)?.pendingWith || []).map((target: any) => `${target.type}:${target.id}`);
+          const alternates = approvers.filter((approver) => !currentTargets.includes(`${approver.type}:${approver.id}`));
+          return (
+            <div className="flex flex-col divide-y divide-gray-100" role="menu">
+              <button type="button" role="menuitem" data-testid="menu-details"
+                className="flex items-center gap-3 py-3 text-sm font-medium text-gray-800 text-start"
+                onClick={() => { setDetailsItem(menuItem); setMenuItem(null); }}>
+                <span className="flex-center w-9 h-9 text-gray-500 bg-gray-100 rounded-full"><SearchIcon size={15} /></span>
+                {t("عرض التفاصيل")}
+              </button>
+              {!isPersonal && pending && alternates.length > 0 && (
+                <button type="button" role="menuitem" data-testid="menu-retarget"
+                  className="flex items-center gap-3 py-3 text-sm font-medium text-gray-800 text-start"
+                  onClick={() => { setRetargetItem(menuItem); setMenuItem(null); }}>
+                  <span className="flex-center w-9 h-9 rounded-full text-amber-600 bg-amber-50"><FaRegClock size={15} /></span>
+                  {t("todo.approval.retarget")}
+                </button>
+              )}
+              {canRemove && (
+                <button type="button" role="menuitem" data-testid="menu-remove"
+                  className="flex items-center gap-3 py-3 text-sm font-medium text-red-600 text-start"
+                  onClick={() => { setConfirmDelete(menuItem); setMenuItem(null); }}>
+                  <span className="flex-center w-9 h-9 text-red-500 rounded-full bg-red-50"><FaTrash size={13} /></span>
+                  {t("todo.remove")}
+                </button>
+              )}
+            </div>
+          );
+        })()}
+      </BottomSheet>
+
+      {/* Read-only details: every assignment source with its own timestamp. */}
+      <BottomSheet open={!!detailsItem} onClose={() => setDetailsItem(null)} label={t("تفاصيل المهمة")}>
+        {detailsItem && (
+          <div className="text-start">
+            <h3 className="text-[15px] font-semibold text-black">{t(detailsItem.task.title)}</h3>
+            <div className="flex gap-2.5 mt-2">{renderTaskResources(detailsItem.task)}</div>
+            <h4 className="mt-4 mb-1 text-xs font-bold text-gray-500">{t("مصادر المهمة")}</h4>
+            <ul className="flex flex-col gap-2">
+              {(isPersonal || (detailsItem.sources || []).length === 0
+                ? [{ sourceType: "student", name: t("أنت"), createdAt: detailsItem.addedDate } as any]
+                : detailsItem.sources || []
+              ).map((source: any, index: number) => (
+                <li key={index} className="flex items-center justify-between p-2 text-sm rounded-lg bg-gray-50">
+                  <span className="font-medium text-gray-800">
+                    <bdi>{source.sourceType === "student" ? t("أنت") : source.name || t(source.sourceType)}</bdi>
+                    <span className="text-xs text-gray-500"> · {source.sourceType === "teacher" ? t("المعلم") : source.sourceType === "parent" ? t("ولي الأمر") : t("أضفتها أنت")}</span>
+                  </span>
+                  <span className="text-xs text-gray-500">{formatTodoDate(source.createdAt || detailsItem.addedDate, i18n.language, true)}</span>
+                </li>
+              ))}
+            </ul>
+            {detailsItem.status === "completed" && (
+              <p className="mt-3 text-sm text-green-700">
+                {t("todo.status.completed")}
+                {detailsItem.completedByName ? <> — {t("todo.approval.approvedBy")}: <bdi>{detailsItem.completedByName}</bdi></> : null}
+              </p>
+            )}
+          </div>
+        )}
+      </BottomSheet>
+
+      {/* Retarget: pick another currently-eligible approver. Never a completion. */}
+      <BottomSheet open={!!retargetItem} onClose={() => setRetargetItem(null)} label={t("todo.approval.retarget")}>
+        {retargetItem && (() => {
+          const pending = pendingRequestOf(retargetItem);
+          const currentTargets = ((pending as any)?.pendingWith || []).map((target: any) => `${target.type}:${target.id}`);
+          const alternates = approvers.filter((approver) => !currentTargets.includes(`${approver.type}:${approver.id}`));
+          return alternates.length === 0 ? (
+            <p className="py-3 text-sm text-center text-gray-500">{t("لا يوجد ولي أمر أو معلم مرتبط بحسابك")}</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {alternates.map((approver) => (
+                <button key={`${approver.type}:${approver.id}`} type="button"
+                  data-testid={`retarget-${approver.type}-${approver.id}`}
+                  onClick={() => void retargetTo(approver)}
+                  className="flex items-center w-full gap-3 p-2 border border-gray-200 rounded-lg text-start hover:border-blueprimary">
+                  <div className="flex-shrink-0 w-10 h-10 overflow-hidden bg-gray-100 rounded-full">
+                    <GetAvatar userAvatarData={approver.profileImg ?? undefined} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate"><bdi>{approver.name}</bdi></p>
+                    <p className="text-xs text-gray-500">{t(approver.type === "parent" ? "Parent" : "Teacher")}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          );
+        })()}
+      </BottomSheet>
+
+      {/* Source filter */}
+      <BottomSheet open={showSourceSheet} onClose={() => setShowSourceSheet(false)} label={t("todo.source.label")}>
+        <div className="flex flex-col divide-y divide-gray-100" role="radiogroup" aria-label={t("todo.source.label")}>
+          {SOURCE_OPTIONS.map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              role="radio"
+              aria-checked={sourceFilter === option.key}
+              data-testid={`source-${option.key}`}
+              onClick={() => { setSourceFilter(option.key); setShowSourceSheet(false); }}
+              className="flex items-center gap-3 py-3 text-sm font-medium text-gray-800 text-start"
+            >
+              <span className={`flex-center w-8 h-8 rounded-full ${getSourceVisual(option.key).triggerClass}`}>
+                {getSourceVisual(option.key).icon}
+              </span>
+              <span className="flex-1">{t(option.label)}</span>
+              {sourceFilter === option.key && <FaCheck className="text-blueprimary" size={14} />}
+            </button>
+          ))}
+        </div>
+      </BottomSheet>
+
+      {/* Sort */}
+      <BottomSheet open={showSortSheet} onClose={() => setShowSortSheet(false)} label={t("todo.sort.label")}>
+        <div className="flex flex-col divide-y divide-gray-100" role="radiogroup" aria-label={t("todo.sort.label")}>
+          {(Object.keys(SORT_LABELS) as Array<keyof typeof SORT_LABELS>).map((mode) => (
+            <button key={mode} type="button" role="radio" aria-checked={sortMode === mode}
+              data-testid={`sort-${mode}`}
+              onClick={() => { setSortMode(mode); setShowSortSheet(false); }}
+              className="flex items-center justify-between py-3 text-sm font-medium text-gray-800 text-start">
+              {t(SORT_LABELS[mode])}
+              {sortMode === mode && <FaCheck className="text-blueprimary" size={14} />}
+            </button>
+          ))}
+        </div>
+      </BottomSheet>
+
+      <BottomSheet open={showDatePicker} onClose={() => setShowDatePicker(false)} label={t("todo.date.select")}>
+        <Calendar
+          value={dateKeyToLocalDate(selectedDate)}
+          minDate={earliestDate ? dateKeyToLocalDate(earliestDate) : undefined}
+          maxDate={dateKeyToLocalDate(serverToday)}
+          locale={isRtl ? "ar-EG" : "en-US"}
+          calendarType="gregory"
+          prev2Label={null}
+          next2Label={null}
+          prevLabel={<span role="img" aria-label={t("todo.date.previousMonth")}>{isRtl ? <FaChevronRight size={12} /> : <FaChevronLeft size={12} />}</span>}
+          nextLabel={<span role="img" aria-label={t("todo.date.nextMonth")}>{isRtl ? <FaChevronLeft size={12} /> : <FaChevronRight size={12} />}</span>}
+          showNeighboringMonth={false}
+          className="todo-calendar"
+          onChange={(value) => {
+            const chosenDate = Array.isArray(value) ? value[0] : value;
+            if (!(chosenDate instanceof Date)) return;
+            setHistoryBoundaryAttempted(false);
+            setSelectedDate(localDateToDateKey(chosenDate));
+            setShowDatePicker(false);
+          }}
+        />
+      </BottomSheet>
+
+      {/* Delete Confirmation */}
+      <AnimatePresence>
+        {confirmDelete && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+            onClick={() => !isDeleting && setConfirmDelete(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 1 }}
+              className="w-full max-w-sm p-6 mx-4 bg-white shadow-2xl rounded-xl"
+              onClick={(event) => event.stopPropagation()}
+              role="alertdialog"
+              aria-label={t("حذف المهمة")}
+            >
+              <div className="text-center">
+                <div className="flex items-center justify-center w-14 h-14 mx-auto mb-4 rounded-full bg-red-50">
+                  <FaTrash className="text-xl text-red-500" />
+                </div>
+                <h2 className="mb-1 text-lg font-bold text-gray-800">
+                  {t("إزالة المهمة؟")}
+                </h2>
+                <p className="mb-1 text-sm font-medium text-gray-800">
+                  {t(confirmDelete.task.title)}
+                </p>
+                <p className="mb-5 text-xs text-gray-500">
+                  {t("سيتم حذفها من قائمة مهامك فقط.")}
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setConfirmDelete(null)}
+                    disabled={isDeleting}
+                    className="flex-1 px-4 py-2.5 font-medium text-gray-800 transition-colors bg-gray-100 rounded-lg hover:bg-gray-200"
+                  >
+                    {t("إلغاء")}
+                  </button>
+                  <button
+                    data-testid="confirm-delete-todo"
+                    onClick={handleConfirmDelete}
+                    disabled={isDeleting}
+                    className="flex-1 px-4 py-2.5 font-medium text-white transition-colors bg-red-500 rounded-lg hover:bg-red-600 disabled:opacity-50"
+                  >
+                    {isDeleting ? t("جاري الحذف...") : t("إزالة")}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <ToastContainer position="top-center" autoClose={3000} closeOnClick pauseOnHover theme="light" />
 
       {/* Confirmation Popup */}
       <AnimatePresence>
@@ -1050,7 +1870,7 @@ const TodoList = () => {
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.5, opacity: 0 }}
+              exit={{ scale: 0.5, opacity: 1 }}
               className="w-full max-w-sm p-6 mx-4 bg-white shadow-2xl rounded-xl"
               onClick={(e) => e.stopPropagation()}
             >
@@ -1058,30 +1878,70 @@ const TodoList = () => {
                 <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-green-500 rounded-full">
                   <FaCheck className="text-2xl text-white" />
                 </div>
-                {!isPersonal && (
-                  <select
-                    data-testid="mission-approver-select"
-                    className="w-full p-3 mb-5 text-black bg-white border rounded-xl"
-                    value={selectedApprover ? `${selectedApprover.type}:${selectedApprover.id}` : ""}
-                    onChange={(event) => {
-                      const selected = approvers.find((approver) => `${approver.type}:${approver.id}` === event.target.value);
-                      setSelectedApprover(selected || null);
-                    }}
-                  >
-                    <option value="">{t("Choose a Parent or Teacher")}</option>
-                    {approvers.map((approver) => (
-                      <option key={`${approver.type}:${approver.id}`} value={`${approver.type}:${approver.id}`}>
-                        {approver.name} — {t(approver.type === "parent" ? "Parent" : "Teacher")}
-                      </option>
-                    ))}
-                  </select>
-                )}
                 <h2 className="mb-2 text-xl font-bold text-gray-800">
                   {t("تأكيد الإنجاز")}
                 </h2>
-                <p className="mb-6 text-gray-600">
+                <p className={`text-gray-600 ${isPersonal ? "mb-6" : "mb-4"}`}>
                   {t("هل أنت متأكد من أنك أنجزت هذه المهمة؟")}
                 </p>
+                {!isPersonal && (
+                  <div
+                    className="mb-5 text-end"
+                    data-testid="mission-approver-select"
+                  >
+                    <p className="mb-2 text-sm font-semibold text-gray-700">
+                      {t("Choose a Parent or Teacher")}
+                    </p>
+                    {approvers.length === 0 ? (
+                      <p className="py-3 text-sm text-center text-gray-500 border border-dashed rounded-lg">
+                        {t("لا يوجد ولي أمر أو معلم مرتبط بحسابك")}
+                      </p>
+                    ) : (
+                      <div className="flex flex-col gap-2 overflow-y-auto max-h-56">
+                        {approvers.map((approver) => {
+                          const isSelected =
+                            selectedApprover?.type === approver.type &&
+                            selectedApprover?.id === approver.id;
+                          const details = [
+                            t(approver.type === "parent" ? "Parent" : "Teacher"),
+                            approver.subject,
+                            approver.grade ? t(approver.grade) : null,
+                            approver.className,
+                          ].filter(Boolean);
+                          return (
+                            <button
+                              key={`${approver.type}:${approver.id}`}
+                              type="button"
+                              data-testid={`approver-option-${approver.type}:${approver.id}`}
+                              aria-pressed={isSelected}
+                              onClick={() => setSelectedApprover(approver)}
+                              className={`flex items-center w-full gap-3 p-2 text-end transition-colors border rounded-lg ${
+                                isSelected
+                                  ? "border-green-500 bg-green-50"
+                                  : "border-gray-200 bg-white hover:border-gray-300"
+                              }`}
+                            >
+                              <div className="flex-shrink-0 w-10 h-10 overflow-hidden bg-gray-100 rounded-full">
+                                <GetAvatar userAvatarData={approver.profileImg ?? undefined} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-800 truncate">
+                                  {approver.name}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {details.join(" · ")}
+                                </p>
+                              </div>
+                              {isSelected && (
+                                <FaCheck className="flex-shrink-0 text-green-600" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowConfirmPopup(false)}
@@ -1174,4 +2034,4 @@ const TodoList = () => {
   );
 };
 
-export default TodoList;
+export default LegacyTodoList;

@@ -1,22 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 import splashgif from "../../../assets/splashscreen/Snabl-El-Ehsan Animation-Vertical.mp4";
 import wonderlearnLogo from "../../../assets/WonderLearn.png";
 import schoologos from "../../../assets/combinedlogosfinal.png";
+import { localStore } from "../../../utils/safeStorage";
 
 const SplashScreen: React.FC = () => {
   const history = useHistory();
+  const { t } = useTranslation();
 
   useEffect(() => {
-    const hasVisited = localStorage.getItem("hasVisited") === "true";
-    const keepLoggedIn = localStorage.getItem("keepLoggedIn") === "true";
-    const role = localStorage.getItem("role");
+    const hasVisited = localStore.getItem("hasVisited") === "true";
+    const keepLoggedIn = localStore.getItem("keepLoggedIn") === "true";
+    const role = localStore.getItem("role");
     const hasAuthToken = Boolean(
-      localStorage.getItem("token") || localStorage.getItem("refreshToken"),
+      localStore.getItem("token") || localStore.getItem("refreshToken"),
     );
-    const firstTimer = localStorage.getItem("firstTimer");
+    const firstTimer = localStore.getItem("firstTimer");
 
     const timer = setTimeout(() => {
       if (keepLoggedIn && role && hasAuthToken) {
@@ -42,13 +45,13 @@ const SplashScreen: React.FC = () => {
       // Do not route a stale keepLoggedIn flag to a protected page when its
       // tokens were cleared or lost.
       if (keepLoggedIn || role) {
-        localStorage.setItem("keepLoggedIn", "false");
-        localStorage.removeItem("role");
+        localStore.setItem("keepLoggedIn", "false");
+        localStore.removeItem("role");
       }
 
       if (!hasVisited) {
         // First-time visitor to app redirects to onboarding
-        localStorage.setItem("hasVisited", "true");
+        localStore.setItem("hasVisited", "true");
         history.replace("/onboarding");
       } else {
         // Returning visitor (but not logged in) redirects to choose sign method
@@ -74,7 +77,7 @@ const SplashScreen: React.FC = () => {
       >
         <motion.img src={schoologos} alt="" className="w-2/3" />
         <h1 className="text-xl font-bold text-blueprimary">
-          اهداء من وقف د.حسن العديسي
+          {t("اهداء من وقف د.حسن العديسي")}
         </h1>
       </motion.div>
 
@@ -93,7 +96,7 @@ const SplashScreen: React.FC = () => {
         transition={{ delay: 2, duration: 0.5 }}
       >
         <motion.h1 className="text-2xl text-[#5e5e5e] font-bold ">
-          Powered By
+          {t("Powered By")}
         </motion.h1>
         <motion.img src={wonderlearnLogo} alt="" className="w-2/3" />
       </motion.div>

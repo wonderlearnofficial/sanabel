@@ -5,6 +5,7 @@ import {
   enablePrayerNotifications,
   PRAYER_ENABLED_KEY,
 } from "./prayerNotifications";
+import { localStore } from "../utils/safeStorage";
 
 export const APP_NOTIFICATIONS_ENABLED_KEY = "sanabel:app_notifications_enabled";
 export const NOTIFICATIONS_REQUESTED_KEY = "sanabel:notifications_prompted";
@@ -67,12 +68,12 @@ export const setupNotificationChannels = async (): Promise<void> => {
  */
 export const requestAppNotificationPermissions = async (): Promise<boolean> => {
   try {
-    localStorage.setItem(NOTIFICATIONS_REQUESTED_KEY, "true");
+    localStore.setItem(NOTIFICATIONS_REQUESTED_KEY, "true");
 
     if (Capacitor.isNativePlatform()) {
       const current = await LocalNotifications.checkPermissions();
       if (current.display === "granted") {
-        localStorage.setItem(APP_NOTIFICATIONS_ENABLED_KEY, "true");
+        localStore.setItem(APP_NOTIFICATIONS_ENABLED_KEY, "true");
         await setupNotificationChannels();
         return true;
       }
@@ -80,7 +81,7 @@ export const requestAppNotificationPermissions = async (): Promise<boolean> => {
       const requested = await LocalNotifications.requestPermissions();
       const granted = requested.display === "granted";
       if (granted) {
-        localStorage.setItem(APP_NOTIFICATIONS_ENABLED_KEY, "true");
+        localStore.setItem(APP_NOTIFICATIONS_ENABLED_KEY, "true");
         await setupNotificationChannels();
       }
       return granted;
@@ -89,7 +90,7 @@ export const requestAppNotificationPermissions = async (): Promise<boolean> => {
     // Web Browser Notifications
     if (typeof window !== "undefined" && "Notification" in window) {
       if (Notification.permission === "granted") {
-        localStorage.setItem(APP_NOTIFICATIONS_ENABLED_KEY, "true");
+        localStore.setItem(APP_NOTIFICATIONS_ENABLED_KEY, "true");
         return true;
       }
 
@@ -97,7 +98,7 @@ export const requestAppNotificationPermissions = async (): Promise<boolean> => {
         const permission = await Notification.requestPermission();
         const granted = permission === "granted";
         if (granted) {
-          localStorage.setItem(APP_NOTIFICATIONS_ENABLED_KEY, "true");
+          localStore.setItem(APP_NOTIFICATIONS_ENABLED_KEY, "true");
           if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("/sw.js").catch(() => {});
           }
@@ -114,20 +115,29 @@ export const requestAppNotificationPermissions = async (): Promise<boolean> => {
 };
 
 /**
- * Entry point called automatically once the application starts.
- * Ensures anyone (Student, Teacher, Parent, Admin, Guest) gets prompted for
- * notification permissions immediately upon launching the app.
+ * Entry point called automatically once the application starts. It must not
+ * trigger a permission prompt: iOS browsers require notification permission
+ * to be requested from a direct user gesture. The onboarding modal/settings
+ * call requestAppNotificationPermissions after the user taps Enable.
  */
 export const initAppNotificationsOnStartup = async (): Promise<void> => {
   try {
-    const isGranted = await requestAppNotificationPermissions();
+    let isGranted = false;
+    if (Capacitor.isNativePlatform()) {
+      const current = await LocalNotifications.checkPermissions();
+      isGranted = current.display === "granted";
+      if (isGranted) await setupNotificationChannels();
+    } else if (typeof window !== "undefined" && "Notification" in window) {
+      isGranted = Notification.permission === "granted";
+    }
 
     if (isGranted) {
+      localStore.setItem(APP_NOTIFICATIONS_ENABLED_KEY, "true");
       // If prayer notifications haven't been explicitly disabled by the user,
       // auto-enable or resync them for the 7-day rolling window
-      const prayerPref = localStorage.getItem(PRAYER_ENABLED_KEY);
+      const prayerPref = localStore.getItem(PRAYER_ENABLED_KEY);
       if (prayerPref === null || prayerPref === "true") {
-        localStorage.setItem(PRAYER_ENABLED_KEY, "true");
+        localStore.setItem(PRAYER_ENABLED_KEY, "true");
         if (Capacitor.isNativePlatform()) {
           await resyncPrayerNotificationsIfEnabled();
         }

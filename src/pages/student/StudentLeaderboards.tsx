@@ -62,6 +62,77 @@ interface FilterState {
   gender: string;
 }
 
+// One podium column. When `item` is missing the slot renders as a skeleton
+// instead of removing the whole board: a class with fewer than three ranked
+// students still sees the leaderboard it is working towards.
+const PodiumSlot: React.FC<{
+  item?: LeaderboardItem;
+  place: 1 | 2 | 3;
+}> = ({ item, place }) => {
+  const { t } = useTranslation();
+
+  const layout = {
+    1: { order: "order-2", color: "text-blueprimary", Column: FirstPlaceColumn },
+    2: { order: "order-1", color: "text-redprimary", Column: SecondPlaceColumn },
+    3: { order: "order-3", color: "text-yellowprimary", Column: ThirdPlaceColumn },
+  }[place];
+
+  const columnVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: { opacity: 1, y: 0, transition: { duration: 1 } },
+  };
+
+  return (
+    <motion.div
+      className={`flex flex-col items-center ${layout.order} w-1/3`}
+      variants={columnVariants}
+    >
+      {item ? (
+        <>
+          <div
+            className={
+              place === 1
+                ? "relative w-20 h-20 border-2 rounded-full border-blueprimary"
+                : "w-20 h-20"
+            }
+          >
+            <GetAvatar userAvatarData={item.user.profileImg ?? undefined} />
+            {place === 1 && (
+              <div className="absolute top-0 p-4 text-center transform -translate-x-1/2 -translate-y-1/2 flex-center left-1/2">
+                <LeaderboardsStar size={40} className="text-blueprimary" />
+              </div>
+            )}
+          </div>
+          <h1 className="text-sm text-center text-black">
+            {`${item.user.firstName} ${item.user.lastName}`.trim()}
+          </h1>
+          <h1 className="text-[#999] uppercase text-xs text-center">
+            {item.class?.grade ? t(item.class.grade) : ""}
+          </h1>
+          <h1 className="text-[#999] uppercase text-xs text-center">
+            {item.class?.classname ?? ""}
+          </h1>
+          <div className="scale-90">
+            <MedalAndLevel level={item.level} color={layout.color} dir="" size="w-16" />
+          </div>
+        </>
+      ) : (
+        <div
+          className="flex flex-col items-center w-full"
+          aria-label={t("مكان شاغر")}
+        >
+          <div className="w-20 h-20 bg-gray-200 border-2 border-gray-200 border-dashed rounded-full animate-pulse" />
+          <div className="w-20 h-3 mt-2 bg-gray-200 rounded animate-pulse" />
+          <div className="w-12 h-2 mt-1.5 bg-gray-100 rounded animate-pulse" />
+          <div className="w-16 h-2 mt-1.5 bg-gray-100 rounded animate-pulse" />
+          <div className="w-14 h-6 mt-2 bg-gray-100 rounded-full animate-pulse" />
+        </div>
+      )}
+      <layout.Column className={`w-full${item ? "" : " opacity-40"}`} />
+    </motion.div>
+  );
+};
+
 const Leaderboards: React.FC = () => {
   const { darkMode, toggleDarkMode } = useTheme();
   const { t } = useTranslation();
@@ -76,21 +147,9 @@ const Leaderboards: React.FC = () => {
 
   useAutoStartGuide("student-leaderboard", !!user && user.role === "Student" && !!user.classId);
 
-  const [leaderboardsData, setLeaderboardsData] = useState<LeaderboardItem[]>([
-    {
-      id: 0,
-      level: 1,
-      user: {
-        firstName: "",
-        lastName: "",
-      },
-      xp: 0,
-      class: {
-        classname: "",
-        grade: "",
-      },
-    },
-  ]);
+  // Starts empty. A placeholder row would now reach the board as a nameless
+  // entry, since the board renders instead of bailing out on thin data.
+  const [leaderboardsData, setLeaderboardsData] = useState<LeaderboardItem[]>([]);
   const [filteredData, setFilteredData] = useState<LeaderboardItem[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -104,7 +163,8 @@ const Leaderboards: React.FC = () => {
     gender: "",
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  // True on mount so the first paint is the loading state, not an empty board.
+  const [isLoading, setIsLoading] = useState(true);
   const userRole = localStorage.getItem("role");
 
   // Update the fetchUserData function
@@ -316,8 +376,10 @@ const Leaderboards: React.FC = () => {
     );
   }
 
-  // Guard clause for insufficient data (only when not searching)
-  if (sortedData.length < 3 && !isSearching) {
+  // Only a filter that matches nothing collapses the page, because the fix is
+  // to clear the filter. Fewer than three ranked students still renders the
+  // board, with skeleton placeholders for the slots nobody holds yet.
+  if (sortedData.length === 0 && !isSearching && hasActiveFilters()) {
     return (
       <div className="w-full" id="page-height">
         <div className="flex flex-col items-center justify-center w-full h-full p-2">
@@ -325,18 +387,14 @@ const Leaderboards: React.FC = () => {
             {t("لوحة المتصدرين")}
           </h1>
           <p className="mt-4 text-center text-gray-500">
-            {hasActiveFilters()
-              ? t("لا توجد نتائج تطابق المرشحات المحددة")
-              : t("لا توجد بيانات كافية لعرض لوحة المتصدرين")}
+            {t("لا توجد نتائج تطابق المرشحات المحددة")}
           </p>
-          {hasActiveFilters() && (
-            <button
-              onClick={clearAllFilters}
-              className="px-6 py-2 mt-4 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
-            >
-              {t("مسح الكل")}
-            </button>
-          )}
+          <button
+            onClick={clearAllFilters}
+            className="px-6 py-2 mt-4 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            {t("مسح الكل")}
+          </button>
           {userRole == "Student" ? (
             <StudentNavbar />
           ) : userRole == "Teacher" ? (
@@ -541,114 +599,17 @@ const Leaderboards: React.FC = () => {
                 animate="visible"
                 variants={listVariants}
               >
-                {/* First Place (center) */}
-                <motion.div
-                  className="flex flex-col items-center order-2 w-1/3"
-                  variants={columnVariants}
-                >
-                  <div className="relative w-20 h-20 border-2 rounded-full border-blueprimary">
-                    <GetAvatar
-                      userAvatarData={
-                        sortedData[0].user.profileImg ?? undefined
-                      }
-                    />
-                    <div className="absolute top-0 p-4 text-center transform -translate-x-1/2 -translate-y-1/2 flex-center left-1/2">
-                      <LeaderboardsStar
-                        size={40}
-                        className="text-blueprimary"
-                      />
-                    </div>
-                  </div>
-                  <h1 className="text-sm text-center text-black">
-                    {sortedData[0].user.firstName +
-                      " " +
-                      sortedData[0].user.lastName}
-                  </h1>
-                  <h1 className="text-[#999] uppercase text-xs text-center">
-                    {t(sortedData[0].class.grade)}
-                  </h1>
-                  <h1 className="text-[#999] uppercase text-xs text-center">
-                    {sortedData[0].class.classname}
-                  </h1>
-                  <div className="scale-90">
-                    <MedalAndLevel
-                      level={sortedData[0].level}
-                      color="text-blueprimary"
-                      dir=""
-                      size="w-16"
-                    />
-                  </div>
-                  <FirstPlaceColumn className="w-full" />
-                </motion.div>
-
-                {/* Second Place (left) */}
-                <motion.div
-                  className="flex flex-col items-center order-1 w-1/3"
-                  variants={columnVariants}
-                >
-                  <div className="w-20 h-20">
-                    <GetAvatar
-                      userAvatarData={
-                        sortedData[1].user.profileImg ?? undefined
-                      }
-                    />
-                  </div>
-                  <h1 className="text-sm text-center text-black">
-                    {sortedData[1].user.firstName +
-                      " " +
-                      sortedData[1].user.lastName}
-                  </h1>
-                  <h1 className="text-[#999] uppercase text-xs text-center">
-                    {t(sortedData[1].class.grade)}
-                  </h1>
-                  <h1 className="text-[#999] uppercase text-xs text-center">
-                    {sortedData[1].class.classname}
-                  </h1>
-                  <div className="scale-90">
-                    <MedalAndLevel
-                      level={sortedData[1].level}
-                      color="text-redprimary"
-                      dir=""
-                      size="w-16"
-                    />
-                  </div>
-                  <SecondPlaceColumn className="w-full" />
-                </motion.div>
-
-                {/* Third Place (right) */}
-                <motion.div
-                  className="flex flex-col items-center order-3 w-1/3"
-                  variants={columnVariants}
-                >
-                  <div className="w-20 h-20">
-                    <GetAvatar
-                      userAvatarData={
-                        sortedData[2].user.profileImg ?? undefined
-                      }
-                    />
-                  </div>
-                  <h1 className="text-sm text-center text-black">
-                    {sortedData[2].user.firstName +
-                      " " +
-                      sortedData[2].user.lastName}
-                  </h1>
-                  <h1 className="text-[#999] uppercase text-xs text-center">
-                    {t(sortedData[2].class.grade)}
-                  </h1>
-                  <h1 className="text-[#999] uppercase text-xs text-center">
-                    {sortedData[2].class.classname}
-                  </h1>
-                  <div className="scale-90">
-                    <MedalAndLevel
-                      level={sortedData[2].level}
-                      color="text-yellowprimary"
-                      dir=""
-                      size="w-16"
-                    />
-                  </div>
-                  <ThirdPlaceColumn className="w-full" />
-                </motion.div>
+                <PodiumSlot item={sortedData[0]} place={1} />
+                <PodiumSlot item={sortedData[1]} place={2} />
+                <PodiumSlot item={sortedData[2]} place={3} />
               </motion.div>
+
+              {/* Explain the empty podium slots rather than leaving them bare. */}
+              {sortedData.length < 3 && (
+                <p className="w-full mt-2 text-sm text-center text-gray-500">
+                  {t("لوحة المتصدرين تكتمل عندما يشارك ثلاثة طلاب على الأقل")}
+                </p>
+              )}
 
               {/* Remaining leaderboard list */}
               <motion.div

@@ -212,7 +212,11 @@ export const EditDrawer: React.FC<EditDrawerProps> = ({
                 >
                   <option value="">{t("admin.modal.selectGrade")}</option>
                   {gradesList
-                    .filter((g) => String(g.organizationId) === editOrgId)
+                    .filter(
+                      (g) =>
+                        g.organizationId == null ||
+                        String(g.organizationId) === editOrgId,
+                    )
                     .map((g) => (
                       <option key={g.id} value={g.id}>
                         {t(`admin.grade.${g.name}`) !== `admin.grade.${g.name}`
@@ -302,8 +306,10 @@ export const EditDrawer: React.FC<EditDrawerProps> = ({
                     value={editOrgId}
                     onChange={(e) => {
                       setEditOrgId(e.target.value);
+                      setEditGrade("");
                       setEditClassId("");
                     }}
+                    data-testid="student-organization-select"
                     className={selectCls}
                   >
                     <option value="">{t("admin.modal.selectOrg")}</option>
@@ -321,13 +327,31 @@ export const EditDrawer: React.FC<EditDrawerProps> = ({
                   <label className={labelCls}>{t("admin.modal.grade")}</label>
                   <select
                     value={editGrade}
-                    onChange={(e) => setEditGrade(e.target.value)}
+                    onChange={(e) => {
+                      const nextGradeId = e.target.value;
+                      setEditGrade(nextGradeId);
+                      const currentClass = classesOptions.find(
+                        (candidate) => String(candidate.id) === editClassId,
+                      );
+                      if (
+                        currentClass &&
+                        currentClass.gradeId != null &&
+                        String(currentClass.gradeId ?? "") !== nextGradeId
+                      ) {
+                        setEditClassId("");
+                      }
+                    }}
+                    data-testid="student-grade-select"
                     className={selectCls}
                     disabled={!editOrgId}
                   >
                     <option value="">{t("admin.modal.selectGrade")}</option>
                     {gradesList
-                      .filter((g) => classesOptions.some((c) => String(c.gradeId) === String(g.id)))
+                      .filter(
+                        (g) =>
+                          g.organizationId == null ||
+                          String(g.organizationId) === editOrgId,
+                      )
                       .map((g) => (
                         <option key={g.id} value={g.id}>
                           {t(`admin.grade.${g.name}`) !== `admin.grade.${g.name}`
@@ -344,13 +368,27 @@ export const EditDrawer: React.FC<EditDrawerProps> = ({
                   <label className={labelCls}>{t("admin.th.class")}</label>
                   <select
                     value={editClassId}
-                    onChange={(e) => setEditClassId(e.target.value)}
+                    onChange={(e) => {
+                      const nextClassId = e.target.value;
+                      setEditClassId(nextClassId);
+                      const nextClass = classesOptions.find(
+                        (candidate) => String(candidate.id) === nextClassId,
+                      );
+                      if (nextClass?.gradeId != null) {
+                        setEditGrade(String(nextClass.gradeId));
+                      }
+                    }}
+                    data-testid="student-class-select"
                     disabled={!editOrgId}
                     className={`${selectCls} disabled:opacity-50`}
                   >
                     <option value="">{t("admin.modal.noClass")}</option>
                     {classesOptions
-                      .filter((c) => String(c.organizationId) === editOrgId && String(c.gradeId) === editGrade)
+                      .filter(
+                        (c) =>
+                          String(c.organizationId) === editOrgId &&
+                          (!editGrade || String(c.gradeId) === editGrade),
+                      )
                       .map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.classname}

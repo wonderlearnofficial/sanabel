@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
+import { localStore } from "../utils/safeStorage";
 
 // Create the context
 const ThemeContext = createContext<{
@@ -17,7 +18,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Check user's preference and set initial theme
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
+    const savedTheme = localStore.getItem("theme");
     if (savedTheme) {
       setDarkMode(savedTheme === "dark");
       document.documentElement.classList.toggle("dark", savedTheme === "dark");
@@ -28,7 +29,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     const isDark = !darkMode;
     setDarkMode(isDark);
     document.documentElement.classList.toggle("dark", isDark);
-    localStorage.setItem("theme", isDark ? "dark" : "light");
+    localStore.setItem("theme", isDark ? "dark" : "light");
   };
 
   return (

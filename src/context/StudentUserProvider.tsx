@@ -5,6 +5,7 @@ import { describeApiError } from "../utils/apiError";
 import { AudioManager } from "../utils/AudioManager";
 import { GameplayAction, gameplayEndpoints, gameplaySound, reconcileGameplay } from "../utils/gameplay";
 import { toFiniteNumber } from "../utils/numericData";
+import { localStore } from "../utils/safeStorage";
 import React, {
   createContext,
   useContext,
@@ -115,7 +116,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
   currentUser.current = user;
 
   const mutateStudent = useCallback(async (action: GameplayAction, body: Record<string, unknown> = {}) => {
-    const token = localStorage.getItem("token");
+    const token = localStore.getItem("token");
     const reject = (message: string) => Object.assign(new Error(message), { response: { status: 400, data: { message } } });
     if (!token || !currentUser.current) throw reject("يرجى تسجيل الدخول أولاً");
     if (mutationInFlight.current) throw reject("يرجى الانتظار حتى تكتمل العملية الحالية");
@@ -128,7 +129,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
         method: endpoint.method, url: `${API_BASE_URL}/students/${endpoint.path}`,
         data: body, headers: { Authorization: `Bearer ${token}` }, timeout: 15000,
       });
-      if (token !== localStorage.getItem("token") || !currentUser.current) throw reject("يرجى تسجيل الدخول أولاً");
+      if (token !== localStore.getItem("token") || !currentUser.current) throw reject("يرجى تسجيل الدخول أولاً");
       const previous = currentUser.current;
       const next = reconcileGameplay(previous, response.data);
       currentUser.current = next;
@@ -148,8 +149,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
   // Function to fetch user data based on role
   const fetchUserData = useCallback(async (token?: string) => {
     const version = ++requestVersion.current;
-    const authToken = token || localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+    const authToken = token || localStore.getItem("token");
+    const role = localStore.getItem("role");
 
     if (!authToken || !role) {
       setUser(null);
@@ -175,7 +176,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
         },
       });
 
-      if (version !== requestVersion.current || mutationInFlight.current || authToken !== localStorage.getItem("token")) return;
+      if (version !== requestVersion.current || mutationInFlight.current || authToken !== localStore.getItem("token")) return;
       if (response.status === 200) {
         setRefreshError(null);
         const userData = response.data.data;
@@ -350,7 +351,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
     let checkInFlight = false;
 
     const validateOpenSession = async () => {
-      const token = localStorage.getItem("token");
+      const token = localStore.getItem("token");
       if (!token || checkInFlight) return;
 
       checkInFlight = true;

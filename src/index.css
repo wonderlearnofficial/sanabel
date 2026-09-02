@@ -66,6 +66,18 @@ body {
   padding-left: env(safe-area-inset-left, 0px);
 }
 
+/* Keep the permission sheet scrollable on short iPhones without displaying a
+ * heavy browser scrollbar over the rounded sheet. */
+.permissions-sheet {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.permissions-sheet::-webkit-scrollbar {
+  display: none;
+}
+
 /*
  * Onboarding and registration screens share one predictable scroll owner.
  * Starting content at the top is important on short phones: centering or
@@ -170,13 +182,34 @@ option {
 
 #page-height {
   height: calc(
-    100vh - 80px - env(safe-area-inset-top, 0px) -
-      env(safe-area-inset-bottom, 0px)
+    100vh - 80px
   );
   height: calc(
-    100dvh - 80px - env(safe-area-inset-top, 0px) -
-      env(safe-area-inset-bottom, 0px)
+    100dvh - 80px
   );
+}
+
+/* iOS Safari zooms focused controls whose computed text size is below 16px.
+ * Keep normal page zoom available and raise only form-control text on compact
+ * touch layouts. Checkbox/radio/range geometry is intentionally unaffected. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+
+/* Hide a scroll container's native scrollbar while keeping it scrollable.
+ * Used for horizontal chip rows and the app's page scroller, where the
+ * browser scrollbar reads as a rendering glitch inside the mobile shell. */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Tailwind CSS file or global styles */

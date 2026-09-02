@@ -338,7 +338,7 @@ const SanabelMissionsPage: React.FC = () => {
           ))
         ) : (
           <div className="py-8 text-center text-gray-500">
-            No missions found
+            {t("لا توجد مهام")}
           </div>
         )}
       </div>

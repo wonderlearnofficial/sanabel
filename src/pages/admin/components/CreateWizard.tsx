@@ -144,7 +144,7 @@ export const CreateWizard: React.FC<CreateWizardProps> = ({
       onClick={() => !createdCredentials && onClose()}
     >
       <motion.div
-        className="relative bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl overflow-hidden border border-slate-100 flex flex-col gap-5 max-h-[90vh] overflow-y-auto"
+        className="relative bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl overflow-hidden border border-slate-100 flex flex-col gap-5 max-h-[90vh] max-h-[90dvh] overflow-y-auto"
         initial={{ scale: 0.95, y: 15, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.95, y: 15, opacity: 0 }}

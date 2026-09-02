@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "io.ionic.starter"
+    namespace "com.wonderlearn.sanabel"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "io.ionic.starter"
+        applicationId "com.wonderlearn.sanabel"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 10206
+        versionName "1.2.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -25,7 +25,10 @@ android {
 
     applicationVariants.all { variant ->
         variant.outputs.all {
-            outputFileName = "sanabel.apk"
+            // Day-month-year mirrors the human-readable date (for example
+            // 1/9/2026), using hyphens because slashes are invalid in names.
+            def buildDate = new Date().format('d-M-yyyy')
+            outputFileName = "sanabel-v${variant.versionName}-${buildDate}.apk"
         }
     }
 }
