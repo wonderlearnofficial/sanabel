@@ -320,6 +320,71 @@ describe("School Student To-Do v2", () => {
     expect(screen.getByRole("heading", { name: /مصادر متعددة/ })).toBeInTheDocument();
     expect(screen.queryByTestId("todo-drag-3")).not.toBeInTheDocument();
   });
+
+  it("Solo Users view truthful completed missions and uncompleted tasks on past dates", async () => {
+    mockUser.classId = null;
+    const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+
+    localStorage.setItem("sanabel:todos:days:9", JSON.stringify({
+      [yesterday]: [{ id: 6, task: task(6, "Water a plant"), completed: false, addedDate: `${yesterday}T09:00:00Z` }],
+      [today]: [{ id: 7, task: task(7, "Today mission"), completed: false, addedDate: `${today}T09:00:00Z` }],
+    }));
+
+    vi.mocked(axios.get).mockImplementation(async (url) => {
+      if (url.endsWith("/students/appear-Taskes-Completed")) {
+        return {
+          data: {
+            completedTasks: [
+              {
+                id: 3,
+                taskId: 3,
+                title: "Help the class",
+                type: "الإحسان للجسد",
+                missionDate: yesterday,
+                createdAt: `${yesterday}T10:00:00Z`,
+              },
+            ],
+          },
+        };
+      }
+      return { data: {} };
+    });
+
+    render(<StudentToDoList />);
+    await waitFor(() => expect(screen.getByText("Today mission")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByLabelText("اليوم السابق"));
+    await waitFor(() => {
+      expect(screen.getByText("Help the class")).toBeInTheDocument();
+      expect(screen.getByText("Water a plant")).toBeInTheDocument();
+    });
+  });
+
+  it("Solo User missions assigned on a previous day do not leak into the new day", async () => {
+    mockUser.classId = null;
+    const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+
+    localStorage.setItem("sanabel:todos:days:9", JSON.stringify({
+      [yesterday]: [{ id: 6, task: task(6, "Yesterday open task"), completed: false, addedDate: `${yesterday}T09:00:00Z` }],
+    }));
+
+    vi.mocked(axios.get).mockImplementation(async (url) => {
+      if (url.endsWith("/students/appear-Taskes-Completed")) {
+        return { data: { completedTasks: [] } };
+      }
+      return { data: {} };
+    });
+
+    render(<StudentToDoList />);
+    await waitFor(() => expect(screen.queryByText("Yesterday open task")).not.toBeInTheDocument());
+
+    fireEvent.click(screen.getByLabelText("اليوم السابق"));
+    await waitFor(() => {
+      expect(screen.getByText("Yesterday open task")).toBeInTheDocument();
+    });
+  });
 });
 
 describe("reorder and helpers (pure)", () => {

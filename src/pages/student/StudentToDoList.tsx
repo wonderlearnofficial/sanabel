@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "../../config/api";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, useCallback, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { AudioManager } from "../../utils/AudioManager";
@@ -965,14 +965,38 @@ const TodoList = () => {
 
   const submitting = useRef(false);
   const [loadedFor, setLoadedFor] = useState<number | null>(null);
-  // Solo selection stays local. School To-Do state is populated from the
-  // server below and already carries authoritative lifecycle state.
-  const todoItems = storedItems.map(item => ({
-    ...item,
-    completed: isPersonal
-      ? (user?.completedTasks?.taskIds.includes(Number(item.task.id)) ?? false)
-      : item.status === "completed",
-  }));
+
+  const getSoloDaysKey = (userId: number) => `sanabel:todos:days:${userId}`;
+
+  const getSoloDayAssigned = useCallback((userId: number, dateStr: string): TodoItem[] => {
+    const key = getSoloDaysKey(userId);
+    let daysMap = localStore.getJson<Record<string, TodoItem[]>>(key, {});
+    // Adopt the legacy shared selection list once for the signed-in user.
+    if (!daysMap || Object.keys(daysMap).length === 0) {
+      const legacyKey = `sanabel:todos:${userId}`;
+      let selections = localStore.getItem(legacyKey);
+      if (selections === null && !localStore.getItem("sanabel:legacy-todos-migrated")) {
+        selections = localStore.getItem("todoList");
+        if (selections) localStore.setItem(legacyKey, selections);
+        localStore.setItem("sanabel:legacy-todos-migrated", String(userId));
+      }
+      const legacyItems = selections === null ? [] : localStore.getJson<TodoItem[]>(legacyKey, [], isTodoItemArray);
+      if (legacyItems && legacyItems.length > 0) {
+        daysMap = { [serverToday]: legacyItems };
+        localStore.setItem(key, JSON.stringify(daysMap));
+      }
+    }
+    return daysMap[dateStr] || [];
+  }, [serverToday]);
+
+  const saveSoloDayAssigned = useCallback((userId: number, dateStr: string, items: TodoItem[]) => {
+    const key = getSoloDaysKey(userId);
+    const daysMap = localStore.getJson<Record<string, TodoItem[]>>(key, {});
+    daysMap[dateStr] = items.map((it) => ({ ...it, completed: false }));
+    localStore.setItem(key, JSON.stringify(daysMap));
+  }, []);
+
+  const todoItems = storedItems;
 
   const fetchSchoolTodo = async () => {
     const authToken = localStore.getItem("token");
@@ -1018,6 +1042,102 @@ const TodoList = () => {
     setApprovers(approverResponse.data?.data?.approvers || []);
   };
 
+  const fetchSoloDayData = useCallback(async () => {
+    if (!user) return;
+    setIsListLoading(true);
+    setListError(false);
+
+    try {
+      const authToken = localStore.getItem("token");
+      let completedList: any[] = [];
+      if (authToken) {
+        try {
+          const res = await axios.get(`${API_BASE_URL}/students/appear-Taskes-Completed`, {
+            headers: { Authorization: `Bearer ${authToken}` },
+            timeout: 10000,
+          });
+          completedList = res.data?.completedTasks || [];
+        } catch (err) {
+          console.warn("Could not fetch completed tasks history:", err);
+        }
+      }
+
+      // Update earliest date if history exists
+      if (completedList.length > 0) {
+        const dates = completedList
+          .map((c: any) => c.missionDate || (c.createdAt ? c.createdAt.slice(0, 10) : ""))
+          .filter(Boolean);
+        if (dates.length > 0) {
+          dates.sort();
+          setEarliestDate(dates[0]);
+        }
+      }
+
+      // Find all completed tasks for selectedDate
+      const completedForDate = completedList.filter((ct: any) => {
+        const cDate = ct.missionDate || (ct.createdAt ? ct.createdAt.slice(0, 10) : "");
+        return cDate === selectedDate;
+      });
+      const completedTaskIdSet = new Set(completedForDate.map((ct: any) => Number(ct.taskId || ct.id)));
+
+      // If viewing today, also merge user.completedTasks.taskIds
+      if (selectedDate === serverToday && user?.completedTasks?.taskIds) {
+        user.completedTasks.taskIds.forEach((id: number) => completedTaskIdSet.add(Number(id)));
+      }
+
+      // Load items assigned on selectedDate
+      const assignedItems = getSoloDayAssigned(user.id, selectedDate);
+
+      // Build merged item list:
+      const assignedTaskIds = new Set<number>();
+      const mergedItems: TodoItem[] = assignedItems.map((item) => {
+        assignedTaskIds.add(Number(item.task.id));
+        const isDone = completedTaskIdSet.has(Number(item.task.id));
+        return {
+          ...item,
+          completed: isDone,
+          status: isDone ? "completed" : "todo",
+          missionDate: selectedDate,
+        };
+      });
+
+      // Add completed tasks from backend that weren't in assigned list for this date
+      for (const ct of completedForDate) {
+        const tId = Number(ct.taskId || ct.id);
+        if (!assignedTaskIds.has(tId)) {
+          assignedTaskIds.add(tId);
+          mergedItems.push({
+            id: tId,
+            task: {
+              id: tId,
+              title: ct.title,
+              description: ct.description,
+              type: ct.type,
+              categoryId: ct.categoryId,
+              categoryTitle: ct.category,
+              snabelRed: ct.snabelRed || 0,
+              snabelYellow: ct.snabelYellow || 0,
+              snabelBlue: ct.snabelBlue || 0,
+              xp: ct.xp || 0,
+            } as unknown as Task,
+            completed: true,
+            status: "completed",
+            addedDate: ct.createdAt || `${selectedDate}T12:00:00.000Z`,
+            missionDate: selectedDate,
+          });
+        }
+      }
+
+      setTodoItems(mergedItems);
+      setLoadedFor(user.id);
+    } catch (error) {
+      console.error("Error loading Solo To-Do:", error);
+      setListError(true);
+    } finally {
+      setIsListLoading(false);
+    }
+  }, [user?.id, selectedDate, serverToday, getSoloDayAssigned]);
+
   useEffect(() => {
     if (!user) return;
     if (!isPersonal) {
@@ -1032,27 +1152,8 @@ const TodoList = () => {
       setLoadedFor(user.id);
       return;
     }
-    setIsListLoading(false);
-    try {
-      const key = `sanabel:todos:${user.id}`;
-      let selections = localStore.getItem(key);
-      // Adopt the legacy shared selection list once for the signed-in user.
-      // Its cached completion flags are deliberately never trusted.
-      if (selections === null && !localStore.getItem("sanabel:legacy-todos-migrated")) {
-        selections = localStore.getItem("todoList");
-        if (selections) localStore.setItem(key, selections);
-        localStore.setItem("sanabel:legacy-todos-migrated", String(user.id));
-      }
-      const saved = selections === null
-        ? []
-        : localStore.getJson<TodoItem[]>(key, [], isTodoItemArray);
-      setTodoItems(saved);
-    } catch {
-      setTodoItems([]);
-    }
-    setLoadedFor(user.id);
-    void refreshUserData();
-  }, [user?.id, isPersonal, refreshUserData, selectedDate]);
+    void fetchSoloDayData();
+  }, [user?.id, isPersonal, selectedDate, serverToday]);
 
   // Resume/focus is the reliable mobile day-boundary trigger. The next API
   // response supplies serverToday; the phone's clock never chooses reward day.
@@ -1068,15 +1169,6 @@ const TodoList = () => {
       document.removeEventListener("visibilitychange", refreshOnResume);
     };
   }, [user?.id, isPersonal, selectedDate, serverToday]);
-
-  useEffect(() => {
-    if (!user || !isPersonal || loadedFor !== user.id) return;
-    try {
-      localStore.setItem(`sanabel:todos:${user.id}`, JSON.stringify(storedItems.map(item => ({ ...item, completed: false }))));
-    } catch {
-      // Selections remain usable in memory when browser storage is unavailable.
-    }
-  }, [storedItems, user?.id, loadedFor, isPersonal]);
 
   const addMission = async (task: Task) => {
     if (!isPersonal) {
@@ -1100,15 +1192,22 @@ const TodoList = () => {
       task: task,
       completed: false,
       addedDate: new Date().toISOString(),
+      missionDate: selectedDate,
+      status: "todo",
     };
+    if (user?.id) {
+      const currentAssigned = getSoloDayAssigned(user.id, selectedDate);
+      if (!currentAssigned.some((item) => item.task.id === task.id)) {
+        const updated = [...currentAssigned, newTodoItem];
+        saveSoloDayAssigned(user.id, selectedDate, updated);
+      }
+    }
     setTodoItems((prev) => {
       if (prev.some((item) => item.task.id === task.id)) {
         return prev;
       }
       return [...prev, newTodoItem];
     });
-    // A newly added pending mission must be visible even if the user was
-    // previously viewing the completed filter or had an active search.
     setFilter("all");
     setSearchQuery("");
   };
@@ -1148,27 +1247,28 @@ const TodoList = () => {
         setShowConfirmPopup(false);
         return;
       }
-      const response = await mutateStudent("mission", { taskId: selectedItem.task.id, time: getCurrentTime() });
+      const response = await mutateStudent("mission", {
+        taskId: selectedItem.task.id,
+        time: getCurrentTime(),
+        missionDate: selectedDate,
+      });
 
       if (response.status === 200 || response.status === 201) {
-        // mutateStudent already reconciled the authoritative daily snapshot.
+        setTodoItems((prev) =>
+          prev.map((item) =>
+            item.id === selectedItem.id || item.task.id === selectedItem.task.id
+              ? { ...item, completed: true, status: "completed" }
+              : item,
+          ),
+        );
         setShowConfirmPopup(false);
         setShowCongratsPopup(true);
+        void refreshUserData();
       }
     } catch (error) {
       AudioManager.play("error");
       console.error("Error marking mission complete:", error);
-      // Always show the SPECIFIC reason the request failed (timeout, offline,
-      // expired session, duplicate completion, server error...) — never a
-      // blank or generic message. Matches utils/apiError.ts used elsewhere
-      // (e.g. the shop). The previous version alerted `errorData.message ||
-      // response.statusText`, which rendered as a blank dialog whenever the
-      // server's error body used a different key AND the connection was
-      // HTTP/2 (Vercel/Railway both are) — response.statusText is spec-empty
-      // for HTTP/2 in every browser, not just Safari.
       alert(t(describeApiError(error)));
-      // A timeout can occur after the server committed. Reconcile before
-      // another attempt instead of assuming the completion was rolled back.
       void refreshUserData();
     } finally {
       submitting.current = false;
@@ -1190,8 +1290,13 @@ const TodoList = () => {
       }
       return;
     }
+    if (user?.id) {
+      const currentAssigned = getSoloDayAssigned(user.id, selectedDate);
+      const updated = currentAssigned.filter((item) => item.id !== id && item.task.id !== id);
+      saveSoloDayAssigned(user.id, selectedDate, updated);
+    }
     setTodoItems((prev) => {
-      const updated = prev.filter((item) => item.id !== id);
+      const updated = prev.filter((item) => item.id !== id && item.task.id !== id);
       return updated;
     });
   };
@@ -1363,7 +1468,7 @@ const TodoList = () => {
   };
 
   const stats = getStats();
-  const isHistorical = !isPersonal && selectedDate < serverToday;
+  const isHistorical = selectedDate < serverToday;
   const shiftSelectedDate = (days: number) => {
     const date = new Date(`${selectedDate}T12:00:00.000Z`);
     date.setUTCDate(date.getUTCDate() + days);
