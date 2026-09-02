@@ -912,7 +912,7 @@ const AddMissionModal = ({
   );
 };
 
-const LegacyTodoList = () => {
+const TodoList = () => {
   const { t, i18n } = useTranslation();
   const { user, refreshUserData, mutateStudent } = useUserContext();
   const [storedItems, setTodoItems] = useState<TodoItem[]>([]);
@@ -923,7 +923,6 @@ const LegacyTodoList = () => {
   const [serverToday, setServerToday] = useState(() => new Date().toISOString().slice(0, 10));
   const [earliestDate, setEarliestDate] = useState<string | undefined>();
   const [historyBoundaryAttempted, setHistoryBoundaryAttempted] = useState(false);
-  const [historyBoundaryAttempts, setHistoryBoundaryAttempts] = useState(0);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [historicalPendingCount, setHistoricalPendingCount] = useState(0);
   const [oldestHistoricalPendingDate, setOldestHistoricalPendingDate] = useState<string | null>(null);
@@ -1321,12 +1320,11 @@ const LegacyTodoList = () => {
   // actionable set in their own order — otherwise a drop would silently
   // rewrite the order of items that are not on screen.
   const dragEnabled =
-    !isPersonal ? selectedDate === serverToday &&
+    selectedDate === serverToday &&
     sortMode === "manual" &&
     sourceFilter === "all" &&
     searchQuery === "" &&
-    (filter === "all" || filter === "active" || filter === "pending") :
-    sortMode === "manual" && sourceFilter === "all" && searchQuery === "" && (filter === "all" || filter === "active" || filter === "pending");
+    (filter === "all" || filter === "active" || (!isPersonal && filter === "pending"));
 
   const sensors = useSensors(
     // Small activation distance/delay so vertical scrolling never turns into
@@ -1401,7 +1399,6 @@ const LegacyTodoList = () => {
   };
 
   const stats = getStats();
-  const isHistorical = !isPersonal && selectedDate < serverToday;
   const shiftSelectedDate = (days: number) => {
     const date = new Date(`${selectedDate}T12:00:00.000Z`);
     date.setUTCDate(date.getUTCDate() + days);
@@ -1473,7 +1470,7 @@ const LegacyTodoList = () => {
             )}
             {historyBoundaryAttempted && selectedDate !== serverToday && (
               <p data-testid="todo-history-boundary" className="w-full text-center text-[11px] leading-4 text-gray-400">
-                {t("todo.date.firstDay")}
+                {t(isPersonal ? "todo.date.noEarlierHistory" : "todo.date.firstDay")}
               </p>
             )}
         {!isPersonal && selectedDate === serverToday && historicalPendingCount > 0 && (
@@ -1486,7 +1483,7 @@ const LegacyTodoList = () => {
           <div className="flex items-center justify-between w-full px-2 py-1 border-2 rounded-xl">
             <input type="text" placeholder={t("todo.searchPlaceholder")}
               className="w-full py-2.5 text-black bg-transparent drop-shadow-sm text-start" value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)} autoFocus={!isPersonal} />
+              onChange={(e) => setSearchQuery(e.target.value)} autoFocus />
             <div className="w-10 h-10 bg-blueprimary rounded-xl flex-center"><SearchIcon className="text-white" size={20} /></div>
           </div>
         )}
@@ -1684,7 +1681,7 @@ const LegacyTodoList = () => {
       <BottomSheet open={!!menuItem} onClose={() => setMenuItem(null)} label={t("خيارات المهمة")}>
         {menuItem && (() => {
           const kind = todoSourceKind(menuItem, isPersonal);
-          const canRemove = isPersonal || (!isHistorical && menuItem.status === "todo" && kind === "self");
+          const canRemove = !isHistorical && (isPersonal || (menuItem.status === "todo" && kind === "self"));
           const pending = pendingRequestOf(menuItem);
           const currentTargets = ((pending as any)?.pendingWith || []).map((target: any) => `${target.type}:${target.id}`);
           const alternates = approvers.filter((approver) => !currentTargets.includes(`${approver.type}:${approver.id}`));
@@ -2072,400 +2069,4 @@ const LegacyTodoList = () => {
   );
 };
 
-const TodoList = LegacyTodoList;
 export default TodoList;
-
-/* Removed superseded Solo-only draft.
-type SoloFilter = "all" | "active" | "completed";
-
-const toDateKey = (value: Date) => {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const day = String(value.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-const fromDateKey = (value: string) => {
-  const [year, month, day] = value.split("-").map(Number);
-  return new Date(year, month - 1, day, 12);
-};
-
-const changeDate = (value: string, days: number) => {
-  const date = fromDateKey(value);
-  date.setDate(date.getDate() + days);
-  return toDateKey(date);
-};
-
-export const formatTodoDate = (value: string | undefined, locale: string) => {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat(locale.startsWith("ar") ? "ar-EG" : "en", {
-    day: "numeric",
-    month: "long",
-  }).format(date);
-};
-
-export const todoSourceKind = (item: TodoItem, isPersonal: boolean) => {
-  if (isPersonal) return "self";
-  const sourceTypes = new Set((item.sources || []).map((source) => source.sourceType));
-  if (sourceTypes.size > 1) return "multi";
-  if (sourceTypes.has("teacher")) return "teacher";
-  if (sourceTypes.has("parent")) return "parent";
-  return "self";
-};
-
-export const computeReorder = (ids: number[], activeId: number, overId: number) => {
-  const from = ids.indexOf(activeId);
-  const to = ids.indexOf(overId);
-  if (from < 0 || to < 0 || from === to) return null;
-  const reordered = [...ids];
-  reordered.splice(to, 0, reordered.splice(from, 1)[0]);
-  return {
-    ids: reordered,
-    payload: reordered.map((id, position) => ({ id, position })),
-  };
-};
-
-const SoloTodoList = () => {
-  const { t, i18n } = useTranslation();
-  const { user, refreshUserData, mutateStudent } = useUserContext();
-  const role = localStorage.getItem("role");
-  const locale = i18n.resolvedLanguage || i18n.language || "ar";
-  const direction = locale.startsWith("ar") ? "rtl" : "ltr";
-  const authoritativeToday = user?.completedTasks?.date || toDateKey(new Date());
-
-  const [storedItems, setStoredItems] = useState<TodoItem[]>([]);
-  const [historyItems, setHistoryItems] = useState<TodoItem[]>([]);
-  const [selectedDate, setSelectedDate] = useState(authoritativeToday);
-  const [earliestDate, setEarliestDate] = useState(authoritativeToday);
-  const [filter, setFilter] = useState<SoloFilter>("all");
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
-  const [showCongratsPopup, setShowCongratsPopup] = useState(false);
-  const [selectedMissionId, setSelectedMissionId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadedFor, setLoadedFor] = useState<number | null>(null);
-  const [boundaryAttempts, setBoundaryAttempts] = useState(0);
-  const [showBoundaryMessage, setShowBoundaryMessage] = useState(false);
-  const submitting = useRef(false);
-
-  useEffect(() => {
-    if (!user) return;
-    const today = user.completedTasks?.date || toDateKey(new Date());
-    setSelectedDate(today);
-    setEarliestDate(today);
-    setShowBoundaryMessage(false);
-    setBoundaryAttempts(0);
-
-    try {
-      const storageKey = `sanabel:todos:${user.id}`;
-      let selections = localStorage.getItem(storageKey);
-      if (selections === null && !localStorage.getItem("sanabel:legacy-todos-migrated")) {
-        selections = localStorage.getItem("todoList");
-        if (selections) localStorage.setItem(storageKey, selections);
-        localStorage.setItem("sanabel:legacy-todos-migrated", String(user.id));
-      }
-      const parsed = JSON.parse(selections || "[]");
-      setStoredItems(Array.isArray(parsed) ? parsed : []);
-    } catch {
-      setStoredItems([]);
-    }
-    setLoadedFor(user.id);
-    void refreshUserData();
-
-    const authToken = localStorage.getItem("token");
-    if (!authToken) return;
-    void axios.get(`${API_BASE_URL}/students/student-task-completed`, {
-      headers: { Authorization: `Bearer ${authToken}` },
-    }).then((response) => {
-      const completedTasks = Array.isArray(response.data?.completedTasks)
-        ? response.data.completedTasks
-        : [];
-      const completedHistory: TodoItem[] = completedTasks.map((task: any, index: number) => ({
-        id: `solo-history-${task.id}-${task.missionDate || task.createdAt}-${index}`,
-        task,
-        completed: true,
-        status: "completed" as const,
-        missionDate: task.missionDate || String(task.createdAt || "").slice(0, 10),
-        addedDate: task.createdAt || task.missionDate,
-      }));
-      setHistoryItems(completedHistory);
-      const dates = completedHistory
-        .map((item) => item.missionDate)
-        .filter(Boolean)
-        .sort() as string[];
-      setEarliestDate(dates[0] || today);
-    }).catch(() => {
-      setHistoryItems([]);
-      setEarliestDate(today);
-    });
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (!user || loadedFor !== user.id) return;
-    try {
-      localStorage.setItem(
-        `sanabel:todos:${user.id}`,
-        JSON.stringify(storedItems.map((item) => ({ ...item, completed: false }))),
-      );
-    } catch {
-      // The current list remains usable in memory if storage is unavailable.
-    }
-  }, [storedItems, user?.id, loadedFor]);
-
-  const isHistorical = selectedDate < authoritativeToday;
-  const todayItems = storedItems.map((item) => ({
-    ...item,
-    completed: user?.completedTasks?.taskIds?.includes(Number(item.task.id)) ?? false,
-  }));
-  const itemsForDate = isHistorical
-    ? historyItems.filter((item) => item.missionDate === selectedDate)
-    : todayItems;
-
-  const selectDate = (nextDate: string) => {
-    if (nextDate > authoritativeToday) return;
-    if (nextDate < earliestDate) {
-      setBoundaryAttempts((current) => {
-        const next = current + 1;
-        if (next >= 2) setShowBoundaryMessage(true);
-        return next;
-      });
-      return;
-    }
-    setBoundaryAttempts(0);
-    setShowBoundaryMessage(false);
-    setSelectedDate(nextDate);
-    setShowCalendar(false);
-    setFilter("all");
-  };
-
-  const addMission = (task: Task) => {
-    setStoredItems((current) => current.some((item) => item.task.id === task.id)
-      ? current
-      : [...current, { id: task.id, task, completed: false, addedDate: new Date().toISOString() }]);
-    setFilter("all");
-    setSearchQuery("");
-  };
-
-  const confirmComplete = async () => {
-    if (selectedMissionId === null || submitting.current) return;
-    const selected = todayItems.find((item) => Number(item.id) === selectedMissionId);
-    if (!selected) return;
-    submitting.current = true;
-    setIsLoading(true);
-    try {
-      const response = await mutateStudent("mission", {
-        taskId: selected.task.id,
-        time: new Date().toISOString(),
-      });
-      if (response.status === 200 || response.status === 201) setShowCongratsPopup(true);
-    } catch (error) {
-      AudioManager.play("error");
-      alert(t(describeApiError(error)));
-      void refreshUserData();
-    } finally {
-      submitting.current = false;
-      setIsLoading(false);
-      setSelectedMissionId(null);
-      setShowConfirmPopup(false);
-    }
-  };
-
-  const query = searchQuery.trim().toLowerCase();
-  const visibleItems = itemsForDate.filter((item) => {
-    const searchable = `${item.task.title} ${t(item.task.title)} ${t(item.task.type)}`.toLowerCase();
-    if (query && !searchable.includes(query)) return false;
-    if (filter === "active") return !item.completed;
-    if (filter === "completed") return item.completed;
-    return true;
-  });
-
-  const stats = {
-    all: itemsForDate.length,
-    active: itemsForDate.filter((item) => !item.completed).length,
-    completed: itemsForDate.filter((item) => item.completed).length,
-  };
-
-  const dateLabel = selectedDate === authoritativeToday
-    ? t("todo.date.today")
-    : selectedDate === changeDate(authoritativeToday, -1)
-      ? t("todo.date.yesterday")
-      : new Intl.DateTimeFormat(locale.startsWith("ar") ? "ar-EG" : "en", {
-          weekday: "short",
-          day: "numeric",
-          month: "short",
-        }).format(fromDateKey(selectedDate));
-
-  const resources = (task: Task) => [
-    { icon: blueSanabel, value: task.snabelBlue, label: "سنبلة زرقاء" },
-    { icon: redSanabel, value: task.snabelRed, label: "سنبلة حمراء" },
-    { icon: yellowSanabel, value: task.snabelYellow, label: "سنبلة صفراء" },
-    { icon: xpIcon, value: task.xp, label: "نقاط الخبرة" },
-  ].map((resource) => (
-    <span key={resource.label} className="flex flex-col items-center text-xs text-black">
-      <img src={resource.icon} alt={resource.label} className="h-4 w-auto" />
-      {resource.value}
-    </span>
-  ));
-
-  const tabs: Array<{ key: SoloFilter; label: string; count: number; icon: typeof FaList }> = [
-    { key: "all", label: t("todo.status.all"), count: stats.all, icon: FaList },
-    { key: "active", label: t("todo.status.inProgress"), count: stats.active, icon: FaClock },
-    { key: "completed", label: t("todo.status.completed"), count: stats.completed, icon: FaCheckCircle },
-  ];
-
-  return (
-    <div id="page-height" dir={direction} className="flex flex-col items-center gap-4 overflow-y-auto p-4 pb-24">
-      <header className="w-full space-y-3">
-        <div className="flex items-center justify-between">
-          <GoBackButton />
-          <h1 className="text-2xl font-bold text-black">{t("todo.page.title")}</h1>
-          <button
-            type="button"
-            aria-label={searchOpen ? t("إغلاق البحث") : t("todo.search")}
-            onClick={() => {
-              setSearchOpen((open) => !open);
-              if (searchOpen) setSearchQuery("");
-            }}
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-blueprimary text-white"
-          >
-            {searchOpen ? <FaTimes /> : <SearchIcon className="text-white" size={20} />}
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2" dir="ltr">
-          <button type="button" aria-label={t("todo.date.previous")} onClick={() => selectDate(changeDate(selectedDate, -1))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-            <FaChevronLeft />
-          </button>
-          <button type="button" aria-label={t("todo.date.select")} aria-haspopup="dialog" onClick={() => setShowCalendar(true)} className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800" dir={direction}>
-            <FaCalendarAlt className="text-blueprimary" />
-            {dateLabel}
-          </button>
-          <button type="button" aria-label={t("todo.date.next")} disabled={selectedDate >= authoritativeToday} onClick={() => selectDate(changeDate(selectedDate, 1))} className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 disabled:opacity-30">
-            <FaChevronRight />
-          </button>
-        </div>
-
-        {showBoundaryMessage && selectedDate !== authoritativeToday && (
-          <p data-testid="todo-history-boundary" className="text-center text-xs text-slate-500">{t("todo.date.noEarlierHistory")}</p>
-        )}
-
-        {searchOpen && (
-          <div className="flex items-center gap-2 rounded-xl border-2 border-slate-200 px-3">
-            <SearchIcon className="text-slate-400" size={18} />
-            <input autoFocus type="search" placeholder={t("todo.searchPlaceholder")} value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} className="w-full bg-transparent py-3 text-start text-black outline-none" />
-          </div>
-        )}
-
-        <div className="grid w-full grid-cols-3 gap-2">
-          {tabs.map(({ key, label, count, icon: Icon }) => (
-            <button key={key} data-testid={`status-tab-${key}`} onClick={() => setFilter(key)} className={`flex min-w-0 items-center justify-center gap-1 rounded-xl px-2 py-2 text-xs font-medium ${filter === key ? "bg-blueprimary text-white" : "bg-slate-100 text-slate-600"}`}>
-              <Icon />
-              <span className="truncate">{label}</span>
-              <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1 ${filter === key ? "bg-white text-blueprimary" : "bg-white"}`}>{count}</span>
-            </button>
-          ))}
-        </div>
-      </header>
-
-      <main className="flex min-h-[16rem] w-full flex-1 flex-col gap-3">
-        {visibleItems.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center text-center text-slate-400">
-            <FaList className="mb-3 text-4xl" />
-            <p>{t(query ? "todo.empty.results" : filter === "completed" ? "todo.empty.completed" : filter === "active" ? "todo.empty.inProgress" : "todo.empty.all")}</p>
-          </div>
-        ) : visibleItems.map((item, index) => {
-          const typeImage = sanabelImgs[item.task.type]
-            || [sanabelType1Img, sanabelType2Img, sanabelType3Img, sanabelType4Img][Math.max(0, (item.task.categoryId || 1) - 1)];
-          return (
-            <motion.article key={item.id} data-testid={`todo-card-${item.task.id}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index * 0.04, 0.2) }} className={`rounded-2xl border p-4 ${item.completed ? "border-green-100 bg-green-50" : "border-slate-200 bg-white"}`}>
-              <div className="mb-3 flex items-center justify-between gap-2">
-                {!isHistorical ? <button type="button" aria-label={t("todo.remove")} onClick={() => setStoredItems((current) => current.filter((candidate) => candidate.id !== item.id))} className="p-2 text-slate-300 hover:text-red-500"><FaTrash /></button> : <span />}
-                <span data-testid={`category-chip-${item.task.id}`} className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-1 text-xs text-blueprimary">
-                  <img src={typeImage} alt="" className="h-5 w-5 object-contain" />
-                  {t(item.task.type)}
-                </span>
-              </div>
-              <h3 className="text-start font-semibold text-slate-800">{t(item.task.title)}</h3>
-              <div className="mt-4 flex items-end justify-between gap-3">
-                <div className="flex gap-2">{resources(item.task)}</div>
-                <button type="button" data-testid={`complete-mission-${item.task.id}`} aria-label={t(item.completed ? "todo.status.completed" : "تأكيد الإنجاز")} aria-pressed={item.completed} disabled={item.completed || isHistorical || isLoading} onClick={() => { setSelectedMissionId(Number(item.id)); setShowConfirmPopup(true); }} className={`flex h-10 w-10 items-center justify-center rounded-full text-white ${item.completed ? "bg-green-500" : "bg-blueprimary disabled:bg-slate-300"}`}>
-                  <FaCheck />
-                </button>
-              </div>
-            </motion.article>
-          );
-        })}
-      </main>
-
-      {!isHistorical && (
-        <div className="w-full">
-          <PrimaryButton style="w-full bg-blueprimary" text={t("todo.addMission")} arrow="none" onClick={() => setShowAddModal(true)} />
-        </div>
-      )}
-
-      <AddMissionModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onAddMission={addMission} existingTaskIds={todayItems.map((item) => item.task.id)} />
-
-      {showCalendar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-5" onClick={() => setShowCalendar(false)}>
-          <div role="dialog" aria-label={t("todo.date.select")} className="w-full max-w-sm rounded-3xl bg-white p-4 shadow-xl" onClick={(event) => event.stopPropagation()}>
-            <Calendar
-              className="todo-calendar"
-              value={fromDateKey(selectedDate)}
-              minDate={fromDateKey(earliestDate)}
-              maxDate={fromDateKey(authoritativeToday)}
-              onChange={(value) => { if (value instanceof Date) selectDate(toDateKey(value)); }}
-              prevLabel={<FaChevronLeft aria-label={t("todo.date.previousMonth")} />}
-              nextLabel={<FaChevronRight aria-label={t("todo.date.nextMonth")} />}
-              prev2Label={null}
-              next2Label={null}
-              locale={locale.startsWith("ar") ? "ar-EG" : "en-US"}
-            />
-            <button type="button" onClick={() => setShowCalendar(false)} className="mt-2 w-full rounded-xl bg-slate-100 py-3">{t("todo.date.cancel")}</button>
-          </div>
-        </div>
-      )}
-
-      <AnimatePresence>
-        {showConfirmPopup && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowConfirmPopup(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="w-full max-w-sm rounded-2xl bg-white p-6 text-center" onClick={(event) => event.stopPropagation()}>
-              <h2 className="mb-2 text-xl font-bold">{t("تأكيد الإنجاز")}</h2>
-              <p className="mb-6 text-slate-600">{t("هل أنت متأكد من أنك أنجزت هذه المهمة؟")}</p>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setShowConfirmPopup(false)} className="flex-1 rounded-xl bg-slate-100 py-3">{t("إلغاء")}</button>
-                <button type="button" data-testid="confirm-mission-action" onClick={() => void confirmComplete()} disabled={isLoading} className="flex-1 rounded-xl bg-green-500 py-3 text-white disabled:opacity-50">{t("تأكيد")}</button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showCongratsPopup && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-sm rounded-2xl bg-white p-8 text-center">
-              <Tickcircle className="mx-auto mb-4 text-5xl text-green-500" />
-              <h2 className="mb-5 text-2xl font-bold">{t("🎉 مبروك! 🎉")}</h2>
-              <button type="button" onClick={() => setShowCongratsPopup(false)} className="w-full rounded-xl bg-green-500 py-3 text-white">{t("رائع")}</button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {role === "Student" ? <StudentNavbar /> : role === "Teacher" ? <TeacherNavbar /> : <ParentNavbar />}
-    </div>
-  );
-};
-
-const TodoList = () => {
-  const { user } = useUserContext();
-  return user && !user.classId ? <SoloTodoList /> : <LegacyTodoList />;
-};
-
-export default TodoList;
-*/

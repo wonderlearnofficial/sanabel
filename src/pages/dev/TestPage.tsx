@@ -114,15 +114,13 @@ const AccountCard: React.FC<AccountCardProps> = ({
             <span className="text-xs text-white/70">{cfg.label}</span>
           </div>
         </div>
-        {!isProduction && (
-          <button
-            onClick={() => onLogin(userId)}
-            disabled={loggingInId !== null}
-            className="rounded-xl bg-white/20 hover:bg-white/30 disabled:opacity-50 px-3 py-1.5 text-xs font-bold text-white transition-all border border-white/30"
-          >
-            {isLoggingIn ? "⏳ جاري..." : "⬆ دخول سريع"}
-          </button>
-        )}
+        <button
+          onClick={() => onLogin(userId)}
+          disabled={loggingInId !== null}
+          className="rounded-xl bg-white/20 hover:bg-white/30 disabled:opacity-50 px-3 py-1.5 text-xs font-bold text-white transition-all border border-white/30"
+        >
+          {isLoggingIn ? "⏳ جاري..." : "⬆ دخول سريع"}
+        </button>
       </div>
 
       {/* Details */}
@@ -225,12 +223,6 @@ const TestPage: React.FC = () => {
                   <span className="text-white text-sm font-semibold">{item.value}</span>
                 </div>
               ))}
-              {data.isProduction && (
-                <div className="flex items-center gap-2 rounded-xl bg-orange-500/30 px-3 py-1.5 border border-orange-400/40">
-                  <span>⚠</span>
-                  <span className="text-orange-100 text-xs font-medium">بيئة إنتاج — كلمات المرور مخفية، تسجيل الدخول السريع معطل</span>
-                </div>
-              )}
             </div>
           )}
         </div>
