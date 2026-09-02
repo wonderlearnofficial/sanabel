@@ -74,7 +74,7 @@ import ParentNavbar from "./components/navbar/ParentNavbar";
 import { useTheme } from "./context/ThemeContext";
 import { UserProvider } from "./context/StudentUserProvider";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "react-i18next";
 import "./i18n";
@@ -108,32 +108,34 @@ import UserData from "./pages/admin/UserData";
 
 // Dev-only quick-login tool
 import DevLogin from "./pages/dev/DevLogin";
+import TestPage from "./pages/dev/TestPage";
 import { AppUpdateChecker } from "./components/updates/AppUpdateChecker";
 import { initAppNotificationsOnStartup } from "./services/appNotificationManager";
 import PermissionsStartupModal from "./components/PermissionsStartupModal";
 import ImpersonationBanner from "./components/ImpersonationBanner";
+import { API_BASE_URL } from "./config/api";
+import { localStore } from "./utils/safeStorage";
 
 setupIonicReact();
 
 // Custom hook for internet connection detection
-const useInternetConnection = () => {
+export const useInternetConnection = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [hasBeenOffline, setHasBeenOffline] = useState(false);
+  const failedChecks = useRef(0);
 
   useEffect(() => {
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let activeController: AbortController | null = null;
+    let checkInFlight = false;
+    let disposed = false;
+
     const handleOnline = () => {
-      setIsOnline(true);
-      // Optional: Show a toast notification that connection is restored
-      if (hasBeenOffline) {
-        console.log("Connection restored!");
-        // You can add a toast notification here if you have a toast system
-      }
+      failedChecks.current = 0;
+      if (!disposed) setIsOnline(true);
     };
 
     const handleOffline = () => {
-      setIsOnline(false);
-      setHasBeenOffline(true);
-      console.log("Connection lost!");
+      if (!disposed) setIsOnline(false);
     };
 
     // Add event listeners
@@ -142,42 +144,69 @@ const useInternetConnection = () => {
 
     // Additional check with a ping to ensure real connectivity
     const checkRealConnection = async () => {
+      if (disposed || checkInFlight || document.visibilityState === "hidden") return;
       if (!navigator.onLine) {
-        setIsOnline(false);
+        failedChecks.current = 2;
+        if (!disposed) setIsOnline(false);
         return;
       }
 
+      checkInFlight = true;
+      activeController = new AbortController();
+      const timeoutId = setTimeout(() => activeController?.abort(), 5000);
       try {
-        // Try to fetch a small resource to verify real connectivity
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-        await fetch("https://www.google.com/favicon.ico", {
-          mode: "no-cors",
-          signal: controller.signal,
+        // Verify the API itself. Requests to unrelated hosts (previously
+        // Google) can be blocked by iOS privacy controls and falsely mark an
+        // otherwise healthy Sanabel session as offline.
+        const response = await fetch(`${API_BASE_URL}/health/live`, {
+          method: "GET",
+          cache: "no-store",
+          signal: activeController.signal,
         });
 
+        if (!response.ok) throw new Error(`Health check failed (${response.status})`);
+        failedChecks.current = 0;
+        if (!disposed) setIsOnline(true);
+      } catch {
+        if (disposed) return;
+        failedChecks.current += 1;
+        // A suspended iPhone radio or one Railway timeout must not replace the
+        // whole app. Confirm the failure once before showing offline state.
+        if (!navigator.onLine || failedChecks.current >= 2) {
+          setIsOnline(false);
+        } else {
+          retryTimer = setTimeout(() => void checkRealConnection(), 2000);
+        }
+      } finally {
         clearTimeout(timeoutId);
-        setIsOnline(true);
-      } catch (error) {
-        setIsOnline(false);
-        setHasBeenOffline(true);
+        activeController = null;
+        checkInFlight = false;
       }
     };
 
     // Check connection every 30 seconds
     const intervalId = setInterval(checkRealConnection, 30000);
+    const handleVisible = () => {
+      if (document.visibilityState === "visible") void checkRealConnection();
+    };
+    window.addEventListener("focus", checkRealConnection);
+    document.addEventListener("visibilitychange", handleVisible);
 
     // Initial check
     checkRealConnection();
 
     // Cleanup
     return () => {
+      disposed = true;
+      activeController?.abort();
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("focus", checkRealConnection);
+      document.removeEventListener("visibilitychange", handleVisible);
       clearInterval(intervalId);
+      if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [hasBeenOffline]);
+  }, []);
 
   return isOnline;
 };
@@ -194,14 +223,14 @@ const App: React.FC = () => {
   const { t } = useTranslation();
   const isOnline = useInternetConnection();
 
-  if (!localStorage.getItem("language")) {
-    localStorage.setItem("language", "ar");
+  if (!localStore.getItem("language")) {
+    localStore.setItem("language", "ar");
   }
 
-  if (!localStorage.getItem("dir")) {
-    localStorage.setItem("dir", "ltr");
+  if (!localStore.getItem("dir")) {
+    localStore.setItem("dir", "rtl");
   }
-  const role = localStorage.getItem("role");
+  const role = localStore.getItem("role");
 
   useEffect(() => {
     // Automatically prompt and initialize notifications on startup for all users (student, teacher, parent, guest)
@@ -226,6 +255,8 @@ const App: React.FC = () => {
             <UserData />
           ) : window.location.pathname === "/dev/login" && import.meta.env.DEV ? (
             <DevLogin />
+          ) : window.location.pathname === "/test" ? (
+            <TestPage />
           ) : (
           /* Outer container that fills the entire viewport */
           <div className="app-viewport flex items-center justify-center bg-white md:bg-gray-100">
@@ -291,6 +322,7 @@ const App: React.FC = () => {
                     path="/notifications"
                     component={Notifications}
                   />
+                  <Route exact path="/approvals" component={Notifications} />
                   {/* Student */}
                   <Route exact path="/student/home" component={StudentHome} />
                   <Route
@@ -371,7 +403,7 @@ const App: React.FC = () => {
                     path="/teacher/settings/guides"
                     render={() => (
                       <GuideReplayList
-                        role={localStorage.getItem("role") === "Parent" ? "Parent" : "Teacher"}
+                        role={localStore.getItem("role") === "Parent" ? "Parent" : "Teacher"}
                       />
                     )}
                   />
