@@ -187,7 +187,11 @@ const TestPage: React.FC = () => {
   };
 
   return (
-    <div className="h-screen h-[100dvh] w-full overflow-y-auto overscroll-y-contain bg-gradient-to-br from-slate-50 to-blue-50" dir="rtl">
+    <div
+      className="fixed inset-0 z-10 w-full h-full overflow-y-auto overscroll-y-contain bg-gradient-to-br from-slate-50 to-blue-50"
+      style={{ WebkitOverflowScrolling: "touch", minHeight: "100%" }}
+      dir="rtl"
+    >
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-700 to-indigo-800 px-6 py-8 shadow-lg">
         <div className="mx-auto max-w-5xl">

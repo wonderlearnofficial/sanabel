@@ -249,13 +249,13 @@ const App: React.FC = () => {
         <GuideProvider>
           <ImpersonationBanner />
           {/* Simulation & desktop admin pages: render outside the phone frame and Ionic router entirely */}
-          {window.location.pathname === "/simulation" ? (
+          {window.location.pathname.startsWith("/simulation") ? (
             <Simulation />
-          ) : window.location.pathname === "/admin/userdata" ? (
+          ) : window.location.pathname.startsWith("/admin/userdata") ? (
             <UserData />
-          ) : window.location.pathname === "/dev/login" && import.meta.env.DEV ? (
+          ) : window.location.pathname.startsWith("/dev/login") && import.meta.env.DEV ? (
             <DevLogin />
-          ) : window.location.pathname === "/test" ? (
+          ) : window.location.pathname.startsWith("/test") ? (
             <TestPage />
           ) : (
           /* Outer container that fills the entire viewport */
@@ -496,6 +496,7 @@ const App: React.FC = () => {
                     path="/admin/students/:studentId"
                     component={StudentDetailEdit}
                   />
+                  <Route exact path="/test" component={TestPage} />
                 </Switch>
               </IonRouterOutlet>
             </IonReactRouter>
