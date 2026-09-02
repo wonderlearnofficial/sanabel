@@ -916,7 +916,6 @@ const TodoList = () => {
   const { t, i18n } = useTranslation();
   const { user, refreshUserData, mutateStudent } = useUserContext();
   const [storedItems, setTodoItems] = useState<TodoItem[]>([]);
-  const [soloHistoryItems, setSoloHistoryItems] = useState<TodoItem[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -963,20 +962,17 @@ const TodoList = () => {
 
   const canAssignTask = user?.canAssignTask;
   const isPersonal = !user?.classId;
-  const isHistorical = selectedDate < serverToday;
 
   const submitting = useRef(false);
   const [loadedFor, setLoadedFor] = useState<number | null>(null);
   // Solo selection stays local. School To-Do state is populated from the
   // server below and already carries authoritative lifecycle state.
-  const todoItems = isPersonal && isHistorical
-    ? soloHistoryItems.filter((item) => item.missionDate === selectedDate)
-    : storedItems.map(item => ({
-        ...item,
-        completed: isPersonal
-          ? (user?.completedTasks?.taskIds.includes(Number(item.task.id)) ?? false)
-          : item.status === "completed",
-      }));
+  const todoItems = storedItems.map(item => ({
+    ...item,
+    completed: isPersonal
+      ? (user?.completedTasks?.taskIds.includes(Number(item.task.id)) ?? false)
+      : item.status === "completed",
+  }));
 
   const fetchSchoolTodo = async () => {
     const authToken = localStore.getItem("token");
@@ -1037,9 +1033,6 @@ const TodoList = () => {
       return;
     }
     setIsListLoading(false);
-    const authoritativeToday = user.completedTasks?.date || new Date().toISOString().slice(0, 10);
-    setServerToday(authoritativeToday);
-    if (loadedFor !== user.id) setSelectedDate(authoritativeToday);
     try {
       const key = `sanabel:todos:${user.id}`;
       let selections = localStore.getItem(key);
@@ -1060,36 +1053,6 @@ const TodoList = () => {
     setLoadedFor(user.id);
     void refreshUserData();
   }, [user?.id, isPersonal, refreshUserData, selectedDate]);
-
-  // Solo Users keep today's chosen list locally, while the completion API is
-  // the truthful source for older days. Historic dates therefore show only
-  // missions that were actually completed on that day.
-  useEffect(() => {
-    if (!user || !isPersonal) return;
-    const authToken = localStore.getItem("token");
-    if (!authToken) return;
-    const authoritativeToday = user.completedTasks?.date || serverToday;
-    void axios.get(`${API_BASE_URL}/students/student-task-completed`, {
-      headers: { Authorization: `Bearer ${authToken}` },
-    }).then((response) => {
-      const rows = Array.isArray(response.data?.completedTasks) ? response.data.completedTasks : [];
-      const history: TodoItem[] = rows.map((task: any, index: number) => ({
-        id: `solo-history-${task.id}-${task.missionDate || task.createdAt}-${index}`,
-        task,
-        completed: true,
-        status: "completed" as const,
-        missionDate: task.missionDate || String(task.createdAt || "").slice(0, 10),
-        addedDate: task.createdAt || task.missionDate,
-        completedAt: task.updatedAt || task.createdAt,
-      }));
-      setSoloHistoryItems(history);
-      const dates = history.map((item) => item.missionDate).filter(Boolean).sort() as string[];
-      setEarliestDate(dates[0] || authoritativeToday);
-    }).catch(() => {
-      setSoloHistoryItems([]);
-      setEarliestDate(authoritativeToday);
-    });
-  }, [user?.id, isPersonal, user?.completedTasks?.date]);
 
   // Resume/focus is the reliable mobile day-boundary trigger. The next API
   // response supplies serverToday; the phone's clock never chooses reward day.
@@ -1320,11 +1283,12 @@ const TodoList = () => {
   // actionable set in their own order — otherwise a drop would silently
   // rewrite the order of items that are not on screen.
   const dragEnabled =
-    selectedDate === serverToday &&
+    !isPersonal ? selectedDate === serverToday &&
     sortMode === "manual" &&
     sourceFilter === "all" &&
     searchQuery === "" &&
-    (filter === "all" || filter === "active" || (!isPersonal && filter === "pending"));
+    (filter === "all" || filter === "active" || filter === "pending") :
+    sortMode === "manual" && sourceFilter === "all" && searchQuery === "" && (filter === "all" || filter === "active" || filter === "pending");
 
   const sensors = useSensors(
     // Small activation distance/delay so vertical scrolling never turns into
@@ -1399,6 +1363,7 @@ const TodoList = () => {
   };
 
   const stats = getStats();
+  const isHistorical = !isPersonal && selectedDate < serverToday;
   const shiftSelectedDate = (days: number) => {
     const date = new Date(`${selectedDate}T12:00:00.000Z`);
     date.setUTCDate(date.getUTCDate() + days);
@@ -1470,7 +1435,7 @@ const TodoList = () => {
             )}
             {historyBoundaryAttempted && selectedDate !== serverToday && (
               <p data-testid="todo-history-boundary" className="w-full text-center text-[11px] leading-4 text-gray-400">
-                {t(isPersonal ? "todo.date.noEarlierHistory" : "todo.date.firstDay")}
+                {t("todo.date.firstDay")}
               </p>
             )}
         {!isPersonal && selectedDate === serverToday && historicalPendingCount > 0 && (
@@ -1483,7 +1448,7 @@ const TodoList = () => {
           <div className="flex items-center justify-between w-full px-2 py-1 border-2 rounded-xl">
             <input type="text" placeholder={t("todo.searchPlaceholder")}
               className="w-full py-2.5 text-black bg-transparent drop-shadow-sm text-start" value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)} autoFocus />
+              onChange={(e) => setSearchQuery(e.target.value)} autoFocus={!isPersonal} />
             <div className="w-10 h-10 bg-blueprimary rounded-xl flex-center"><SearchIcon className="text-white" size={20} /></div>
           </div>
         )}
@@ -1681,7 +1646,7 @@ const TodoList = () => {
       <BottomSheet open={!!menuItem} onClose={() => setMenuItem(null)} label={t("خيارات المهمة")}>
         {menuItem && (() => {
           const kind = todoSourceKind(menuItem, isPersonal);
-          const canRemove = !isHistorical && (isPersonal || (menuItem.status === "todo" && kind === "self"));
+          const canRemove = isPersonal || (!isHistorical && menuItem.status === "todo" && kind === "self");
           const pending = pendingRequestOf(menuItem);
           const currentTargets = ((pending as any)?.pendingWith || []).map((target: any) => `${target.type}:${target.id}`);
           const alternates = approvers.filter((approver) => !currentTargets.includes(`${approver.type}:${approver.id}`));
