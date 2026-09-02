@@ -69,7 +69,7 @@ const DevLogin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 p-6" dir={i18n.dir()}>
+    <div className="h-screen h-[100dvh] w-full overflow-y-auto bg-gray-50 p-6" dir={i18n.dir()}>
       <ToastContainer position="top-center" autoClose={3000} rtl={i18n.dir() === "rtl"} />
 
       <div className="mx-auto max-w-4xl">
