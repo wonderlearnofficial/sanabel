@@ -9,6 +9,8 @@ import {
 } from "../services/prayerNotifications";
 import { requestAppNotificationPermissions } from "../services/appNotificationManager";
 import { localStore } from "../utils/safeStorage";
+import { useOverlayClaim } from "../guides/v2/OverlayCoordinator";
+import { OVERLAY_TIER } from "../guides/v2/types";
 
 export const PERMISSIONS_ONBOARDING_KEY = "sanabel:permissions_onboarding_completed";
 
@@ -17,6 +19,10 @@ export const PermissionsStartupModal: React.FC = () => {
   const isRTL = i18n.language !== "en";
 
   const [isOpen, setIsOpen] = useState(false);
+  // Tier 1: a platform permission request owns the screen. A tutorial guide
+  // steps aside while it is open (and is not marked seen). Registration only —
+  // this modal's prayer/geolocation behaviour is untouched.
+  useOverlayClaim(isOpen, OVERLAY_TIER.blocking, "permissions-startup");
   const [step, setStep] = useState<"intro" | "detecting" | "manual_city" | "success">("intro");
   const [detectedCityName, setDetectedCityName] = useState<string>("");
   const [selectedCityKey, setSelectedCityKey] = useState<string>("");

@@ -22,6 +22,9 @@ import { localStore } from "../utils/safeStorage";
 
 export const PRAYER_ENABLED_KEY = "prayerNotifications";
 const COORDS_KEY = "prayerNotificationsCoords";
+// Set when the user refused device location. Background work never asks the
+// OS again; only an explicit tap in onboarding or Settings may re-request.
+export const LOCATION_DENIED_KEY = "sanabel:location_permission_denied";
 
 // Deterministic local-notification ids reserved for prayers:
 // 510000 + dayIndex * 10 + prayerIndex  (well clear of other notifications)
@@ -182,6 +185,41 @@ const scheduleNativePrayerNotifications = async (
   return schedule.length;
 };
 
+type LocationPermissionState = {
+  location?: string;
+  coarseLocation?: string;
+};
+
+const isLocationGranted = (state: LocationPermissionState | null | undefined) =>
+  state?.location === "granted" || state?.coarseLocation === "granted";
+
+// Reads the OS location permission without ever showing a prompt.
+export const hasNativeLocationPermission = async (): Promise<boolean> => {
+  try {
+    return isLocationGranted(await Geolocation.checkPermissions());
+  } catch {
+    return false;
+  }
+};
+
+// Only call from a direct user action (onboarding or Settings): this is the
+// one place the OS location prompt may appear.
+const requestNativeLocationPermission = async (): Promise<boolean> => {
+  if (await hasNativeLocationPermission()) {
+    localStore.removeItem(LOCATION_DENIED_KEY);
+    return true;
+  }
+  let granted = false;
+  try {
+    granted = isLocationGranted(await Geolocation.requestPermissions());
+  } catch {
+    granted = false;
+  }
+  if (granted) localStore.removeItem(LOCATION_DENIED_KEY);
+  else localStore.setItem(LOCATION_DENIED_KEY, "true");
+  return granted;
+};
+
 const enableNative = async (coords?: Coords): Promise<EnableResult> => {
   const permission = await LocalNotifications.requestPermissions();
   if (permission.display !== "granted") {
@@ -193,8 +231,10 @@ const enableNative = async (coords?: Coords): Promise<EnableResult> => {
 
   let resolved = coords;
   if (!resolved) {
+    if (!(await requestNativeLocationPermission())) {
+      return { ok: false, needsCity: true, message: LOCATION_FALLBACK_MESSAGE };
+    }
     try {
-      await Geolocation.requestPermissions().catch(() => {});
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: false,
         timeout: 15000,
@@ -427,7 +467,9 @@ export const sendTestPrayerNotification = async (): Promise<EnableResult> => {
 
 // Called once on app startup. On native platforms this rolls the 7-day
 // scheduling window forward using the last known coordinates (refreshing
-// them silently when location permission is still granted).
+// them silently when location permission is still granted). It never shows
+// an OS permission prompt: getCurrentPosition would request permission
+// itself, so it only runs when permission is already granted.
 export const resyncPrayerNotificationsIfEnabled = async (): Promise<void> => {
   if (localStore.getItem(PRAYER_ENABLED_KEY) !== "true") return;
   if (!Capacitor.isNativePlatform()) return; // web is server-scheduled
@@ -437,6 +479,9 @@ export const resyncPrayerNotificationsIfEnabled = async (): Promise<void> => {
   try {
     let coords: { latitude: number; longitude: number } | null = null;
     try {
+      if (!(await hasNativeLocationPermission())) {
+        throw new Error("Location permission not granted");
+      }
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: false,
         timeout: 10000,

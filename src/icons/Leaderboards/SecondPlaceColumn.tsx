@@ -8,7 +8,7 @@ interface CustomIconProps {
 const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
   <svg
     width="100%"
-    height="auto"
+    style={{ height: "auto" }}
     viewBox="0 0 104 150"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"

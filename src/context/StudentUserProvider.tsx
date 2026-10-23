@@ -45,6 +45,14 @@ interface BaseUser {
   classId?: number | null;
   organizationId?: number | null;
   seenGuides: string[];
+  /**
+   * `Users.createdAt` as the server sent it (ISO string), or null when the
+   * profile response does not carry it. Account age only — Tutorial V2 uses it
+   * to tell an account created before the tutorial rollout from a new one.
+   * Kept raw here: every comparison happens in one place
+   * (`guides/v2/eligibility.ts`), never by re-parsing this in a component.
+   */
+  accountCreatedAt?: string | null;
 }
 
 interface StudentUser extends BaseUser {
@@ -85,6 +93,16 @@ interface UserContextProps {
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   refreshUserData: (token?: string) => Promise<void>;
   isLoading: boolean;
+  /**
+   * The last profile-refresh failure, already described by `describeApiError`,
+   * or `null` when the refresh has not failed.
+   *
+   * Exposed because a page that gates on `user` cannot otherwise tell why the
+   * profile is missing, and the two causes need different words: a failed
+   * request (this value) versus no stored session at all (`null` here, with
+   * `user` still null). Guessing between them puts a wrong cause on screen.
+   */
+  refreshError: string | null;
   mutateStudent: (action: GameplayAction, body?: Record<string, unknown>) => Promise<any>;
 }
 
@@ -96,7 +114,6 @@ const API_ENDPOINTS = {
   Student: `${API_BASE_URL}/students/data`,
   Teacher: `${API_BASE_URL}/teachers/teacher-data`,
   Parent: `${API_BASE_URL}/parents/parent-data`,
-  Admin: `${API_BASE_URL}/admin/me`,
 };
 
 // Provide the context
@@ -152,7 +169,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
     const authToken = token || localStore.getItem("token");
     const role = localStore.getItem("role");
 
-    if (!authToken || !role) {
+    if (!authToken || !role || role === "Admin") {
       setUser(null);
       setIsLoading(false);
       return;
@@ -214,6 +231,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
               dateOfBirth: userData.student.user.dateOfBirth,
               isAccess: userData.student.user.isAccess,
               seenGuides: userData.student.user.seenGuides || [],
+              accountCreatedAt:
+                userData.accountCreatedAt ??
+                userData.student.user.createdAt ??
+                null,
             } as StudentUser);
             break;
 
@@ -230,6 +251,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
               dateOfBirth: userData.user.dateOfBirth,
               isAccess: userData.user.isAccess,
               seenGuides: userData.user.seenGuides || [],
+              accountCreatedAt:
+                userData.accountCreatedAt ?? userData.user.createdAt ?? null,
               // Default values for teacher (you may need to adjust based on actual API response)
               grade: 0,
               snabelRed: 0,
@@ -259,6 +282,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
               dateOfBirth: userData.user.dateOfBirth,
               isAccess: userData.user.isAccess,
               seenGuides: userData.user.seenGuides || [],
+              accountCreatedAt:
+                userData.accountCreatedAt ?? userData.user.createdAt ?? null,
               // Default values for parent (you may need to adjust based on actual API response)
               grade: 0,
               snabelRed: 0,
@@ -274,34 +299,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
               connectCode: "",
               canAssignTask: false,
             } as ParentUser);
-            break;
-
-          case "Admin":
-            setUser({
-              id: userData.id,
-              firstName: userData.firstName,
-              lastName: userData.lastName,
-              email: userData.email,
-              role: role,
-              profileImg: userData.profileImg ?? null,
-              gender: userData.gender,
-              dateOfBirth: userData.dateOfBirth,
-              isAccess: userData.isAccess,
-              seenGuides: userData.seenGuides || [],
-              grade: 0,
-              snabelRed: 0,
-              snabelBlue: 0,
-              snabelYellow: 0,
-              xp: 0,
-              water: 0,
-              fertilizer: 0,
-              waterNeeded: 0,
-              fertilizerNeeded: 0,
-              treeStage: 0,
-              treeProgress: 0,
-              connectCode: "",
-              canAssignTask: false,
-            } as AdminUser);
             break;
 
           default:
@@ -387,7 +384,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
 
   return (
     <UserContext.Provider
-      value={{ user, setUser, refreshUserData: fetchUserData, isLoading, mutateStudent }}
+      value={{ user, setUser, refreshUserData: fetchUserData, isLoading, refreshError, mutateStudent }}
     >
       {refreshError && (
         <div role="alert" className="bg-red-50 text-red-800 p-3">

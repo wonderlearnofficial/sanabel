@@ -21,6 +21,10 @@ import fertilizerImg from "../../assets/resources/سماد.png";
 import { treeStages } from "../../data/Tree";
 import { motion, AnimatePresence } from "framer-motion";
 import PrimaryButton from "../../components/PrimaryButton";
+import { emitParentGuideEvent } from '../../guides/v2/parentSignals';
+import { publishGuideFacts } from '../../guides/v2/facts';
+import { useGuideAutoStart } from '../../guides/v2/useGuideAutoStart';
+import { calculateLevel } from '../../utils/LevelCalculator';
 
 const renderResources = (items: any) =>
   [
@@ -55,6 +59,7 @@ const TeacherView: React.FC = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  useGuideAutoStart();
 
   const viewStudent = async () => {
     // Validate code before making API call
@@ -140,8 +145,16 @@ const TeacherView: React.FC = () => {
       if (response.ok) {
         setShowPopup(true);
         setViewingStudent(false);
-      } else if (response.status === 400) {
+        emitParentGuideEvent('child-linked');
+        // Re-read membership on Home; do not guess a count for idempotent links.
+        publishGuideFacts({ parentChildrenKnown: false, linkedChildCount: undefined });
+      } else if (response.status === 409) {
+        // The server sends 409 when the child is linked to a different parent.
         setErrorMessage(t("الطالب مرتبط بالفعل بولي أمر آخر"));
+        setShowErrorPopup(true);
+        setViewingStudent(false);
+      } else if (response.status === 404) {
+        setErrorMessage(t("لم يتم العثور على طالب بهذا الكود"));
         setShowErrorPopup(true);
         setViewingStudent(false);
       } else if (response.status === 401) {
@@ -178,7 +191,7 @@ const TeacherView: React.FC = () => {
 
       {/* Content */}
       {!viewingStudent && (
-        <div className="flex flex-col w-full gap-4 p-2 bg-white rounded-lg flex-center">
+        <div data-guide-id="parent-link-form" className="flex flex-col w-full gap-4 p-2 bg-white rounded-lg flex-center">
           {/* Instructions Card */}
           <div className="w-full p-6 border border-blue-200 rounded-lg shadow-sm bg-blue-50 ">
             <div className="flex items-center gap-3 mb-4">
@@ -217,6 +230,7 @@ const TeacherView: React.FC = () => {
           <div className="w-full space-y-4">
             <input
               type="text"
+              aria-label={t('tutorial.parent.search')}
               placeholder={t("أدخل كود دعوة الطفل")}
               value={code}
               onChange={(e) => setCode(e.target.value)}
@@ -273,7 +287,7 @@ const TeacherView: React.FC = () => {
             transition={{ delay: 0.4 }}
           >
             <MedalAndLevel
-              level={student.level}
+              level={calculateLevel(student.xp).level}
               color="text-[#DBB42C]"
               dir=""
               size="w-20"
@@ -334,6 +348,8 @@ const TeacherView: React.FC = () => {
               whileTap={{ scale: 0.98 }}
               className="w-full p-2 font-semibold text-white transition duration-300 shadow-lg bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleInvite}
+              data-guide-id="parent-link-confirm"
+              style={{ minHeight: 44 }}
             >
               {t("دعوة")}
             </motion.button>

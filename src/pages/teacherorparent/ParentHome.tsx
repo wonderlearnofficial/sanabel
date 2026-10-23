@@ -14,6 +14,8 @@ import { motion } from "framer-motion";
 
 import ParentNavbar from "../../components/navbar/ParentNavbar";
 import Notification from "../../components/Notification";
+import { useParentGuideFacts } from '../../guides/v2/useParentGuideFacts';
+import { useOptionalGuideV2 } from '../../guides/v2/GuideProviderV2';
 import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
 import { useNotifications } from "../Notifications/NotificationContext";
 
@@ -24,6 +26,9 @@ const ParentHome = () => {
   const { t, i18n } = useTranslation();
   const pageDir = i18n.language === "ar" ? "rtl" : "ltr";
   const { pendingApprovalRequests } = useNotifications();
+  const [childCount, setChildCount] = useState<number | null>(null);
+  const guidesV2 = useOptionalGuideV2();
+  useParentGuideFacts(childCount, pendingApprovalRequests.length);
   const [linkedChildrenStatus, setLinkedChildrenStatus] =
     useState<LinkedChildrenStatus>("checking");
   useAutoStartGuide("parent-home", linkedChildrenStatus === "ready");
@@ -68,6 +73,7 @@ const ParentHome = () => {
         setLinkedChildrenStatus(
           linkedChildren.length > 0 ? "ready" : "empty",
         );
+        setChildCount(linkedChildren.length);
       } catch (error) {
         console.error("Error fetching linked children:", error);
         if (isMounted) {
@@ -110,6 +116,7 @@ const ParentHome = () => {
       hoverColor: "hover:from-redprimary hover:to-redprimary/60",
       icon: <FaUserFriends className="text-redprimary" size={28} />,
       onclick: () => history.push("/parent/view"),
+      guideId: "parent-progress-cta",
     },
     {
       title: "عرض التحديات",
@@ -168,6 +175,7 @@ const ParentHome = () => {
       dir={pageDir}
     >
       <div className="flex justify-end w-full">
+        {guidesV2?.enabled && <button type="button" className="min-h-[44px] px-3 underline" onClick={() => history.push('/parent/help')}>{t('tutorial.parent.help')}</button>}
         <Notification />
       </div>
 
@@ -220,6 +228,7 @@ const ParentHome = () => {
 
           <button
             type="button"
+            data-guide-id="parent-invite-cta"
             className="box-border flex items-center justify-center w-full max-w-full gap-3 p-4 font-bold text-white shadow-lg bg-gradient-to-r from-blueprimary to-indigo-400 rounded-2xl"
             onClick={() => history.push("/parent/invite")}
           >
@@ -237,7 +246,8 @@ const ParentHome = () => {
             animate="visible"
           >
             {parentHomeButtons.map((button, index) => (
-              <motion.div
+              <motion.button
+                type="button"
                 className={` flex-center flex-col gap-4 h-32 ${button.bgColor} ${button.hoverColor}
                 rounded-2xl shadow-lg transform transition-all duration-300
                 hover:shadow-2xl cursor-pointer relative overflow-hidden`}
@@ -278,7 +288,7 @@ const ParentHome = () => {
 
                 {/* Shine effect on hover */}
                 <div className="absolute inset-0 transition-transform duration-1000 transform -translate-x-full -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:translate-x-full"></div>
-              </motion.div>
+              </motion.button>
             ))}
           </motion.div>
 

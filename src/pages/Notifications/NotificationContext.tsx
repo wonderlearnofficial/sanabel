@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import axios from "axios";
+import { emitParentGuideEvent } from '../../guides/v2/parentSignals';
 import { API_BASE_URL } from "../../config/api";
 import { localStore } from "../../utils/safeStorage";
 
@@ -148,6 +149,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
         { requestId },
         { headers: { Authorization: `Bearer ${authToken}` } }
       );
+      if (role === 'Parent') emitParentGuideEvent('parent-approval-decided');
     } finally {
       // Refresh regardless of outcome — if someone else already resolved
       // this request (409), it should disappear from the list either way.

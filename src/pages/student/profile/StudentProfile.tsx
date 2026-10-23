@@ -68,6 +68,7 @@ const Profile: React.FC = () => {
         <div className="flex flex-row-reverse items-center w-full gap-1">
           {profileNav.map((item) => (
             <div
+              key={item}
               className={`${
                 show === item
                   ? "bg-blueprimary text-white"

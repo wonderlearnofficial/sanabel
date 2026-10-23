@@ -18,6 +18,24 @@ const KNOWN_SERVER_MESSAGES: Record<string, string> = {
     "وصلت شجرتك إلى أعلى مستوى، تهانينا!",
   "Tree data not found": "بيانات الشجرة غير متوفرة حاليًا.",
 
+  // Authentication and OTP rejections.
+  "Account access has been disabled":
+    "تم إيقاف الوصول إلى هذا الحساب. تواصل مع المسؤول.",
+  "Account no longer exists":
+    "تم حذف حسابك. تواصل مع المسؤول إذا كنت تعتقد أن هذا خطأ.",
+  "Invalid or expired OTP":
+    "الرمز غير صحيح أو انتهت صلاحيته. تحقق منه أو اطلب رمزًا جديدًا.",
+  "Too many incorrect attempts. Please try again later.":
+    "محاولات خاطئة كثيرة. انتظر قليلًا ثم حاول مرة أخرى.",
+  "OTP not verified. Verify OTP before resetting password.":
+    "لم يتم التحقق من الرمز بعد. تحقق من الرمز أولًا ثم غيّر كلمة المرور.",
+  "OTP record not found. Verify OTP before registering.":
+    "لم يتم التحقق من بريدك الإلكتروني بعد. اطلب رمزًا جديدًا وتحقق منه أولًا.",
+
+  // Mission approval rejections.
+  "Add this mission to your To-Do before requesting approval":
+    "أضف هذه المهمة إلى قائمة مهامك قبل طلب الموافقة.",
+
   // Admin API rejections. These Arabic strings are i18n keys; en.ts contains
   // their English equivalents, so callers should display t(describeApiError()).
   "User data not found in request": "بيانات المستخدم غير موجودة في الطلب.",
@@ -67,6 +85,18 @@ const KNOWN_SERVER_MESSAGES: Record<string, string> = {
     "اسم المرحلة الدراسية موجود بالفعل في هذه المدرسة.",
   "Grade has students or classes assigned, reassign or remove them first":
     "لا يمكن حذف المرحلة الدراسية لوجود طلاب أو فصول مرتبطة بها. أعد تعيينها أو احذفها أولاً.",
+};
+
+// Stable server error codes. These win over the free-text message, so a
+// reworded server message still maps to the right explanation.
+const KNOWN_SERVER_CODES: Record<string, string> = {
+  ACCOUNT_DISABLED: "تم إيقاف الوصول إلى هذا الحساب. تواصل مع المسؤول.",
+  ACCOUNT_DELETED:
+    "تم حذف حسابك. تواصل مع المسؤول إذا كنت تعتقد أن هذا خطأ.",
+  // Sent by PATCH /users/login (server/src/controllers/userController.ts).
+  ACCOUNT_SETUP_INCOMPLETE:
+    "لم يكتمل إنشاء هذا الحساب بعد. أكمل التسجيل من صفحة إنشاء حساب.",
+  MISSING_CREDENTIALS: "أدخل البريد الإلكتروني وكلمة السر.",
 };
 
 type ErrorTranslator = (
@@ -135,6 +165,12 @@ export const describeApiError = (
   const serverMessage = String(
     error.response.data?.error || error.response.data?.message || "",
   );
+
+  const code = String(error.response.data?.code || "");
+  const knownCodeMessage = KNOWN_SERVER_CODES[code];
+  if (knownCodeMessage) {
+    return translated(knownCodeMessage);
+  }
 
   const knownServerMessage = KNOWN_SERVER_MESSAGES[serverMessage];
   if (knownServerMessage) {

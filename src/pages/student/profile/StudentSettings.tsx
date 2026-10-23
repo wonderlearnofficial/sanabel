@@ -186,6 +186,14 @@ const Profile: React.FC = () => {
       type: "link",
     },
     {
+      // The replay route existed but nothing linked to it, so no Student could
+      // reach their own tours. Same row as the Teacher/Parent profile uses.
+      title: "دليل الصفحات",
+      icon: <HelpCenter size={25} />,
+      to: "/student/settings/guides",
+      type: "link",
+    },
+    {
       title: "المؤثرات الصوتية",
       icon: soundEffectsEnabled ? (
         <MdVolumeUp size={25} color="#4AAAD6" />
@@ -314,15 +322,6 @@ const Profile: React.FC = () => {
             <div className="h-0.5 bg-gray-200 rounded-lg dark-gray-100" />
           </div>
         ))}
-      </div>
-
-      <div className="flex flex-col items-center w-full gap-2 pb-8">
-        <h1
-          className="text-redprimary"
-          // onClick={() => setDeleteAccountPopup(true)}
-        >
-          {/* {t("حذف الحساب")} */}
-        </h1>
       </div>
 
       {/* City fallback picker — only shown when automatic location fails */}

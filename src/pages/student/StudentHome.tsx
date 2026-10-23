@@ -1,4 +1,6 @@
+import { useGuideAutoStart } from '../../guides/v2/useGuideAutoStart';
 import { API_BASE_URL } from "../../config/api";
+import { requiresMissionApproval } from "../../utils/studentGameplayMode";
 import StudentNavbar from "../../components/navbar/StudentNavbar";
 import i18n from "../../i18n";
 import { useHistory } from "react-router-dom";
@@ -49,6 +51,7 @@ const StudentHome: React.FC = () => {
     isLoading: isUserLoading,
     refreshUserData,
   } = useUserContext();
+  useGuideAutoStart(!!user);
   const xp = toFiniteNumber(user?.xp);
 
   const [missionsDoneToday, setMissionsDoneToday] = useState(0);
@@ -93,13 +96,13 @@ const StudentHome: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
-    if (!user.classId) {
+    if (!requiresMissionApproval(user)) {
       setMissionsDoneToday(user.completedTasks?.taskIds.length ?? 0);
       setIsMissionsLoading(false);
       return;
     }
     fetchUserData();
-  }, [user?.id, user?.classId, user?.completedTasks]);
+  }, [user?.id, user?.organizationId, user?.classId, user?.completedTasks]);
 
   const [medalImgTracker, setMedalImgTracker] = useState(0);
   useEffect(() => {
@@ -318,6 +321,9 @@ const StudentHome: React.FC = () => {
         <motion.div
           variants={itemVariants}
           data-guide-id="daily-challenges"
+          role="button"
+          tabIndex={0}
+          onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } }}
           className="w-full bg-[#4AAAD6] flex justify-between items-center p-1 px-2 rounded-xl cursor-pointer transition-all duration-200 hover:bg-[#3a9ac6] active:scale-[0.98]"
           onClick={() => history.push("/student/challenges")}
         >
@@ -337,7 +343,6 @@ const StudentHome: React.FC = () => {
               <div className="gap-3 flex-center">
                 <span
                   className="text-sm font-bold text-white text-end"
-                  dir="ltr"
                 >
                   {t("التحديات التي تم إنجازها اليوم")}
                 </span>

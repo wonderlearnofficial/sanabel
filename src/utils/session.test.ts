@@ -12,6 +12,8 @@ describe("security session cleanup", () => {
     localStorage.setItem("adminReturnRole", "Admin");
     localStorage.setItem("adminReturnEmail", "admin@example.com");
     localStorage.setItem("adminImpersonatedStudentName", "Student Name");
+    localStorage.setItem("isImpersonated", "true");
+    localStorage.setItem("impersonatedStudentName", "Student Name");
 
     clearClientSession();
 
@@ -22,6 +24,10 @@ describe("security session cleanup", () => {
     expect(localStorage.getItem("adminReturnRole")).toBeNull();
     expect(localStorage.getItem("adminReturnEmail")).toBeNull();
     expect(localStorage.getItem("adminImpersonatedStudentName")).toBeNull();
+    // Guide state is read-only while these markers are present, so a session
+    // that has ended must not leave them for the next user of this device.
+    expect(localStorage.getItem("isImpersonated")).toBeNull();
+    expect(localStorage.getItem("impersonatedStudentName")).toBeNull();
     expect(localStorage.getItem("keepLoggedIn")).toBe("false");
   });
 });

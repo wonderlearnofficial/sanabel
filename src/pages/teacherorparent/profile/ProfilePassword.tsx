@@ -64,8 +64,6 @@ const Password: React.FC = () => {
       toast.error(t("كلمة السر الجديدة لا تلبي المتطلبات")); // "New password does not meet requirements"
     } else {
       // Process password change logic here
-      console.log("Old Password:", tempOldPassword);
-      console.log("New Password:", newPassword);
       toast.success(t("تم تغيير كلمة السر بنجاح")); // "Password changed successfully"
     }
   };

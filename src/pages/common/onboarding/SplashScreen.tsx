@@ -37,13 +37,11 @@ const SplashScreen: React.FC = () => {
         } else if (role === "Parent") {
           history.replace("/parent/home");
         } else if (role === "Admin") {
-          window.location.href = "/admin/userdata";
+          history.replace("/admin-redirect");
         }
         return;
       }
 
-      // Do not route a stale keepLoggedIn flag to a protected page when its
-      // tokens were cleared or lost.
       if (keepLoggedIn || role) {
         localStore.setItem("keepLoggedIn", "false");
         localStore.removeItem("role");
@@ -77,7 +75,7 @@ const SplashScreen: React.FC = () => {
       >
         <motion.img src={schoologos} alt="" className="w-2/3" />
         <h1 className="text-xl font-bold text-blueprimary">
-          {t("اهداء من وقف د.حسن العديسي")}
+          {"اهداء من وقف د.حسن العديسي"}
         </h1>
       </motion.div>
 
@@ -96,7 +94,7 @@ const SplashScreen: React.FC = () => {
         transition={{ delay: 2, duration: 0.5 }}
       >
         <motion.h1 className="text-2xl text-[#5e5e5e] font-bold ">
-          {t("Powered By")}
+          {"Powered by"}
         </motion.h1>
         <motion.img src={wonderlearnLogo} alt="" className="w-2/3" />
       </motion.div>

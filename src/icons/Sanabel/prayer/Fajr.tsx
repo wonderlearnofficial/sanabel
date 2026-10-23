@@ -67,9 +67,9 @@ const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
         width="23.9358"
         height="26.6267"
         filterUnits="userSpaceOnUse"
-        color-interpolation-filters="sRGB"
+        colorInterpolationFilters="sRGB"
       >
-        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feFlood floodOpacity="0" result="BackgroundImageFix" />
         <feBlend
           mode="normal"
           in="SourceGraphic"

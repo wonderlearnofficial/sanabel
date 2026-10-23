@@ -17,6 +17,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
 import { useNotifications } from "../Notifications/NotificationContext";
+import { useTeacherGuideFacts } from '../../guides/v2/useTeacherGuideFacts';
+import { Link } from 'react-router-dom';
 
 const TeacherHome = () => {
   const history = useHistory();
@@ -32,6 +34,7 @@ const TeacherHome = () => {
   });
 
   useAutoStartGuide("teacher-home", true);
+  useTeacherGuideFacts(localStorage.getItem('role') === 'Teacher', { teacherStudentCount: stats.totalStudents, teacherClassCount: stats.totalClasses, teacherPendingCount: pendingApprovalRequests.length });
 
   // Fetch all data on component mount
   useEffect(() => {
@@ -355,6 +358,7 @@ const TeacherHome = () => {
       </motion.div>
 
       {/* Main Content */}
+      <Link to="/teacher/help" className="inline-flex min-h-[44px] items-center px-4 underline">{t('tutorial.teacher.helpTitle')}</Link>
       <motion.div
         className="grid w-full grid-cols-2 gap-2 px-4 "
         variants={containerVariants}
@@ -370,6 +374,9 @@ const TeacherHome = () => {
             hover:shadow-2xl cursor-pointer relative overflow-hidden`}
             key={index}
             data-guide-id={(button as any).guideId}
+            role="button"
+            tabIndex={0}
+            onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } }}
             onClick={button.onclick}
             variants={itemVariants}
             whileHover={{

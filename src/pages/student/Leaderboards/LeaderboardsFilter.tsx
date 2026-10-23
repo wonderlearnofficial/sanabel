@@ -169,7 +169,7 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
       onClick={onClose}
     >
       <motion.div
-        className="relative bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl overflow-hidden border border-gray-100 flex flex-col gap-5"
+        className="relative bg-white rounded-3xl p-6 w-full max-w-md max-h-[min(90dvh,560px)] shadow-2xl overflow-hidden border border-gray-100 flex flex-col gap-4"
         initial={{ scale: 0.9, y: 20, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.9, y: 20, opacity: 0 }}
@@ -177,7 +177,7 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+        <div className="flex items-center justify-between pb-2 border-b border-gray-100 shrink-0">
           <button
             onClick={onClose}
             className="p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
@@ -188,7 +188,7 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
         </div>
 
         {/* Form Body */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto overscroll-contain pe-1">
           {/* Grade Selector */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-600 text-end">
@@ -245,7 +245,7 @@ const LeaderboardsFilterModal: React.FC<FilterProps> = ({
         </div>
 
         {/* Buttons Footer */}
-        <div className="flex gap-3 mt-2">
+        <div className="flex gap-3 mt-2 shrink-0">
           <motion.button
             onClick={resetFilters}
             className="flex-1 py-3.5 font-bold text-gray-600 bg-gray-100 rounded-2xl text-center hover:bg-gray-200 transition-colors shadow-sm"

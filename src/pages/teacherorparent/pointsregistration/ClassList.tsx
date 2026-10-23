@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../../../config/api";
+import { useTeacherGuideFacts } from '../../../guides/v2/useTeacherGuideFacts';
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../../context/ThemeContext";
@@ -6,6 +7,7 @@ import TeacherNavbar from "../../../components/navbar/TeacherNavbar";
 import SearchIcon from "../../../icons/SearchIcon";
 import GoBackButton from "../../../components/GoBackButton";
 import PrimaryButton from "../../../components/PrimaryButton";
+import MissionConfirmationModal from "./MissionConfirmationModal";
 import GetAvatar from "../../student/tutorial/GetAvatar";
 import {
   FaCheck,
@@ -138,63 +140,71 @@ const FilterSortDropdown = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50"
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overscroll-contain"
       dir={i18n.language.startsWith("ar") ? "rtl" : "ltr"}
     >
-      <div className="w-11/12 max-w-md p-5 overflow-y-auto bg-white rounded-xl max-h-90vh ">
-        <h2 className="mb-4 text-xl font-bold text-center text-black">
-          {t("تصفية وترتيب")}
-        </h2>
+      <div className="w-full max-w-md max-h-[min(90dvh,540px)] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200/80">
+        <header className="px-5 pt-5 pb-3 shrink-0 border-b border-slate-100">
+          <h2 className="text-xl font-bold text-center text-slate-900">
+            {t("تصفية وترتيب")}
+          </h2>
+        </header>
 
-        {/* Filter Section */}
-        <div className="mb-4">
-          <h3 className="mb-2 font-semibold text-black">{t("تصفية حسب")}</h3>
-          <div className="space-y-2">
-            {filters.map((filter) => (
-              <label
-                key={filter.value}
-                className="flex items-center gap-2 cursor-pointer"
-              >
-                <input
-                  type="radio"
-                  name="filter"
-                  value={filter.value}
-                  checked={tempFilter === filter.value}
-                  onChange={(e) => setTempFilter(e.target.value)}
-                  className="text-blueprimary"
-                />
-                <span className="text-black">{filter.label}</span>
-              </label>
-            ))}
+        {/* Scrollable Body */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 space-y-4">
+          {/* Filter Section */}
+          <div>
+            <h3 className="mb-2 font-semibold text-slate-800">{t("تصفية حسب")}</h3>
+            <div className="space-y-2">
+              {filters.map((filter) => (
+                <label
+                  key={filter.value}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    name="filter"
+                    value={filter.value}
+                    checked={tempFilter === filter.value}
+                    onChange={(e) => setTempFilter(e.target.value)}
+                    className="text-blueprimary"
+                  />
+                  <span className="text-slate-700">{filter.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Sort Section */}
+          <div>
+            <h3 className="mb-2 font-semibold text-slate-800">{t("ترتيب حسب")}</h3>
+            <div className="space-y-2">
+              {sorts.map((sort) => (
+                <label
+                  key={sort.value}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    name="sort"
+                    value={sort.value}
+                    checked={tempSort === sort.value}
+                    onChange={(e) => setTempSort(e.target.value)}
+                    className="text-blueprimary"
+                  />
+                  <span className="text-slate-700">{sort.label}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Sort Section */}
-        <div className="mb-5">
-          <h3 className="mb-2 font-semibold text-black">{t("ترتيب حسب")}</h3>
-          <div className="space-y-2">
-            {sorts.map((sort) => (
-              <label
-                key={sort.value}
-                className="flex items-center gap-2 cursor-pointer"
-              >
-                <input
-                  type="radio"
-                  name="sort"
-                  value={sort.value}
-                  checked={tempSort === sort.value}
-                  onChange={(e) => setTempSort(e.target.value)}
-                  className="text-blueprimary"
-                />
-                <span className="text-black">{sort.label}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex w-full gap-3">
+        {/* Fixed Footer */}
+        <footer className="p-4 shrink-0 border-t border-slate-100 bg-white flex w-full gap-3">
           <PrimaryButton
-            style="bg-gray-300 text-black flex-1"
+            style="stroke flex-1"
             text={t("إلغاء")}
             arrow="none"
             onClick={onClose}
@@ -208,13 +218,13 @@ const FilterSortDropdown = ({
               onClose();
             }}
           />
-        </div>
+        </footer>
       </div>
     </div>
   );
 };
 
-// Duplicate Task Popup Component (same as StudentList)
+// Duplicate Task Popup Component with bounded viewport height and scrollable list
 const DuplicateTaskPopup = ({
   isOpen,
   onClose,
@@ -222,6 +232,7 @@ const DuplicateTaskPopup = ({
   existingStudentIds,
   allStudents,
   onDeselectStudent,
+  isSubmitting = false,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -229,6 +240,7 @@ const DuplicateTaskPopup = ({
   existingStudentIds: number[];
   allStudents: StudentData[];
   onDeselectStudent: (studentId: number) => void;
+  isSubmitting?: boolean;
 }) => {
   const { t } = useTranslation();
 
@@ -239,33 +251,42 @@ const DuplicateTaskPopup = ({
     .filter(Boolean) as StudentData[];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-11/12 max-w-md p-5 overflow-y-auto bg-white rounded-xl max-h-90vh">
-        <h2 className="mb-4 text-xl font-bold text-center text-black">
-          {t("مهمة مكررة!")}
-        </h2>
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overscroll-contain"
+    >
+      <div className="w-full max-w-md max-h-[min(90dvh,540px)] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200/80">
+        <header className="px-5 pt-5 pb-2 shrink-0 border-b border-slate-100">
+          <h2 className="text-lg font-bold text-center text-slate-900">
+            {t("مهمة مكررة!")}
+          </h2>
+          <p className="mt-1 text-xs text-center text-slate-500">
+            {t("بعض الطلاب أكملوا هذه المهمة بالفعل اليوم")}
+          </p>
+        </header>
 
-        <p className="mb-4 text-center text-gray-600">
-          {t("بعض الطلاب أكملوا هذه المهمة بالفعل اليوم")}
-        </p>
-
-        <div className="mb-5">
+        {/* Scrollable Existing Students List */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4">
           <div className="flex flex-wrap justify-center gap-3">
             {existingStudents.map((student) => (
               <div
                 key={student.id}
-                className="relative flex flex-col items-center"
+                className="relative flex flex-col items-center min-w-[64px]"
               >
-                <div
-                  className="absolute z-10 flex items-center justify-center w-5 h-5 bg-red-500 rounded-full cursor-pointer -top-1 -right-1"
+                <button
+                  type="button"
+                  aria-label={`${t("إزالة")} ${student.user.firstName}`}
+                  disabled={isSubmitting}
+                  className="absolute z-10 flex items-center justify-center w-5 h-5 text-white bg-red-500 rounded-full -top-1 -end-1 shadow-sm disabled:opacity-40"
                   onClick={() => onDeselectStudent(student.id)}
                 >
-                  <FaTimes className="text-xs text-white" />
-                </div>
-                <div className="w-16 h-16 overflow-hidden rounded-full">
+                  <FaTimes className="text-[10px]" />
+                </button>
+                <div className="w-14 h-14 overflow-hidden rounded-full border-2 border-slate-200 bg-slate-50">
                   <GetAvatar userAvatarData={student.user.profileImg} />
                 </div>
-                <span className="mt-1 text-xs font-medium text-center text-black">
+                <span className="mt-1 text-xs font-medium text-center text-slate-800 max-w-[70px] truncate">
                   {`${student.user.firstName}`}
                 </span>
               </div>
@@ -273,140 +294,30 @@ const DuplicateTaskPopup = ({
           </div>
         </div>
 
-        <div className="flex w-full gap-3">
+        {/* Fixed Action Buttons */}
+        <footer className="p-4 shrink-0 border-t border-slate-100 bg-white flex w-full gap-3">
           <PrimaryButton
-            style="bg-gray-300 text-black flex-1"
+            style="stroke flex-1"
             text={t("إلغاء")}
             arrow="none"
-            onClick={onClose}
-          />
-          <PrimaryButton
-            style=""
-            text={t("تسجيل للباقي")}
-            arrow="none"
-            onClick={onContinue}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Confirmation Popup Component (same as StudentList)
-const ConfirmationPopup = ({
-  isOpen,
-  onClose,
-  onConfirm,
-  selectedTask,
-  selectedStudents,
-  onRemoveStudent,
-  action,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  selectedTask: Task | null;
-  selectedStudents: StudentData[];
-  onRemoveStudent: (studentId: number) => void;
-  action: "assign" | "complete";
-}) => {
-  const { t } = useTranslation();
-
-  if (!isOpen || !selectedTask) return null;
-
-  const getTaskTypeImage = (type: string) => {
-    return sanabelImgs[type] || null;
-  };
-
-  const renderResources = (task: any) =>
-    [
-      { icon: blueSanabel, value: task.snabelBlue, label: "سنبلة زرقاء" },
-      { icon: redSanabel, value: task.snabelRed, label: "سنبلة حمراء" },
-      { icon: yellowSanabel, value: task.snabelYellow, label: "سنبلة صفراء" },
-      { icon: xpIcon, value: task.xp, label: "نقاط الخبرة" },
-    ].map((resource, index) => (
-      <div key={index} className="flex flex-col items-center">
-        <img
-          src={resource.icon}
-          alt={resource.label}
-          className="w-auto h-5"
-          loading="lazy"
-        />
-        <h1 className="text-sm text-black">{resource.value}</h1>
-      </div>
-    ));
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-11/12 max-w-md p-5 overflow-y-auto bg-white rounded-xl max-h-90vh">
-        <p className={`mb-2 text-sm font-bold text-center ${action === "assign" ? "text-blueprimary" : "text-green-700"}`}>
-          {t(action === "assign" ? "Assign Mission" : "Register Completed Mission")}
-        </p>
-        <h2 className="mb-4 text-xl font-bold text-center text-black">
-          {t("تأكيد تسجيل المهمة")}
-        </h2>
-
-        <div className="flex-col justify-center w-full p-3 mb-5 border-2 rounded-xl flex-center">
-          <h3 className="mb-2 text-lg font-bold text-center text-black">
-            {t(selectedTask?.title || "")}
-          </h3>
-          <div className="flex justify-center mb-3">
-            <img
-              src={getTaskTypeImage(selectedTask?.type ?? "")}
-              alt={selectedTask?.type}
-              className="object-contain w-16 h-16"
-            />
-          </div>
-          <div className="flex items-center justify-end gap-3 mb-2">
-            <div className="flex gap-2">{renderResources(selectedTask)}</div>
-          </div>
-        </div>
-
-        <div className="mb-5">
-          <h3 className="mb-2 font-medium text-end text-black">
-            {t("الطلاب المختارين")}
-          </h3>
-          <div className="flex justify-start gap-3 px-4 py-2 overflow-x-auto ">
-            {selectedStudents.map((student: any) => (
-              <div
-                key={student.id}
-                className="relative flex flex-col items-center"
-              >
-                <div
-                  className="absolute z-10 flex items-center justify-center w-5 h-5 bg-red-500 rounded-full cursor-pointer -top-1 -right-1"
-                  onClick={() => onRemoveStudent(student.id)}
-                >
-                  <FaTimes className="text-xs text-white" />
-                </div>
-                <div className="overflow-hidden rounded-full w-14 h-14">
-                  <GetAvatar userAvatarData={student.user.profileImg} />
-                </div>
-                <span className="mt-1 text-xs font-medium text-center text-black">
-                  {`${student.user.firstName}`}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex w-full gap-3">
-          <PrimaryButton
-            style="bg-gray-300 text-black flex-1"
-            text={t("إلغاء")}
-            arrow="none"
+            disabled={isSubmitting}
             onClick={onClose}
           />
           <PrimaryButton
             style="flex-1"
-            text={t("تأكيد")}
+            text={t("تسجيل للباقي")}
             arrow="none"
-            onClick={onConfirm}
+            disabled={isSubmitting}
+            onClick={onContinue}
           />
-        </div>
+        </footer>
       </div>
     </div>
   );
 };
+
+// Use the robust, scalable MissionConfirmationModal
+const ConfirmationPopup = MissionConfirmationModal;
 
 // Congratulations Popup Component (same as StudentList)
 const CongratsPopup = ({
@@ -496,6 +407,7 @@ const ClassList: React.FC = () => {
   const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [classesData, setClassesData] = useState<ClassData[]>([]);
+  useTeacherGuideFacts(localStorage.getItem('role') === 'Teacher', { teacherClassCount: classesData.length });
   const [studentsData, setStudentsData] = useState<StudentData[]>([]);
   const [classXpData, setClassXpData] = useState<
     Record<number, { totalXp: number; studentCount: number }>
@@ -519,7 +431,8 @@ const ClassList: React.FC = () => {
   const [showDuplicateTask, setShowDuplicateTask] = useState(false);
   const [existingStudentIds, setExistingStudentIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [missionAction, setMissionAction] = useState<"assign" | "complete">("complete");
+  const [missionAction, setMissionAction] = useState<"assign" | "complete">("assign");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // New states for filtering and sorting
   const [showFilterSort, setShowFilterSort] = useState(false);
@@ -787,9 +700,12 @@ const ClassList: React.FC = () => {
   };
 
   const addProgress = async () => {
+    if (isSubmitting) return;
     if (!selectedStudentIds.length || selectedTaskId === null) return;
     const authToken = localStorage.getItem("token");
     if (!authToken) return;
+
+    setIsSubmitting(true);
     try {
       const selectedTask = filteredTasks[selectedTaskId];
       if (!selectedTask) {
@@ -866,6 +782,8 @@ const ClassList: React.FC = () => {
     } catch (error) {
       console.error("Error adding progress:", error);
       alert(t("تعذر الاتصال بالخادم. تحقق من اتصالك بالإنترنت وحاول مرة أخرى."));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1122,6 +1040,7 @@ const ClassList: React.FC = () => {
     <div
       className="flex flex-col items-center justify-between gap-5 p-4"
       id="page-height"
+      data-guide-id="teacher-class-list"
       dir={isRTL ? "rtl" : "ltr"}
     >
       {/* Header and Search */}
@@ -1160,34 +1079,48 @@ const ClassList: React.FC = () => {
         )}
       </div>
 
-      {/* Selected Students Horizontal List - Show when students are selected */}
+      {/* Selected Students Horizontal Summary - Compact and bounded */}
       {isStudentsSelected && (
-        <div className="w-full ">
-          {/* Selected Students Row */}
-          <div className="flex flex-row w-full gap-3 p-2 overflow-x-auto">
-            {selectedStudents.map((student) => (
-              <div
-                key={student.id}
-                className="relative flex flex-col items-center"
-              >
+        <div className="w-full">
+          <div className="flex items-center justify-between w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl my-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-700">
+                {t("الطلاب المختارون")}
+              </span>
+              <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold text-white bg-blueprimary rounded-full">
+                {selectedStudents.length}
+              </span>
+            </div>
+
+            <div className="flex items-center -space-x-2 rtl:space-x-reverse">
+              {selectedStudents.slice(0, 4).map((student) => (
                 <div
-                  className="absolute z-10 flex items-center justify-center w-5 h-5 bg-red-500 rounded-full cursor-pointer -top-1 -right-1"
-                  onClick={() =>
-                    removeSelectedStudent(
-                      studentsData.findIndex((s) => s.id === student.id)
-                    )
-                  }
+                  key={student.id}
+                  className="relative group shrink-0"
                 >
-                  <FaTimes className="text-xs text-white" />
+                  <button
+                    type="button"
+                    aria-label={`${t("إزالة")} ${student.user.firstName}`}
+                    className="absolute z-10 flex items-center justify-center w-4 h-4 text-white bg-red-500 rounded-full -top-1 -end-1 shadow-xs"
+                    onClick={() =>
+                      removeSelectedStudent(
+                        studentsData.findIndex((s) => s.id === student.id)
+                      )
+                    }
+                  >
+                    <FaTimes className="text-[8px]" />
+                  </button>
+                  <div className="w-8 h-8 overflow-hidden rounded-full border-2 border-white bg-slate-100 shadow-xs">
+                    <GetAvatar userAvatarData={student.user.profileImg} />
+                  </div>
                 </div>
-                <div className="overflow-hidden rounded-full w-14 h-14">
-                  <GetAvatar userAvatarData={student.user.profileImg} />
+              ))}
+              {selectedStudents.length > 4 && (
+                <div className="flex items-center justify-center w-8 h-8 text-xs font-bold text-slate-700 bg-slate-200 border-2 border-white rounded-full shadow-xs shrink-0">
+                  +{selectedStudents.length - 4}
                 </div>
-                <span className="mt-1 text-xs font-medium text-center text-black">
-                  {`${student.user.firstName}`}
-                </span>
-              </div>
-            ))}
+              )}
+            </div>
           </div>
 
           {/* Step Indicator - Show only when in task selection mode */}
@@ -1554,6 +1487,7 @@ const ClassList: React.FC = () => {
         existingStudentIds={existingStudentIds}
         allStudents={studentsData}
         onDeselectStudent={handleRemoveDuplicateStudent}
+        isSubmitting={isSubmitting}
       />
 
       {/* Confirmation Popup */}
@@ -1572,6 +1506,7 @@ const ClassList: React.FC = () => {
           }
         }}
         action={missionAction}
+        isSubmitting={isSubmitting}
       />
 
       {/* Congratulations Popup */}

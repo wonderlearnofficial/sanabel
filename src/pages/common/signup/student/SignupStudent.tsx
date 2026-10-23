@@ -112,8 +112,6 @@ const Signup: React.FC = () => {
       profileImg: "",
     };
 
-    console.log("Submitting form data:", formData);
-
     // Handle API submission here
     try {
       const response = await axios.patch(
@@ -125,11 +123,12 @@ const Signup: React.FC = () => {
         AudioManager.play("success");
         history.push(`/login`);
         // PUSH TO LOGIN
-        toast.success("Sign up");
+        toast.success(t("تم إنشاء الحساب بنجاح"));
       }
     } catch (error) {
       AudioManager.play("error");
-      console.error("Error", error);
+      // Log only the status: the axios error carries the password in config.
+      console.error("Registration failed:", (error as any)?.response?.status);
       toast.error(t(getErrorMessage(error, "registrationFailed")));
     } finally {
       setIsSubmitting(false);

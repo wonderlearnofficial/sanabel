@@ -29,6 +29,9 @@ import StudentProfileOverview from "../studentdetails/StudentProfileOverview";
 import { avatars } from "../../../data/Avatars";
 import StudentNavbar from "../../../components/navbar/StudentNavbar";
 import ParentNavbar from "../../../components/navbar/ParentNavbar";
+import { emitParentGuideEvent } from '../../../guides/v2/parentSignals';
+import { useGuideAutoStart } from '../../../guides/v2/useGuideAutoStart';
+import { useOptionalGuideV2 } from '../../../guides/v2/GuideProviderV2';
 
 // Define types for better type safety
 interface User {
@@ -83,6 +86,11 @@ const Profile: React.FC = () => {
   }, [studentId]);
 
   const role = localStorage.getItem("role");
+  const parentGuides = useOptionalGuideV2();
+  useGuideAutoStart(role === 'Parent' && !loading && Boolean(studentData?.student));
+  useEffect(() => {
+    if (role === 'Parent' && !loading && studentData?.student) emitParentGuideEvent('parent-progress-opened');
+  }, [role, loading, studentData, studentId]);
 
   const fetchStudentData = async (token?: string) => {
     const authToken = token || localStorage.getItem("token");
@@ -160,6 +168,7 @@ const Profile: React.FC = () => {
         <div className="flex items-center w-full gap-1">
           {profileNav.map((item) => (
             <div
+              key={item}
               className={`${
                 show === item
                   ? "bg-blueprimary text-white"
@@ -173,11 +182,13 @@ const Profile: React.FC = () => {
         </div>
       </div>
       {show === profileNav[0] && (
+        <div data-guide-id={role === 'Parent' ? "parent-progress-overview" : undefined} className="w-full">
         <StudentProfileOverview
           xp={studentData.student.xp}
           categoryCounts={studentData.categoryCounts}
           totalCompletedTasks={studentData.totalCompletedTasks}
         />
+        </div>
       )}
       {show == profileNav[1] && (
         <StudentProfileTree
@@ -197,6 +208,7 @@ const Profile: React.FC = () => {
         />
       )}
 
+      {role === 'Parent' && parentGuides?.enabled && <button type="button" data-guide-id="parent-support" className="min-h-[44px] m-3 rounded-xl border p-3 text-black" onClick={() => history.push('/approvals')}>{t('tutorial.parent.support')}</button>}
       {role == "Student" ? (
         <StudentNavbar />
       ) : role == "Teacher" ? (

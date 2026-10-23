@@ -1,6 +1,7 @@
 import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "axios";
+import { subscribeStudentGuideSignals } from '../../guides/v2/studentSignals';
 import StudentToDoList from "./StudentToDoList";
 import { computeReorder, todoSourceKind, formatTodoDate } from "./StudentToDoList";
 
@@ -84,7 +85,9 @@ const serverItems = [
 
 describe("School Student To-Do v2", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     mockUser.classId = 4;
+    mockUser.organizationId = null;
     mockUser.completedTasks = { date: "2026-09-02", taskIds: [] };
     localStorage.setItem("token", "test-token");
     localStorage.setItem("role", "Student");
@@ -105,6 +108,45 @@ describe("School Student To-Do v2", () => {
     render(<StudentToDoList />);
     await waitFor(() => expect(screen.getByText("Help the class")).toBeInTheDocument());
   };
+
+  it("organization membership without a class uses daily missions and never self-rewards", async () => {
+    mockUser.organizationId = 2;
+    mockUser.classId = null;
+    await renderList();
+    expect(vi.mocked(axios.get).mock.calls.some(([url]) => String(url).endsWith("/mission/todo"))).toBe(true);
+    expect(vi.mocked(axios.get).mock.calls.some(([url]) => String(url).endsWith("/mission/myApprovers"))).toBe(true);
+    expect(mockMutateStudent).not.toHaveBeenCalled();
+    expect(screen.getByText("Water a plant")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("complete-mission-6"));
+    fireEvent.click(await screen.findByTestId("approver-option-parent:2"));
+    fireEvent.click(screen.getByTestId("confirm-mission-action"));
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
+      expect.stringContaining("/mission/requestApproval"),
+      expect.objectContaining({ taskId: 6, todoItemId: 43, approverType: "parent", approverId: 2 }),
+      expect.anything(),
+    ));
+    expect(mockMutateStudent).not.toHaveBeenCalled();
+  });
+
+  it('shows safe no-approver explanation for classless School accounts without claiming success', async () => {
+    mockUser.organizationId = 8;
+    mockUser.classId = null;
+    const signals: string[] = [];
+    const stop = subscribeStudentGuideSignals(signal => signals.push(signal.type));
+    vi.mocked(axios.post).mockRejectedValueOnce({ response: { status: 400, data: { message: 'No parent or teacher is available to approve your mission.' } } });
+    const alert = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
+    await renderList();
+    fireEvent.click(screen.getByTestId('complete-mission-6'));
+    fireEvent.click(await screen.findByTestId('approver-option-parent:2'));
+    fireEvent.click(screen.getByTestId('confirm-mission-action'));
+    await waitFor(() => expect(alert).toHaveBeenCalledWith('tutorial.student.noApprover'));
+    expect(signals).toContain('no-approver');
+    expect(signals).not.toContain('approval-sent');
+    expect(signals).not.toContain('mission-completed');
+    expect(mockMutateStudent).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByTestId('complete-mission-6')).not.toBeDisabled());
+    stop(); alert.mockRestore();
+  });
 
   it("uses the compact date navigator, date-scoped API, and collapsed search", async () => {
     vi.mocked(axios.get).mockImplementation(async (url: string) => {
@@ -332,7 +374,7 @@ describe("School Student To-Do v2", () => {
     }));
 
     vi.mocked(axios.get).mockImplementation(async (url) => {
-      if (url.endsWith("/students/appear-Taskes-Completed")) {
+      if (url.endsWith("/students/student-task-completed")) {
         return {
           data: {
             completedTasks: [

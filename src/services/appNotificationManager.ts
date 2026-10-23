@@ -133,14 +133,15 @@ export const initAppNotificationsOnStartup = async (): Promise<void> => {
 
     if (isGranted) {
       localStore.setItem(APP_NOTIFICATIONS_ENABLED_KEY, "true");
-      // If prayer notifications haven't been explicitly disabled by the user,
-      // auto-enable or resync them for the 7-day rolling window
-      const prayerPref = localStore.getItem(PRAYER_ENABLED_KEY);
-      if (prayerPref === null || prayerPref === "true") {
-        localStore.setItem(PRAYER_ENABLED_KEY, "true");
-        if (Capacitor.isNativePlatform()) {
-          await resyncPrayerNotificationsIfEnabled();
-        }
+      // Prayer notifications are switched on only from the permissions
+      // onboarding or Settings, where location use is explained first. On
+      // startup, just roll an already-enabled schedule forward; the resync
+      // never shows an OS location prompt.
+      if (
+        localStore.getItem(PRAYER_ENABLED_KEY) === "true" &&
+        Capacitor.isNativePlatform()
+      ) {
+        await resyncPrayerNotificationsIfEnabled();
       }
     }
   } catch (error) {

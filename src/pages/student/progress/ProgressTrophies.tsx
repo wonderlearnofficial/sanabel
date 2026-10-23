@@ -1,7 +1,9 @@
+import { useGuideAutoStart } from '../../../guides/v2/useGuideAutoStart';
 import { useUserContext } from "../../../context/StudentUserProvider";
 import { describeApiError } from "../../../utils/apiError";
 import { API_BASE_URL } from "../../../config/api";
 import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
+import { useGuideView } from "../../../guides/v2/useGuideView";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
@@ -36,9 +38,11 @@ const containerVariants = {
 };
 
 const Progress: React.FC = () => {
+  // Tutorial V2: this route hosts four tabs, so the tab declares itself.
+  useGuideView("student.progress.trophies");
   useAutoStartGuide("student-trophies", true);
   const { t } = useTranslation();
-  const { user } = useUserContext();
+  const { user, isLoading: isProfileLoading, refreshUserData, refreshError } = useUserContext();
   const requestVersion = useRef(0);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [trophyType, setTrophyType] = useState(0); // 0 = Sanabel trophies, 1 = Other trophies
@@ -81,9 +85,18 @@ const Progress: React.FC = () => {
   };
 
   useEffect(() => {
-    if (user) void fetchTrophies();
+    if (user) {
+      void fetchTrophies();
+      return () => { ++requestVersion.current; };
+    }
+    // No profile, and the provider has stopped trying: nothing is in flight, so
+    // there is nothing to wait for. `loading` starts true and was only ever
+    // cleared inside `fetchTrophies`, so a profile that never arrived — an
+    // unreachable API, an expired session — left this tab spinning forever with
+    // no explanation. Stop the spinner and let the render below say why.
+    if (!isProfileLoading) setLoading(false);
     return () => { ++requestVersion.current; };
-  }, [trophyType, user]);
+  }, [trophyType, user, isProfileLoading]);
 
   // Group trophies by title to show one card per trophy type
   const groupTrophiesByTitle = (trophiesData: any[]) => {
@@ -151,8 +164,39 @@ const Progress: React.FC = () => {
     (trophyItem) => trophyItem.completionStatus === "Completed"
   ).length;
 
-  if (loading) {
+  useGuideAutoStart(!!user && !loading && !loadError);
+  if (loading || isProfileLoading) {
     return <Loading />;
+  }
+
+  // The profile finished loading and produced nothing. Saying so beats an empty
+  // trophy list, which would read as "you have no trophies" — a false zero.
+  //
+  // The two reasons the profile can be missing need different words, so the
+  // cause is read rather than assumed. `refreshError` is whatever
+  // `describeApiError` reported for the failed request — an expired session, a
+  // 500, a timeout, no connection. When it is null the request never failed:
+  // the provider returned without asking the server, because what is stored is
+  // not a usable student session — no token, no role, an unknown role, or an
+  // Admin role, which this app has no student profile for. That is a sign-in
+  // problem and must not be reported as one of connectivity.
+  if (!user) {
+    return (
+      <div className="flex flex-col w-full gap-3 py-10 text-center" role="alert">
+        <p className="font-bold text-black">{t("تعذر تحديث بيانات الطالب")}</p>
+        <p className="text-sm text-[#999999]">
+          {refreshError
+            ? t(refreshError)
+            : t("لا توجد جلسة دخول صالحة لحساب طالب. يرجى تسجيل الدخول بحساب طالب.")}
+        </p>
+        <button
+          className="mx-auto px-4 py-2 text-sm font-bold text-white rounded-xl bg-blueprimary"
+          onClick={() => void refreshUserData()}
+        >
+          {t("إعادة المحاولة")}
+        </button>
+      </div>
+    );
   }
 
   // Get formatted milestone value (convert numbers >= 1000 to 1k/1ك format)
@@ -181,7 +225,10 @@ const Progress: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full gap-3 overflow-y-auto h-3/4">
+    /* The page shell (`#page-height` in StudentProgress) is the scroll
+       container. This tab must not declare another: nesting one inside it
+       showed two scrollbars, and the h-3/4 cap clipped the tab's last row. */
+    <div data-guide-id="student-trophies" className="flex flex-col w-full gap-3">
       {loadError && <div role="alert">{t(loadError)} <button onClick={() => void fetchTrophies()}>{t("إعادة المحاولة")}</button></div>}
       <div className="flex w-full rounded-2xl bg-[#e6e6e6]">
         <h1
@@ -203,6 +250,7 @@ const Progress: React.FC = () => {
       </div>
 
       <motion.div
+        data-guide-id="student-challenges"
         className="w-full bg-[#E14E54] flex-center justify-between items-center p-2 px-4 gap-3 rounded-2xl text-md shadow-sm"
         variants={containerVariants}
         initial="hidden"
@@ -219,9 +267,9 @@ const Progress: React.FC = () => {
           {completedTrophiesCount} / {trophies.length}
         </motion.h1>
 
+        {/* Prose: no dir override. Only the counter above pins a direction. */}
         <motion.h1
           className="font-bold text-white"
-          dir="ltr"
           initial={{ x: 50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
@@ -268,7 +316,13 @@ const Progress: React.FC = () => {
                 className="w-full flex flex-col justify-between items-center shadow-sm p-3 rounded-xl border-[1px] gap-2 bg-white"
                 key={`${trophyType}-${title}`}
               >
-                <div className="flex flex-row-reverse items-center justify-between w-full">
+                <div className={`flex items-center justify-between w-full ${i18n.language === "ar" ? "flex-row-reverse" : "flex-row"}`}>
+                  <div className={`flex flex-col ${i18n.language === "ar" ? "items-end" : "items-start"} gap-1`}>
+                    <img src={trophyImage} alt={title} className="object-contain w-16 h-16" />
+                    <h1 className={`w-full font-bold text-black ${i18n.language === "ar" ? "text-right" : "text-left"}`}>
+                      {t("جائزة {{name}}", { name: t(title) })}
+                    </h1>
+                  </div>
                   <div className="flex gap-2">
                     {getTrophyRewards(representativeTrophy).map((item, idx) => (
                       <div className="flex-col flex-center" key={idx}>
@@ -276,15 +330,6 @@ const Progress: React.FC = () => {
                         <h1 className="text-sm font-semibold text-black">{item.value}</h1>
                       </div>
                     ))}
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <img src={trophyImage} alt={title} className="object-contain w-16 h-16" />
-                    <h1
-                      className="w-full font-bold text-black text-end"
-                      dir="rtl"
-                    >
-                      {t("جائزة") + " " + t(title)}
-                    </h1>
                   </div>
                 </div>
 
@@ -316,7 +361,7 @@ const Progress: React.FC = () => {
                           : "bg-[#FFF8E5] text-[#999]"
                       }`}
                     >
-                      <h1 className="text-xs font-bold" dir="rtl">
+                      <h1 className="text-xs font-bold" dir="ltr">
                         {formatMilestone(milestone, i18n.language === "ar")}
                       </h1>
                     </div>

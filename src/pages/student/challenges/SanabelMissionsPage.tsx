@@ -1,4 +1,8 @@
+import { useOptionalOverlaySuppressed } from '../../../guides/v2/OverlayCoordinator';
+import { useStudentGameplayDialog } from '../../../guides/v2/useStudentGuideFeedback';
+import { emitStudentGuideSignal, isNoApproverError } from '../../../guides/v2/studentSignals';
 import { API_BASE_URL } from "../../../config/api";
+import { requiresMissionApproval } from "../../../utils/studentGameplayMode";
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -27,10 +31,11 @@ type ApprovalStatus = "pending" | "approved" | "denied" | null;
 const SanabelMissionsPage: React.FC = () => {
   const { user, refreshUserData, mutateStudent } = useUserContext();
   const history = useHistory();
+  const optionalSuppressed = useOptionalOverlaySuppressed();
 
   // School-affiliated students go through the parent/teacher approval
-  // workflow instead of completing missions instantly (matches StudentNavbar).
-  const isPersonal = !user?.classId;
+  // workflow instead of completing missions instantly, even before class placement.
+  const isPersonal = !requiresMissionApproval(user);
   const { index, subIndex } = useParams<{ index: any; subIndex: any }>();
   // Ensure index is properly parsed as a number
   const indexAsNumber = parseInt(index, 10);
@@ -92,6 +97,7 @@ const SanabelMissionsPage: React.FC = () => {
   const [approvalError, setApprovalError] = useState<string | null>(null);
   const [showRequestSentPopup, setShowRequestSentPopup] = useState(false);
 
+  useStudentGameplayDialog(showConfirmPopup);
   const submitting = useRef(false);
   useEffect(() => {
     let active = true;
@@ -269,6 +275,27 @@ const SanabelMissionsPage: React.FC = () => {
     // School-affiliated students can't complete missions directly — they
     // send a request to their linked parent/teachers instead.
     if (!isPersonal) {
+      // The server only accepts an approval request for a mission that is in
+      // the To-Do list. Adding it is idempotent: an existing item is returned.
+      let todoItemId: number | undefined;
+      try {
+        const todoResponse = await axios.post(
+          `${API_BASE_URL}/mission/todo`,
+          { taskId: selectedMissionId },
+          { headers: { Authorization: `Bearer ${authToken}` } }
+        );
+        todoItemId = todoResponse.data?.data?.id ?? todoResponse.data?.todo?.id;
+      } catch (error: any) {
+        setApprovalError(
+          `${t("تعذر إضافة المهمة إلى قائمة مهامك. لم يتم إرسال طلب الموافقة.")} ${t(describeApiError(error))}`
+        );
+        setShowConfirmPopup(false);
+        submitting.current = false;
+        setIsLoading(false);
+        setSelectedMissionId(null);
+        return;
+      }
+
       try {
         const response = await axios.post(
           `${API_BASE_URL}/mission/requestApproval`,
@@ -276,24 +303,31 @@ const SanabelMissionsPage: React.FC = () => {
             // No missionDate: the server dates the request from its own
             // canonical day. A device clock never decides a reward's day.
             taskId: selectedMissionId,
+            ...(todoItemId ? { todoItemId } : {}),
             approverId: selectedApprover?.id,
             approverType: selectedApprover?.type,
           },
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
 
-        if (response.status === 201) {
+        if (
+          response.status === 201 ||
+          (response.status === 200 && response.data?.alreadyPending)
+        ) {
           setRequestStatusMap((prev) => ({
             ...prev,
             [selectedMissionId]: "pending",
           }));
           setShowConfirmPopup(false);
+          emitStudentGuideSignal({ type: 'approval-sent' });
           setShowRequestSentPopup(true);
         }
       } catch (error: any) {
+        if (isNoApproverError(error)) emitStudentGuideSignal({ type: 'no-approver' });
         setApprovalError(
-          error?.response?.data?.message ||
-            t("حدث خطأ أثناء إرسال طلب الموافقة")
+          isNoApproverError(error)
+            ? t('tutorial.student.noApprover')
+            : `${t("حدث خطأ أثناء إرسال طلب الموافقة")}: ${t(describeApiError(error))}`
         );
         if (
           error?.response?.data?.message?.startsWith("No parent or teacher")
@@ -317,6 +351,7 @@ const SanabelMissionsPage: React.FC = () => {
       if (response.status === 200 || response.status === 201) {
         // Personal checkmarks derive from the committed context snapshot.
         setShowConfirmPopup(false);
+        emitStudentGuideSignal({ type: 'mission-completed' });
         setShowCongratsPopup(true);
       }
     } catch (error) {
@@ -615,7 +650,7 @@ const SanabelMissionsPage: React.FC = () => {
 
       {/* Congratulations Popup */}
       <AnimatePresence>
-        {showCongratsPopup && (
+        {showCongratsPopup && !optionalSuppressed && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -673,7 +708,7 @@ const SanabelMissionsPage: React.FC = () => {
 
       {/* Request Sent Popup (school students) */}
       <AnimatePresence>
-        {showRequestSentPopup && (
+        {showRequestSentPopup && !optionalSuppressed && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

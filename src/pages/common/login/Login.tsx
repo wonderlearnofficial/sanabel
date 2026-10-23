@@ -15,7 +15,7 @@ import loginImg from "../../../assets/login/logo.png";
 import sanabelVideo from "../../../assets/login/loginVideo.mp4";
 import { FaHome } from "react-icons/fa";
 import { useUserContext } from "../../../context/StudentUserProvider";
-import { getErrorMessage } from "../../../config/getErrorMessage";
+import { describeLoginError, validateLoginFields } from "./loginErrors";
 import { AudioManager } from "../../../utils/AudioManager";
 import { initAppNotificationsOnStartup } from "../../../services/appNotificationManager";
 import { localStore, sessionStore } from "../../../utils/safeStorage";
@@ -50,10 +50,22 @@ const Login: React.FC = () => {
   const history = useHistory();
 
   useEffect(() => {
-    if (sessionStore.getItem("accountDeleted") === "true") {
-      sessionStore.removeItem("accountDeleted");
-      toast.error(t("account_deleted_message"));
-    }
+    // Flags set by the axios interceptor when a forced sign-out redirects here.
+    const flag = sessionStore.getItem("accountDeleted") === "true"
+      ? "accountDeleted"
+      : sessionStore.getItem("sessionExpired") === "true"
+        ? "sessionExpired"
+        : null;
+    if (!flag) return;
+    toast.error(
+      t(flag === "accountDeleted" ? "account_deleted_message" : "انتهت صلاحية جلستك. سجل الدخول مرة أخرى."),
+      { toastId: flag },
+    );
+    // Clear the flag only once the effect has settled: StrictMode's
+    // mount/unmount/mount would otherwise consume it in the discarded pass,
+    // whose toast is dropped with the unmounted container.
+    const timer = window.setTimeout(() => sessionStore.removeItem(flag), 0);
+    return () => window.clearTimeout(timer);
   }, [t]);
 
   const [email, setEmail] = useState("");
@@ -62,6 +74,13 @@ const Login: React.FC = () => {
   const { refreshUserData } = useUserContext();
 
   const handleLogin = async () => {
+    const validationError = validateLoginFields(email, password);
+    if (validationError) {
+      AudioManager.play("error");
+      toast.error(t(validationError));
+      return;
+    }
+
     try {
       const response = await axios.patch(`${API_BASE_URL}/users/login`, {
         email,
@@ -70,7 +89,26 @@ const Login: React.FC = () => {
 
       if (response.status === 200) {
         AudioManager.play("success");
-        // Store auth token
+
+        const role = response.data.data.user.role;
+
+        // Admin account is not a supported mobile application role.
+        // Immediately redirect to the dedicated Admin Console handoff screen
+        // without persisting a long-lived mobile Admin session, without background
+        // token renewal, and without fetching student/teacher/parent state.
+        if (role === "Admin") {
+          localStore.removeItem("token");
+          localStore.removeItem("refreshToken");
+          localStore.removeItem("role");
+          localStore.removeItem("user");
+          localStore.setItem("keepLoggedIn", "false");
+
+          toast.success(t("login_successful"));
+          history.replace("/admin-redirect");
+          return;
+        }
+
+        // Store auth token for mobile roles (Student, Teacher, Parent)
         const sessionStored = localStore.setItem(
           "token",
           `${response.data.data.user.token.toString()}`,
@@ -94,6 +132,12 @@ const Login: React.FC = () => {
         // Store keepLoggedIn preference
         localStore.setItem("keepLoggedIn", "true");
 
+        // A password sign-in is never an impersonated session. A marker left by
+        // an earlier Admin preview on this device would otherwise keep this
+        // user's guides suppressed.
+        localStore.removeItem("isImpersonated");
+        localStore.removeItem("impersonatedStudentName");
+
         // Trigger notification check & setup in the background for this user
         initAppNotificationsOnStartup().catch(() => {});
 
@@ -110,13 +154,12 @@ const Login: React.FC = () => {
           localStore.setItem("firstTimer", "false");
         }
 
-        // Load the role-specific account data into the shared context before navigating
-        await refreshUserData(response.data.data.user.token);
-
         // Show success message
         toast.success(t("login_successful"));
 
-        const role = response.data.data.user.role;
+        // Load the role-specific account data into the shared context before navigating
+        await refreshUserData(response.data.data.user.token);
+
         if (role === "Student") {
           history.replace(
             hasCompletedTutorial
@@ -127,15 +170,13 @@ const Login: React.FC = () => {
           history.replace("/teacher/home");
         } else if (role === "Parent") {
           history.replace("/parent/home");
-        } else if (role === "Admin") {
-          window.location.replace("/admin/userdata");
         } else {
           history.replace("/");
         }
       }
     } catch (error) {
       AudioManager.play("error");
-      toast.error(t(getErrorMessage(error, "login_failed")));
+      toast.error(t(describeLoginError(error)));
     }
   };
 

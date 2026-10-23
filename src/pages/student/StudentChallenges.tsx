@@ -1,4 +1,5 @@
 import { IonRouterLink } from "@ionic/react";
+import { requiresMissionApproval } from "../../utils/studentGameplayMode";
 import StudentNavbar from "../../components/navbar/StudentNavbar";
 import { motion } from "framer-motion";
 import Confetti from "react-confetti";
@@ -41,7 +42,7 @@ const Challenges: React.FC = () => {
 
   // Both experiences use one workspace. StudentToDoList keeps Solo selection
   // local and switches School Students to the persistent assignment API.
-  const isPersonal = !user?.classId;
+  const isPersonal = !requiresMissionApproval(user);
   useAutoStartGuide(
     isPersonal ? "student-mission-personal" : "student-mission-school",
     !!user

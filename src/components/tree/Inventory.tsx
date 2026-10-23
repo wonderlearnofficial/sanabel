@@ -58,7 +58,10 @@ const Inventory: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex flex-col w-full items-center justify-between shadow-md p-2 relative border-[1px] border-[#33333325] rounded-xl">
+    <div
+      data-guide-id="student-wallet"
+      className="flex flex-col w-full items-center justify-between shadow-md p-2 relative border-[1px] border-[#33333325] rounded-xl"
+    >
       <div className="flex flex-col w-full gap-1">
         <h1 className="text-lg text-black ">{t("الموارد الخاصة بك")}</h1>
         <motion.div

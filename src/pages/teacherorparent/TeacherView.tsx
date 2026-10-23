@@ -11,6 +11,9 @@ import MedalAndLevel from "../../components/MedalAndLevel";
 import { calculateLevel } from "../../utils/LevelCalculator";
 import { FiGrid } from "react-icons/fi";
 import { FaThList } from "react-icons/fa";
+import { useTeacherGuideFacts } from '../../guides/v2/useTeacherGuideFacts';
+import { useGuideView } from '../../guides/v2/useGuideView';
+import { useGuideViewSelector } from '../../guides/v2/GuideViewController';
 
 // Define types for better type safety
 
@@ -30,6 +33,9 @@ const TeacherView: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingClassXp, setIsLoadingClassXp] = useState(false);
+  useTeacherGuideFacts(localStorage.getItem('role') === 'Teacher', { teacherStudentCount: studentsData.length, teacherClassCount: classesData.length });
+  useGuideView(selectViewType === 'students' ? 'teacher.view.students' : 'teacher.view.classes');
+  useGuideViewSelector({ 'teacher.view.students': () => setSelectViewType('students') });
 
   const filterOptions = [
     { value: "all", label: "الكل" },
@@ -344,6 +350,7 @@ const TeacherView: React.FC = () => {
     <div
       className="flex flex-col items-center justify-between gap-5 p-4 overflow-y-auto"
       id="page-height"
+      data-guide-id={selectViewType === 'students' && studentsData.length > 0 ? "teacher-roster" : undefined}
     >
       {/* Header */}
 

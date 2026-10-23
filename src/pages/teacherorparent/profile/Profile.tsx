@@ -117,7 +117,7 @@ const Profile: React.FC = () => {
     {
       title: "مركز المساعدة",
       icon: <HelpCenter size={25} />,
-      to: "/student/settings/helpcenter",
+      to: localStorage.getItem('role') === 'Teacher' ? '/teacher/help' : "/student/settings/helpcenter",
       type: "link",
     },
     {

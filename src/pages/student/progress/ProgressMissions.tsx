@@ -1,7 +1,9 @@
+import { useGuideAutoStart } from '../../../guides/v2/useGuideAutoStart';
 import { useUserContext } from "../../../context/StudentUserProvider";
 import { describeApiError } from "../../../utils/apiError";
 import { API_BASE_URL } from "../../../config/api";
 import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
+import { useGuideView } from "../../../guides/v2/useGuideView";
 import StudentNavbar from "../../../components/navbar/StudentNavbar";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -74,6 +76,8 @@ const gridItemVariants = {
 
 const ProgressMissions: React.FC = () => {
 
+  // Tutorial V2: this route hosts four tabs, so the tab declares itself.
+  useGuideView("student.progress.stats");
   useAutoStartGuide("student-stats", true);
   const { t } = useTranslation();
   const { user } = useUserContext();
@@ -183,8 +187,12 @@ const ProgressMissions: React.FC = () => {
   const filteredSanabelType = sanabelType.filter((item) => item.value > 0);
   const filteredSanabelColor = sanabelColor.filter((item) => item.value > 0);
 
+  useGuideAutoStart(!!user && !loadError);
   return (
-    <div className="flex flex-col w-full gap-3 overflow-y-auto h-3/4">
+    /* The page shell (`#page-height` in StudentProgress) is the scroll
+       container. This tab must not declare another: nesting one inside it
+       showed two scrollbars, and the h-3/4 cap clipped the tab's last row. */
+    <div data-guide-id="student-stats" className="flex flex-col w-full gap-3">
       {loadError && <div role="alert">{t(loadError)} <button onClick={() => void fetchTasksCompleted()}>{t("إعادة المحاولة")}</button></div>}
       <motion.div
         className="w-full bg-[#E14E54] flex-center justify-between items-center p-2 gap-3 rounded-xl text-lg"
@@ -202,9 +210,11 @@ const ProgressMissions: React.FC = () => {
           {completedTasks}
         </motion.h1>
 
+        {/* No `dir` override here: this is prose, and forcing LTR on an Arabic
+            label misplaces any trailing punctuation. Only the count above needs
+            a fixed direction. */}
         <motion.h1
           className="font-bold text-white"
-          dir="ltr"
           initial={{ x: 50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
@@ -240,7 +250,11 @@ const ProgressMissions: React.FC = () => {
               </h1>
               <img src={items.img} alt="sanabel" className="w-1/3" />
             </div>
-            <h1 className="font-bold text-black text-end">{t(items.name)}</h1>
+            {/* `text-start`, not `text-end`: a label begins at the reading
+                edge — right in Arabic, left in English. `text-end` pushed it to
+                the far side in both languages, which in English left the
+                wrapped category names ragged against the right margin. */}
+            <h1 className="font-bold text-black text-start">{t(items.name)}</h1>
           </motion.div>
         ))}
       </motion.div>

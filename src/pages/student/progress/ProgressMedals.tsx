@@ -1,3 +1,4 @@
+import { useGuideAutoStart } from '../../../guides/v2/useGuideAutoStart';
 import StudentNavbar from "../../../components/navbar/StudentNavbar";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -15,6 +16,7 @@ import { calculateLevel } from "../../../utils/LevelCalculator";
 
 import { medalsData } from "../../../data/MedalsData";
 import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
+import { useGuideView } from "../../../guides/v2/useGuideView";
 import { toFiniteNumber } from "../../../utils/numericData";
 
 const calculateXpForLevel = (targetLevel: any) => {
@@ -68,17 +70,23 @@ const Progress: React.FC = () => {
     (item) => xp >= calculateXpForLevel(item.level)
   ).length;
 
-  useAutoStartGuide("student-progress", !!user);
+  // Tutorial V2: this route hosts four tabs, so the tab declares itself.
+  useGuideView("student.progress.level");
+  // `studentMedalGuide` in guideConfigs — this tab shows the current level and
+  // the medals it unlocks, which is what that guide describes. The id used to
+  // be "student-progress", which matches no registered guide.
+  useAutoStartGuide("student-medal", !!user);
 
+  useGuideAutoStart(!!user);
   return (
     <motion.div
-      className="flex flex-col w-full gap-2 overflow-y-auto h-3/4 "
+      data-guide-id="student-medals" className="flex flex-col w-full gap-2"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
       <motion.div
-        className="relative flex flex-col w-full gap-1 overflow-y-auto rounded-xl"
+        className="relative flex flex-col w-full gap-1 rounded-xl"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.8, type: "spring" }}
@@ -101,15 +109,19 @@ const Progress: React.FC = () => {
           </p>
         </motion.div>
 
-        <div className="w-full bg-[#fab70050] rounded-3xl h-8 flex justify-end items-center relative overflow-hidden">
-          {/* Text displaying current and needed XP */}
-          <div
-            className={`text-[#997000] px-3 relative z-10 ${
-              i18n.language === "ar" ? "" : "flex"
-            } `}
-          >
-            <span className="text-black">{neededXp}/</span>
-            {currentXp}
+        <div data-guide-id="student-xp-meter" className="w-full bg-[#fab70050] rounded-3xl h-8 flex justify-end items-center relative overflow-hidden">
+          {/* Progress towards the next level, as current/needed.
+
+              The operands used to be emitted as `neededXp/currentXp`. Under RTL
+              the browser reordered them back into the right visual order, so it
+              read correctly in Arabic and backwards in English — 19/11 for a
+              student with 11 of 19 points.
+
+              `dir="ltr"` keeps the pair in that order in both languages: a
+              numeric fraction is written left-to-right in Arabic too, so this is
+              not a concession to English. */}
+          <div className="text-[#997000] px-3 relative z-10 flex" dir="ltr">
+            <span className="text-black">{currentXp}</span>/{neededXp}
           </div>
 
           {/* Progress bar */}
@@ -154,17 +166,17 @@ const Progress: React.FC = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.3 }}
       >
-        <h1
-          className="text-redprimary"
-          dir={i18n.language === "ar" ? "rtl" : "ltr"}
-        >
+        {/* Always LTR. Under `dir="rtl"` the browser reordered the pair, so
+            Arabic showed "9 / 1" for one medal out of nine — the same fault the
+            XP fraction above had, in the opposite language. */}
+        <h1 className="text-redprimary" dir="ltr">
           ({achievedMedals} / {medalsData.length})
         </h1>
         &ensp;
         <h1 className="text-black ">{t("الميداليات")}</h1>
       </motion.div>
       <motion.div
-        className="grid grid-cols-2 gap-2 overflow-y-auto h-3/4"
+        className="grid grid-cols-2 gap-2"
         initial="hidden"
         animate="visible"
         variants={{

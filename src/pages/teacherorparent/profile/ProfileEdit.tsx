@@ -114,8 +114,6 @@ const Step1: React.FC = () => {
       profileImg: character,
     };
 
-    console.log("Submitting form data:", formData);
-
     // Handle API submission here
     try {
       const response = await axios.post(

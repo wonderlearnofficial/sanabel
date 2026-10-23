@@ -1,3 +1,4 @@
+import { useGuideAutoStart } from '../../guides/v2/useGuideAutoStart';
 import StudentNavbar from "../../components/navbar/StudentNavbar";
 import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
 import { useHistory } from "react-router-dom";
@@ -47,6 +48,7 @@ const Profile: React.FC = () => {
     }
   };
   const parentCode = user?.connectCode;
+  useGuideAutoStart(!!user);
   return (
     <div className="flex flex-col items-center justify-between w-full overflow-y-auto h-5/6">
       <div className="flex flex-row-reverse items-center justify-between bg-yellowprimary py-7 w-full  p-4 rounded-b-[50px] ">

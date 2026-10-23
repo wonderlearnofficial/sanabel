@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useGuide } from "./GuideProvider";
 import { useUserContext } from "../context/StudentUserProvider";
+import { requiresMissionApproval } from "../utils/studentGameplayMode";
 
 // Spotlight guide: dims the page with a cutout around the step's real
 // element (data-guide-id) and anchors a small tooltip next to it. Steps with
@@ -31,9 +32,11 @@ const GuideOverlay: React.FC = () => {
   } = useGuide();
   const { t, i18n } = useTranslation();
   const { user } = useUserContext();
-  // Students with no class complete missions directly (instant reward, no
-  // parent/teacher approval), so guide steps use their "personal" wording.
-  const isPersonal = !user?.classId;
+  // Reward wording follows the completion policy the server enforces, not class
+  // placement: an organization member awaiting a class still needs approval
+  // (docs/GAMEPLAY_ALIGNMENT.md §5-8). V2 reads the same rule through
+  // `ExperienceContext.rewardMode`.
+  const isPersonal = !requiresMissionApproval(user);
   const isRTL = i18n.language === "ar";
   const prefersReducedMotion = useReducedMotion();
   const cardRef = useRef<HTMLDivElement>(null);

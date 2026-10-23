@@ -13,6 +13,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useUserContext } from "../../../context/StudentUserProvider"; // Updated import
 import { createEmptyOTP, isCompleteOTP } from "../../../utils/otp";
+import { getErrorMessage } from "../../../config/getErrorMessage";
 
 const Toaster = () => (
   <ToastContainer
@@ -90,7 +91,7 @@ const ForgotPassword: React.FC = () => {
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
-      toast.error(t("invalidOTP"), {
+      toast.error(t(getErrorMessage(error, "otpSendFailed")), {
         toastId: "profile-password-otp-send-error",
       });
     } finally {
@@ -131,7 +132,7 @@ const ForgotPassword: React.FC = () => {
       }
     } catch (error) {
       console.error("Error verifying OTP:", error);
-      toast.error(t("invalidOTP"), {
+      toast.error(t(getErrorMessage(error, "invalidOTP")), {
         toastId: "profile-password-otp-verification-error",
       });
     } finally {

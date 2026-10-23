@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "../../../config/api";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import PrimaryButton from "../../../components/PrimaryButton";
 import { IonRouterLink } from "@ionic/react";
@@ -45,6 +45,9 @@ const ChangePassword: React.FC = () => {
   });
 
   const [isPasswordChanged, setIsPasswordChanged] = useState(false);
+  // One reset per tap: the OTP-verified flag is consumed by the first request.
+  const requestInFlightRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const validatePassword = (password: string) => {
     setIsValid({
       minLength: password.length >= 8,
@@ -89,6 +92,10 @@ const ChangePassword: React.FC = () => {
       return;
     }
 
+    if (requestInFlightRef.current || isPasswordChanged) return;
+    requestInFlightRef.current = true;
+    setIsSubmitting(true);
+
     try {
       const response = await axios.patch(
         `${API_BASE_URL}/users/reset-password`,
@@ -106,9 +113,16 @@ const ChangePassword: React.FC = () => {
         toast.success(t("passwordChangeSuccess"));
       }
     } catch (error) {
-      console.error("Error during password change:", error);
+      // Log the status only: the axios error carries the new password.
+      console.error(
+        "Error during password change:",
+        (error as any)?.response?.status,
+      );
 
       toast.error(t(getErrorMessage(error, "passwordChangeFailed")));
+    } finally {
+      requestInFlightRef.current = false;
+      setIsSubmitting(false);
     }
   };
   return (
@@ -175,13 +189,13 @@ const ChangePassword: React.FC = () => {
         className={`w-full ${
           validConditionsCount === 3 ? "opacity-100" : "opacity-50"
         }`}
-        onClick={handleChangePassword}
       >
         <PrimaryButton
           style={""}
           text={"حفظ"}
           arrow={"none"}
           onClick={handleChangePassword}
+          disabled={isSubmitting}
         />
       </div>
 

@@ -1,4 +1,10 @@
+import { useGuideAutoStart } from '../../guides/v2/useGuideAutoStart';
+import { useOptionalOverlaySuppressed } from '../../guides/v2/OverlayCoordinator';
+import { useStudentGuideToast, useStudentGameplayDialog } from '../../guides/v2/useStudentGuideFeedback';
+import { emitStudentGuideSignal, isNoApproverError } from '../../guides/v2/studentSignals';
+import { publishGuideFacts } from '../../guides/v2/facts';
 import { API_BASE_URL } from "../../config/api";
+import { requiresMissionApproval } from "../../utils/studentGameplayMode";
 import { useEffect, useRef, useState, useCallback, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
@@ -244,6 +250,7 @@ const TodoCard = ({
       ref={sortable.setNodeRef}
       style={style}
       data-testid={`todo-card-${item.task.id}`}
+      data-guide-id={sources.some(source => source.sourceType !== "student") ? "todo-assigned-mission" : undefined}
       className={`border rounded-[20px] px-4 py-3 shadow-sm ${
         sortable.isDragging ? "shadow-lg ring-2 ring-blueprimary z-10 relative" : ""
       } ${
@@ -271,15 +278,19 @@ const TodoCard = ({
             {t(item.task.type)}
           </span>
           {item.status === "pending_approval" && (
-            <span className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-full text-amber-700 bg-amber-50">
+            <span
+              data-guide-id="todo-pending-badge"
+              className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-full text-amber-700 bg-amber-50"
+            >
               <FaRegClock size={10} aria-hidden="true" />
               {pendingNames.length > 0
                 ? <>{t("todo.approval.waitingForPrefix")} <bdi>{pendingNames.join("، ")}</bdi></>
                 : t("todo.approval.waiting")}
             </span>
           )}
+          {(item.approvalRequests || []).some(request => request.status === "denied") && item.status === "todo" && <span data-guide-id="todo-denied-badge" className="text-xs text-gray-600">{t("tutorial.student.deniedTitle")}</span>}
           {item.status === "completed" && (
-            <span className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold text-green-700 rounded-full bg-green-50">
+            <span data-guide-id={(item.approvalRequests || []).some(request => request.status === "approved") ? "todo-approved-badge" : undefined} className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold text-green-700 rounded-full bg-green-50">
               <FaCheck size={9} aria-hidden="true" />
               {t("todo.status.completed")}
             </span>
@@ -342,7 +353,7 @@ const TodoCard = ({
           aria-pressed={item.completed}
           disabled={isHistorical || item.completed || item.status === "pending_approval" || busy}
           data-testid={`complete-mission-${item.task.id}`}
-          data-guide-id="mission-action"
+          data-guide-id={!isHistorical && !item.completed && item.status !== "pending_approval" ? "mission-action" : undefined}
           onClick={() => onToggleComplete(item.id)}
           className={`w-11 h-11 rounded-full flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
             item.completed
@@ -840,12 +851,12 @@ const AddMissionModal = ({
                       }`}
                       onClick={() => setSelectedTaskId(task.id)}
                     >
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex w-1/2 gap-2">
+                      <div className="flex items-center justify-between w-full gap-3">
+                        <div className="flex shrink-0 gap-2">
                           {renderResources(task)}
                         </div>
-                        <div className="flex flex-col items-end gap-0.5">
-                          <h3 className="text-sm font-bold text-end text-black" dir="auto">
+                        <div className="flex-1 min-w-0 flex flex-col items-end gap-0.5">
+                          <h3 className="text-sm font-bold text-end text-black break-words line-clamp-2" dir="auto">
                             {t(task.title)}
                           </h3>
                         </div>
@@ -867,16 +878,16 @@ const AddMissionModal = ({
                         key={task.id}
                         className="border rounded-xl p-3 bg-gray-50/80 border-gray-200 opacity-75 cursor-not-allowed select-none"
                       >
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex w-1/2 gap-2">
+                        <div className="flex items-center justify-between w-full gap-3">
+                          <div className="flex shrink-0 gap-2">
                             {renderResources(task)}
                           </div>
-                          <div className="flex flex-col items-end gap-1">
+                          <div className="flex-1 min-w-0 flex flex-col items-end gap-1">
                             <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
                               <FaCheck size={10} />
                               <span>{t("مضافة بالفعل في قائمتك")}</span>
                             </div>
-                            <h3 className="text-sm font-medium text-end text-gray-600" dir="auto">
+                            <h3 className="text-sm font-medium text-end text-gray-600 break-words line-clamp-2" dir="auto">
                               {t(task.title)}
                             </h3>
                           </div>
@@ -913,6 +924,8 @@ const AddMissionModal = ({
 };
 
 const TodoList = () => {
+  const guideToast = useStudentGuideToast();
+  const optionalSuppressed = useOptionalOverlaySuppressed();
   const { t, i18n } = useTranslation();
   const { user, refreshUserData, mutateStudent } = useUserContext();
   const [storedItems, setTodoItems] = useState<TodoItem[]>([]);
@@ -961,7 +974,7 @@ const TodoList = () => {
   const grade = user?.grade;
 
   const canAssignTask = user?.canAssignTask;
-  const isPersonal = !user?.classId;
+  const isPersonal = !requiresMissionApproval(user);
 
   const submitting = useRef(false);
   const [loadedFor, setLoadedFor] = useState<number | null>(null);
@@ -997,6 +1010,21 @@ const TodoList = () => {
   }, []);
 
   const todoItems = storedItems;
+  useGuideAutoStart(!!user && !isListLoading);
+  useStudentGameplayDialog(showConfirmPopup || showAddModal);
+  useEffect(() => {
+    if (isPersonal || isListLoading) return;
+    const requests = todoItems.flatMap(item => item.approvalRequests || []);
+    publishGuideFacts({
+      pendingApprovalCount: requests.filter(item => item.status === 'pending').length,
+      approvedApprovalCount: requests.filter(item => item.status === 'approved').length,
+      deniedApprovalCount: requests.filter(item => item.status === 'denied').length,
+      assignedMissionCount: todoItems.filter(item => item.sources?.some(source => source.sourceType !== 'student')).length,
+    });
+  }, [todoItems, isPersonal, isListLoading]);
+  useEffect(() => {
+    if (showConfirmPopup && !isPersonal && !isListLoading && approvers.length === 0) emitStudentGuideSignal({ type: 'no-approver' });
+  }, [showConfirmPopup, isPersonal, isListLoading, approvers.length]);
 
   const fetchSchoolTodo = async () => {
     const authToken = localStore.getItem("token");
@@ -1052,7 +1080,7 @@ const TodoList = () => {
       let completedList: any[] = [];
       if (authToken) {
         try {
-          const res = await axios.get(`${API_BASE_URL}/students/appear-Taskes-Completed`, {
+          const res = await axios.get(`${API_BASE_URL}/students/student-task-completed`, {
             headers: { Authorization: `Bearer ${authToken}` },
             timeout: 10000,
           });
@@ -1243,6 +1271,7 @@ const TodoList = () => {
           approverId: selectedApprover.id,
           approverType: selectedApprover.type,
         }, { headers: { Authorization: `Bearer ${authToken}` } });
+        emitStudentGuideSignal({ type: 'approval-sent' });
         await fetchSchoolTodo();
         setShowConfirmPopup(false);
         return;
@@ -1262,13 +1291,15 @@ const TodoList = () => {
           ),
         );
         setShowConfirmPopup(false);
+        emitStudentGuideSignal({ type: 'mission-completed' });
         setShowCongratsPopup(true);
         void refreshUserData();
       }
     } catch (error) {
       AudioManager.play("error");
       console.error("Error marking mission complete:", error);
-      alert(t(describeApiError(error)));
+      if (isNoApproverError(error)) emitStudentGuideSignal({ type: 'no-approver' });
+      alert(t(isNoApproverError(error) ? 'tutorial.student.noApprover' : describeApiError(error)));
       void refreshUserData();
     } finally {
       submitting.current = false;
@@ -1449,7 +1480,7 @@ const TodoList = () => {
       await axios.post(`${API_BASE_URL}/mission/approval/${request.id}/retarget`,
         { approverType: approver.type, approverId: approver.id },
         { headers: { Authorization: `Bearer ${authToken}` } });
-      toast.success(`${t("تم إرسال الطلب إلى")} ${approver.name}`);
+      guideToast('success', `${t("تم إرسال الطلب إلى")} ${approver.name}`);
       setRetargetItem(null);
       await fetchSchoolTodo();
     } catch (error) {
@@ -1494,6 +1525,7 @@ const TodoList = () => {
     // One natural scroll region: the page itself. No nested fixed-height list
     // with its own scrollbar.
     <div
+      data-guide-id="student-mission-workspace"
       className="flex flex-col items-center gap-3 px-4 pt-3 pb-4 overflow-y-auto no-scrollbar"
       id="page-height"
       dir={isRtl ? "rtl" : "ltr"}
@@ -1731,6 +1763,7 @@ const TodoList = () => {
       {!isHistorical && <div className="sticky bottom-0 z-20 flex justify-center w-full pt-2 pb-1 bg-gradient-to-t from-white via-white to-transparent">
         <button
           type="button"
+          data-guide-id="mission-add"
           onClick={() => setShowAddModal(true)}
           className="flex items-center justify-center gap-2 px-8 h-[52px] text-lg font-bold text-white rounded-full shadow-md bg-gradient-to-r from-[#2293c7] to-blueprimary active:scale-[0.98] transition-transform"
         >
@@ -1960,7 +1993,7 @@ const TodoList = () => {
         )}
       </AnimatePresence>
 
-      <ToastContainer position="top-center" autoClose={3000} closeOnClick pauseOnHover theme="light" />
+      <ToastContainer style={{ zIndex: 10020 }} position="top-center" autoClose={3000} closeOnClick pauseOnHover theme="light" />
 
       {/* Confirmation Popup */}
       <AnimatePresence>
@@ -1999,7 +2032,7 @@ const TodoList = () => {
                     </p>
                     {approvers.length === 0 ? (
                       <p className="py-3 text-sm text-center text-gray-500 border border-dashed rounded-lg">
-                        {t("لا يوجد ولي أمر أو معلم مرتبط بحسابك")}
+                        {t("tutorial.student.noApprover")}
                       </p>
                     ) : (
                       <div className="flex flex-col gap-2 overflow-y-auto max-h-56">
@@ -2071,7 +2104,7 @@ const TodoList = () => {
 
       {/* Congratulations Popup */}
       <AnimatePresence>
-        {showCongratsPopup && isPersonal && (
+        {showCongratsPopup && isPersonal && !optionalSuppressed && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

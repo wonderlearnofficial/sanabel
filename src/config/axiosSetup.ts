@@ -24,6 +24,21 @@ export const TERMINAL_SESSION_CODES = new Set([
   "SESSION_REVOKED",
 ]);
 
+// An expired or unverifiable access token is refreshable. The server sends
+// 401 for both (a malformed token used to be 403, so 403 is still accepted).
+const REFRESHABLE_TOKEN_CODES = new Set(["TOKEN_EXPIRED", "TOKEN_INVALID"]);
+
+export function isRefreshableAuthFailure(
+  status: number | undefined,
+  code: unknown,
+): boolean {
+  return (
+    (status === 401 || status === 403) &&
+    typeof code === "string" &&
+    REFRESHABLE_TOKEN_CODES.has(code)
+  );
+}
+
 function endExpiredSession(
   reason: "expired" | "accountDeleted" = "expired",
 ): void {
@@ -88,13 +103,14 @@ export function setupAxiosAuth(): void {
       const status = error.response?.status;
       const code = error.response?.data?.code;
       const url: string = original?.url || "";
-      const isAuthCall =
-        url.includes("/users/refresh") || url.includes("/users/login");
+      const isLoginCall = url.includes("/users/login");
+      const isAuthCall = url.includes("/users/refresh") || isLoginCall;
       const isDeletedAccount = code === "ACCOUNT_DELETED";
-      const isTerminalSession = TERMINAL_SESSION_CODES.has(code);
-      const canRefresh =
-        (status === 401 && code === "TOKEN_EXPIRED") ||
-        (status === 403 && code === "TOKEN_INVALID");
+      // A login rejection (for example ACCOUNT_DISABLED) is not a session
+      // ending; the login page shows the specific reason instead.
+      const isTerminalSession =
+        !isLoginCall && TERMINAL_SESSION_CODES.has(code);
+      const canRefresh = isRefreshableAuthFailure(status, code);
 
       if (isTerminalSession) {
         endExpiredSession(isDeletedAccount ? "accountDeleted" : "expired");

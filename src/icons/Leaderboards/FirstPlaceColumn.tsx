@@ -8,7 +8,7 @@ interface CustomIconProps {
 const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
   <svg
     width="100%"
-    height="auto"
+    style={{ height: "auto" }}
     viewBox="0 0 110 200"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
@@ -28,8 +28,8 @@ const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
         y2="189"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#4AAAD6" />
-        <stop offset="1" stop-color="#CDE8F4" />
+        <stop stopColor="#4AAAD6" />
+        <stop offset="1" stopColor="#CDE8F4" />
       </linearGradient>
     </defs>
   </svg>

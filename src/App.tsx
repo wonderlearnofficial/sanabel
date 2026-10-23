@@ -1,3 +1,4 @@
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Redirect, Route, Switch } from "react-router-dom";
 import { BrowserRouter as Router } from "react-router-dom";
 import { IonRouterOutlet, setupIonicReact } from "@ionic/react";
@@ -5,115 +6,117 @@ import { IonReactRouter } from "@ionic/react-router";
 import { ThemeProvider } from "./context/ThemeContext";
 import "./index.css";
 
-// PAGES
+// Helper for route-level code splitting compatible with IonRouterOutlet
+const lazyRoute = (factory: () => Promise<{ default: React.ComponentType<any> }>) => {
+  const LazyComponent = lazy(factory);
+  return (props: any) => (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="w-8 h-8 border-4 border-sky-400 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <LazyComponent {...props} />
+    </Suspense>
+  );
+};
 
+// BOOT-CRITICAL PAGES (Statically imported for instant boot and initial navigation)
 import SplashScreen from "./pages/common/onboarding/SplashScreen";
 import OnBoarding from "./pages/common/onboarding/Onboarding";
 import ChooseSignMethod from "./pages/common/onboarding/ChooseSignMethod";
-
-// Student Signup
 import SignupStudent from "./pages/common/signup/student/SignupStudent";
-
-// Login
-import Login from "./pages/common/login/Login";
-
-// Notifications
-
-import Notifications from "./pages/Notifications/Notifications";
-
-// Student
-import StudentNavbar from "./components/navbar/StudentNavbar";
-import StudentHome from "./pages/student/StudentHome";
-import StudentToDoList from "./pages/student/StudentToDoList";
-import StudentProfile from "./pages/student/StudentProfile";
-import StudentProfileEdit from "./pages/student/profile/StudentProfileEdit";
-import StudentSettings from "./pages/student/profile/StudentSettings";
-import StudentPrivacyPolicy from "./pages/student/profile/StudentPrivacyPolicy";
-import StudentHelpCenter from "./pages/student/profile/StudentHelpCenter";
-import StudentLeaderboards from "./pages/student/StudentLeaderboards";
-import CreateAvatar from "./pages/student/onboarding/CreateAvatar";
-import AvatarReady from "./pages/student/onboarding/AvatarReady";
-
-import StudentChallenges from "./pages/student/StudentChallenges";
-import ChooseSanabelType from "./pages/student/challenges/ChooseSanabelType";
-import ChooseSanabel from "./pages/student/challenges/ChooseSanabel";
-import SanabelMissionsPage from "./pages/student/challenges/SanabelMissionsPage";
-
-import SanabelReminder from "./pages/student/challenges/SanabelReminder";
-
-import StudentProgress from "./pages/student/StudentProgress";
-
-// Teacher
-import TeacherNavbar from "./components/navbar/TeacherNavbar";
-import TeacherHome from "./pages/teacherorparent/TeacherHome";
-import TeacherProfile from "./pages/teacherorparent/profile/Profile";
-import TeacherChooseSanabelType from "./pages/teacherorparent/challenges/ChooseSanabelType";
-import TeacherChooseSanabel from "./pages/teacherorparent/challenges/ChooseSanabel";
-import TeacherSanabelMissionsPage from "./pages/teacherorparent/challenges/SanabelMissionsPage";
-import SanabelTest from "./pages/teacherorparent/challenges/SanabelTest";
-
-import TeacherView from "./pages/teacherorparent/TeacherView";
-
-// Teacher View Details
-
-import StudentDetails from "./pages/teacherorparent/studentdetails/StudentDetails";
-import ClassDetails from "./pages/teacherorparent/teacherviewdetails/ClassDetails";
-
-// Registration
-
 import SignupParentOrTeacher from "./pages/common/signup/parent_teacher/SignupParentOrTeacher";
-
-// Teacher Lists
-import StudentsList from "./pages/teacherorparent/pointsregistration/StudentsList";
-import TeamsList from "./pages/teacherorparent/pointsregistration/TeamsList";
-import ClassList from "./pages/teacherorparent/pointsregistration/ClassList";
-
-// Parent
-import ParentNavbar from "./components/navbar/ParentNavbar";
-
-import { useTheme } from "./context/ThemeContext";
-import { UserProvider } from "./context/StudentUserProvider";
-
-import { useEffect, useRef, useState } from "react";
-
-import { useTranslation } from "react-i18next";
-import "./i18n";
-import ForgotPassword from "./pages/common/login/ForgotPassword";
-import ChangePassword from "./pages/common/login/ChangePassword";
-import StudentProfilePassword from "./pages/student/profile/StudentProfilePassword";
-
-import Leaderboards from "./pages/student/StudentLeaderboards";
-import ParentHome from "./pages/teacherorparent/ParentHome";
-import ParentInvite from "./pages/teacherorparent/ParentInvite";
-import ParentView from "./pages/teacherorparent/ParentView";
-import { NotificationProvider } from "./pages/Notifications/NotificationContext";
-import { GuideProvider } from "./guides/GuideProvider";
-import GuideOverlay from "./guides/GuideOverlay";
-import GuideReplayList from "./guides/GuideReplayList";
-
-import Avatar from "./Avatar";
-import Simulation from "./Simulation";
-
-// No Internet Component
+import Login from "./pages/common/login/Login";
+import ImpersonateHandoff from "./pages/auth/ImpersonateHandoff";
+import StudentHome from "./pages/student/StudentHome";
 import NoInternetPage from "./pages/common/NoInternet";
 
-// Admin
-import AdminRoute from "./components/AdminRoute";
-import AdminProfile from "./pages/admin/AdminProfile";
-import OrganizationsList from "./pages/admin/organizations/OrganizationsList";
-import OrganizationForm from "./pages/admin/organizations/OrganizationForm";
-import StudentsManagement from "./pages/admin/students/StudentsManagement";
-import StudentDetailEdit from "./pages/admin/students/StudentDetailEdit";
-import UserData from "./pages/admin/UserData";
+// Navbars
+import StudentNavbar from "./components/navbar/StudentNavbar";
+import TeacherNavbar from "./components/navbar/TeacherNavbar";
+import ParentNavbar from "./components/navbar/ParentNavbar";
 
-// Dev-only quick-login tool
-import DevLogin from "./pages/dev/DevLogin";
-import TestPage from "./pages/dev/TestPage";
+// ROUTE-ONLY & HEAVY-OPTIONAL PAGES (Code-split into on-demand chunks)
+// Notifications
+const Notifications = lazyRoute(() => import("./pages/Notifications/Notifications"));
+
+// Student Secondary
+const StudentToDoList = lazyRoute(() => import("./pages/student/StudentToDoList"));
+const StudentProfile = lazyRoute(() => import("./pages/student/StudentProfile"));
+const StudentProfileEdit = lazyRoute(() => import("./pages/student/profile/StudentProfileEdit"));
+const StudentSettings = lazyRoute(() => import("./pages/student/profile/StudentSettings"));
+const StudentPrivacyPolicy = lazyRoute(() => import("./pages/student/profile/StudentPrivacyPolicy"));
+const StudentHelpCenter = lazyRoute(() => import("./pages/student/profile/StudentHelpCenter"));
+const StudentLeaderboards = lazyRoute(() => import("./pages/student/StudentLeaderboards"));
+const Leaderboards = StudentLeaderboards;
+const CreateAvatar = lazyRoute(() => import("./pages/student/onboarding/CreateAvatar"));
+const AvatarReady = lazyRoute(() => import("./pages/student/onboarding/AvatarReady"));
+const StudentChallenges = lazyRoute(() => import("./pages/student/StudentChallenges"));
+const ChooseSanabelType = lazyRoute(() => import("./pages/student/challenges/ChooseSanabelType"));
+const ChooseSanabel = lazyRoute(() => import("./pages/student/challenges/ChooseSanabel"));
+const SanabelMissionsPage = lazyRoute(() => import("./pages/student/challenges/SanabelMissionsPage"));
+const SanabelReminder = lazyRoute(() => import("./pages/student/challenges/SanabelReminder"));
+const StudentProgress = lazyRoute(() => import("./pages/student/StudentProgress"));
+const StudentProfilePassword = lazyRoute(() => import("./pages/student/profile/StudentProfilePassword"));
+
+// Teacher Secondary
+const TeacherHome = lazyRoute(() => import("./pages/teacherorparent/TeacherHome"));
+const TeacherProfile = lazyRoute(() => import("./pages/teacherorparent/profile/Profile"));
+const TeacherChooseSanabelType = lazyRoute(() => import("./pages/teacherorparent/challenges/ChooseSanabelType"));
+const TeacherChooseSanabel = lazyRoute(() => import("./pages/teacherorparent/challenges/ChooseSanabel"));
+const TeacherSanabelMissionsPage = lazyRoute(() => import("./pages/teacherorparent/challenges/SanabelMissionsPage"));
+const SanabelTest = lazyRoute(() => import("./pages/teacherorparent/challenges/SanabelTest"));
+const TeacherView = lazyRoute(() => import("./pages/teacherorparent/TeacherView"));
+const StudentDetails = lazyRoute(() => import("./pages/teacherorparent/studentdetails/StudentDetails"));
+const ClassDetails = lazyRoute(() => import("./pages/teacherorparent/teacherviewdetails/ClassDetails"));
+const StudentsList = lazyRoute(() => import("./pages/teacherorparent/pointsregistration/StudentsList"));
+const TeamsList = lazyRoute(() => import("./pages/teacherorparent/pointsregistration/TeamsList"));
+const ClassList = lazyRoute(() => import("./pages/teacherorparent/pointsregistration/ClassList"));
+
+// Parent Secondary
+const ParentHome = lazyRoute(() => import("./pages/teacherorparent/ParentHome"));
+const ParentInvite = lazyRoute(() => import("./pages/teacherorparent/ParentInvite"));
+const ParentView = lazyRoute(() => import("./pages/teacherorparent/ParentView"));
+
+// Auth Recovery
+const ForgotPassword = lazyRoute(() => import("./pages/common/login/ForgotPassword"));
+const ChangePassword = lazyRoute(() => import("./pages/common/login/ChangePassword"));
+
+// Standalone Tools
+const Avatar = lazyRoute(() => import("./Avatar"));
+const Simulation = lazyRoute(() => import("./Simulation"));
+
+// Admin Redirect Screen for Mobile App
+import AdminRedirectScreen from "./pages/auth/AdminRedirectScreen";
+
+// Dev-only tools
+const DevLogin = lazyRoute(() => import("./pages/dev/DevLogin"));
+const TestPage = lazyRoute(() => import("./pages/dev/TestPage"));
 import { AppUpdateChecker } from "./components/updates/AppUpdateChecker";
 import { initAppNotificationsOnStartup } from "./services/appNotificationManager";
 import PermissionsStartupModal from "./components/PermissionsStartupModal";
 import ImpersonationBanner from "./components/ImpersonationBanner";
 import { API_BASE_URL } from "./config/api";
+import { useTheme } from "./context/ThemeContext";
+import { UserProvider } from "./context/StudentUserProvider";
+import { useTranslation } from "react-i18next";
+import "./i18n";
+import { NotificationProvider } from "./pages/Notifications/NotificationContext";
+import { GuideProvider } from "./guides/GuideProvider";
+import GuideOverlay from "./guides/GuideOverlay";
+import GuideRouteWatcher from "./guides/GuideRouteWatcher";
+import { OverlayCoordinatorProvider } from "./guides/v2/OverlayCoordinator";
+import { GuideProviderV2 } from "./guides/v2/GuideProviderV2";
+import StudentGuideBridge from './guides/v2/StudentGuideBridge';
+import ParentGuideBridge from './guides/v2/ParentGuideBridge';
+import ParentHelpV2, { ParentHelpDispatch } from './pages/teacherorparent/ParentHelpV2';
+import TeacherGuideBridge from './guides/v2/TeacherGuideBridge';
+import TeacherHelpV2, { TeacherHelpDispatch, TeacherReplayCompatibility } from './pages/teacherorparent/TeacherHelpV2';
+import StudentHelpV2, { StudentReplayCompatibility } from './pages/student/StudentHelpV2';
+import GuideOverlayV2 from "./guides/v2/GuideOverlayV2";
+import GuideReplayList from "./guides/GuideReplayList";
 import { localStore } from "./utils/safeStorage";
 
 setupIonicReact();
@@ -211,13 +214,6 @@ export const useInternetConnection = () => {
   return isOnline;
 };
 
-const AdminHomeRedirect = () => {
-  useEffect(() => {
-    window.location.href = "/admin/userdata";
-  }, []);
-  return null;
-};
-
 const App: React.FC = () => {
   const { darkMode, toggleDarkMode } = useTheme();
   const { t } = useTranslation();
@@ -246,13 +242,17 @@ const App: React.FC = () => {
     <UserProvider>
       <ThemeProvider>
         <NotificationProvider>
+        <OverlayCoordinatorProvider>
         <GuideProvider>
+        {/* Tutorial V2 runs only for experiences its feature flag
+            enables; with the flag off it subscribes to nothing and
+            renders nothing, and the Phase 0 engine above stays in
+            charge. */}
+        <GuideProviderV2>
           <ImpersonationBanner />
-          {/* Simulation & desktop admin pages: render outside the phone frame and Ionic router entirely */}
+          {/* Simulation & dev pages: render outside the phone frame and Ionic router entirely */}
           {window.location.pathname.startsWith("/simulation") ? (
             <Simulation />
-          ) : window.location.pathname.startsWith("/admin/userdata") ? (
-            <UserData />
           ) : window.location.pathname.startsWith("/dev/login") && import.meta.env.DEV ? (
             <DevLogin />
           ) : window.location.pathname.startsWith("/test") ? (
@@ -264,6 +264,12 @@ const App: React.FC = () => {
             <div className="relative w-full h-full md:max-w-[430px] md:shadow-2xl overflow-hidden bg-white">
             <PermissionsStartupModal />
             <IonReactRouter>
+              {/* Renders nothing; reports navigation to GuideProvider, which
+                  sits above the router. */}
+              <GuideRouteWatcher />
+              <StudentGuideBridge />
+              <ParentGuideBridge />
+              <TeacherGuideBridge />
               <IonRouterOutlet>
                 <Switch>
                   {/* // Splash Screen */}
@@ -301,6 +307,7 @@ const App: React.FC = () => {
                   />
                   {/* Login */}
                   <Route exact path="/login" component={Login} />
+                  <Route exact path="/impersonate" component={ImpersonateHandoff} />
                   <Route
                     exact
                     path="/forgotpassword"
@@ -323,7 +330,10 @@ const App: React.FC = () => {
                     component={Notifications}
                   />
                   <Route exact path="/approvals" component={Notifications} />
+                  <Route exact path="/parent/help" component={ParentHelpV2} />
                   {/* Student */}
+                  <Route exact path="/help" render={() => <ParentHelpDispatch><TeacherHelpDispatch /></ParentHelpDispatch>} />
+                  <Route exact path="/teacher/help" component={TeacherHelpV2} />
                   <Route exact path="/student/home" component={StudentHome} />
                   <Route
                     exact
@@ -353,12 +363,12 @@ const App: React.FC = () => {
                   <Route
                     exact
                     path="/student/settings/helpcenter"
-                    component={StudentHelpCenter}
+                    render={() => <ParentHelpDispatch><StudentHelpV2 /></ParentHelpDispatch>}
                   />
                   <Route
                     exact
                     path="/student/settings/guides"
-                    render={() => <GuideReplayList role="Student" />}
+                    component={StudentReplayCompatibility}
                   />
 
                   <Route
@@ -401,11 +411,7 @@ const App: React.FC = () => {
                   <Route
                     exact
                     path="/teacher/settings/guides"
-                    render={() => (
-                      <GuideReplayList
-                        role={localStore.getItem("role") === "Parent" ? "Parent" : "Teacher"}
-                      />
-                    )}
+                    component={TeacherReplayCompatibility}
                   />
 
                   <Route
@@ -468,34 +474,9 @@ const App: React.FC = () => {
                   <Route exact path="/parent/invite" component={ParentInvite} />
                   <Route exact path="/parent/view" component={ParentView} />
 
-                  {/* Admin */}
-                  <AdminRoute exact path="/admin/home" component={AdminHomeRedirect} />
-                  <AdminRoute exact path="/admin/profile" component={AdminProfile} />
-                  <AdminRoute
-                    exact
-                    path="/admin/organizations"
-                    component={OrganizationsList}
-                  />
-                  <AdminRoute
-                    exact
-                    path="/admin/organizations/new"
-                    component={OrganizationForm}
-                  />
-                  <AdminRoute
-                    exact
-                    path="/admin/organizations/:organizationId"
-                    component={OrganizationForm}
-                  />
-                  <AdminRoute
-                    exact
-                    path="/admin/students"
-                    component={StudentsManagement}
-                  />
-                  <AdminRoute
-                    exact
-                    path="/admin/students/:studentId"
-                    component={StudentDetailEdit}
-                  />
+                  {/* Admin Console Redirect */}
+                  <Route exact path="/admin-redirect" component={AdminRedirectScreen} />
+                  <Route path="/admin" render={() => <Redirect to="/admin-redirect" />} />
                   <Route exact path="/test" component={TestPage} />
                 </Switch>
               </IonRouterOutlet>
@@ -504,8 +485,11 @@ const App: React.FC = () => {
           </div>
           )}
           <GuideOverlay />
+          <GuideOverlayV2 />
           <AppUpdateChecker />
+        </GuideProviderV2>
         </GuideProvider>
+        </OverlayCoordinatorProvider>
         </NotificationProvider>
       </ThemeProvider>
     </UserProvider>

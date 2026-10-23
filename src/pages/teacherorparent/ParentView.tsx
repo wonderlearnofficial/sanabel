@@ -12,6 +12,7 @@ import { FiGrid } from "react-icons/fi";
 import { FaThList } from "react-icons/fa";
 import StudentNavbar from "../../components/navbar/StudentNavbar";
 import ParentNavbar from "../../components/navbar/ParentNavbar";
+import { useParentGuideFacts } from '../../guides/v2/useParentGuideFacts';
 
 const ParentView: React.FC = () => {
   const history = useHistory();
@@ -22,6 +23,8 @@ const ParentView: React.FC = () => {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(false);
+  const [childrenLoaded, setChildrenLoaded] = useState(false);
+  useParentGuideFacts(childrenLoaded ? studentsData.length : null);
 
   const filterOptions = [
     { value: "all", label: "الكل" },
@@ -55,8 +58,9 @@ const ParentView: React.FC = () => {
         // Ensure data.data is an array, if it's a single object, wrap it in an array
         const studentsArray = Array.isArray(data.data)
           ? data.data
-          : [data.data];
+          : data.data ? [data.data] : [];
         setStudentsData(studentsArray);
+        setChildrenLoaded(true);
         console.log("Students data:", studentsArray);
       }
     } catch (error) {
@@ -212,9 +216,9 @@ const ParentView: React.FC = () => {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 w-full overflow-y-auto">
+      <div data-guide-id={studentsData.length > 1 ? "parent-child-switch" : undefined} className="flex-1 w-full overflow-y-auto">
         {/* Students View - with Grid and Row layout options */}
-        <div className="flex flex-col items-start w-full gap-2">
+        <div data-guide-id="parent-child-list" className="flex flex-col items-start w-full gap-2">
           <h1 className="text-xl font-bold text-black ">{t("الطلاب")}</h1>
 
           {isLoading ? (
@@ -224,10 +228,15 @@ const ParentView: React.FC = () => {
           ) : filteredStudents.length > 0 ? (
             layoutType === "grid" ? (
               // Grid View
-              <div className="grid w-full grid-cols-3 gap-2 mt-2">
+              <div
+                className="grid w-full grid-cols-3 gap-2 mt-2"
+              >
                 {filteredStudents.map((student: any) => (
                   <div
                     key={student.id}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigateToStudentDetail(student.id); } }}
                     className="flex flex-col items-center gap-1 p-2 border-2 cursor-pointer rounded-xl hover:bg-gray-50"
                     onClick={() => navigateToStudentDetail(student.id)}
                   >
@@ -260,6 +269,9 @@ const ParentView: React.FC = () => {
                 {filteredStudents.map((student: any) => (
                   <div
                     key={student.id}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigateToStudentDetail(student.id); } }}
                     className="flex flex-row-reverse items-center justify-between w-full p-1 border-2 rounded-xl "
                     onClick={() => navigateToStudentDetail(student.id)}
                   >

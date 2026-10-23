@@ -1,3 +1,8 @@
+import { useGuideAutoStart } from '../../guides/v2/useGuideAutoStart';
+import { useGuideView } from '../../guides/v2/useGuideView';
+import { useOptionalOverlaySuppressed } from '../../guides/v2/OverlayCoordinator';
+import { useStudentGuideToast, useStudentGameplayDialog } from '../../guides/v2/useStudentGuideFeedback';
+import { emitStudentGuideSignal } from '../../guides/v2/studentSignals';
 import { useAutoStartGuide } from "../../guides/useAutoStartGuide";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
@@ -25,6 +30,7 @@ import { AudioManager } from "../../utils/AudioManager";
 
 const Toaster = () => (
   <ToastContainer
+    style={{ zIndex: 10020 }}
     position="top-center"
     autoClose={1000}
     hideProgressBar={false}
@@ -39,6 +45,8 @@ const Toaster = () => (
 );
 
 const Shop: React.FC = () => {
+  const guideToast = useStudentGuideToast();
+  const optionalSuppressed = useOptionalOverlaySuppressed();
   const { t } = useTranslation();
   const { user, refreshUserData, mutateStudent, isLoading: isUserLoading } = useUserContext();
   useAutoStartGuide("student-shop", true);
@@ -89,7 +97,7 @@ const Shop: React.FC = () => {
     } else if (operation === "+" && buyWaterCount < remainingWaterNeeded) {
       setBuyWaterCount(count => Math.min(remainingWaterNeeded, count + 1));
     } else if (operation === "+" && buyWaterCount === remainingWaterNeeded) {
-      toast.warning(t("لقد وصلت إلى الحد الأقصى المطلوب من الماء"));
+      guideToast('warning', t("لقد وصلت إلى الحد الأقصى المطلوب من الماء"));
     }
   }
 
@@ -105,7 +113,7 @@ const Shop: React.FC = () => {
       operation === "+" &&
       buyFertilizerCount === remainingFertilizerNeeded
     ) {
-      toast.warning(t("لقد وصلت إلى الحد الأقصى المطلوب من السماد"));
+      guideToast('warning', t("لقد وصلت إلى الحد الأقصى المطلوب من السماد"));
     }
   }
 
@@ -116,6 +124,10 @@ const Shop: React.FC = () => {
     useState(false);
   const [missingSanabel, setMissingSanabel] = useState<any[]>([]);
   const [isBuying, setIsBuying] = useState(false);
+
+  useGuideView(!isProgressReady ? 'student.progress.shop' : null);
+  useGuideAutoStart(!!user && !isUserLoading);
+  useStudentGameplayDialog(isPopupVisible || isInsufficientFundsVisible);
 
   // The server charges the SAME total cost from EACH sanabel color, so the
   // shortage must be computed per color — not by "spending" one pooled budget
@@ -231,6 +243,7 @@ const Shop: React.FC = () => {
 
       if (response.status === 200) {
 
+        emitStudentGuideSignal({ type: 'tree-grown' });
         setIsCelebrationVisible(true);
         // Refresh user data to show updated tree stage
       }
@@ -260,7 +273,7 @@ const Shop: React.FC = () => {
 
           <div className="flex-col gap-2 bg-[#FFF8E5] rounded-xl w-full flex justify-between p-2">
             <div className="flex flex-row-reverse justify-between">
-              <div className="flex-center">
+              <div className="flex-center" data-guide-id="shop-fertilizer">
                 <div className="gap-1 p-1 bg-white flex-center rounded-3xl select-none">
                   <button
                     type="button"
@@ -284,7 +297,7 @@ const Shop: React.FC = () => {
                 </div>
                 <img src={fertilizerImg} alt="" className="w-auto h-8 select-none pointer-events-none" />
               </div>
-              <div className="flex-center">
+              <div className="flex-center" data-guide-id="shop-water">
                 <div className="gap-1 p-1 bg-white flex-center rounded-3xl select-none">
                   <button
                     type="button"
@@ -420,6 +433,7 @@ const Shop: React.FC = () => {
                   <div className="flex justify-center gap-3 mt-4">
                     <button
                       type="button"
+                      data-guide-id="shop-confirm"
                       className="flex-1 min-h-[48px] px-4 py-3 font-bold text-white transition-transform transform shadow-md bg-blueprimary rounded-xl active:scale-95 disabled:opacity-50 disabled:pointer-events-none select-none cursor-pointer touch-manipulation border-0 outline-none flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -514,7 +528,7 @@ const Shop: React.FC = () => {
             )}
 
             {/* Purchase Success Popup */}
-            {isPurchaseConfirmed && (
+            {isPurchaseConfirmed && !optionalSuppressed && (
               <div className="fixed top-0 left-0 z-50 w-full h-full bg-black bg-opacity-50 flex-center">
                 <div className="w-4/5 max-w-sm p-6 text-center bg-white rounded-2xl shadow-xl">
                   <CheckmarkAnimation />
@@ -541,6 +555,7 @@ const Shop: React.FC = () => {
         <div className="w-2/3">
           {treeProgress < 51 && (
             <motion.button
+              data-guide-id="tree-grow"
               className="w-full gap-2 px-6 py-3 font-bold text-white rounded-full shadow-lg flex-center bg-gradient-to-r from-blueprimary to-blue-400"
               initial={{ scale: 1 }}
               animate={{
@@ -561,7 +576,7 @@ const Shop: React.FC = () => {
           )}
 
           {/* Celebration Popup */}
-          {isCelebrationVisible && (
+          {isCelebrationVisible && !optionalSuppressed && (
             <div className="fixed inset-0 z-50 flex items-center justify-center w-full mx-auto ">
               {/* Backdrop with blur effect */}
               <motion.div

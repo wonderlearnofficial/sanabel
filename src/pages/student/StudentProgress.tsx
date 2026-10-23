@@ -10,6 +10,7 @@ import ProgressMissions from "./progress/ProgressMissions";
 import ProgressMedals from "./progress/ProgressMedals";
 import ProgressTrophies from "./progress/ProgressTrophies";
 import ProgressTree from "./progress/ProgressTree";
+import { useGuideViewSelector } from "../../guides/v2/GuideViewController";
 // Navbar
 
 import missionsDoneImg from "../../assets/target.png";
@@ -29,6 +30,17 @@ const Progress: React.FC = () => {
   const { t } = useTranslation();
   const [selectProgressType, setSelectProgressType] = useState(0);
 
+  // Tutorial V2 replay: a guide anchored to one of these tabs asks for its
+  // view, and this page is the only thing that can honour it — the selection
+  // lives in local state, not in the router.
+  useGuideViewSelector({
+    "student.progress.stats": () => setSelectProgressType(0),
+    "student.progress.trophies": () => setSelectProgressType(1),
+    "student.progress.level": () => setSelectProgressType(2),
+    "student.progress.tree": () => setSelectProgressType(3),
+    "student.progress.shop": () => setSelectProgressType(3),
+  });
+
   return (
     <div
       className="flex flex-col items-center justify-between w-full h-full gap-0 p-4 overflow-y-auto"
@@ -44,7 +56,10 @@ const Progress: React.FC = () => {
         </p>
       </div>
 
-      <div className="flex w-full bg-[#E6E6E6] rounded-3xl p-1 gap-1 justify-between items-center select-none">
+      <div
+        data-guide-id="progress-tabs"
+        className="flex w-full bg-[#E6E6E6] rounded-3xl p-1 gap-1 justify-between items-center select-none"
+      >
         {navbar.map((item, index) => (
           <button
             key={index}

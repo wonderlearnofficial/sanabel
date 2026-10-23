@@ -33,7 +33,10 @@ const SanabelTree = () => {
   const isFinalStage = treeProgress >= 51;
   const language = localStorage.getItem("language");
   return (
-    <div className="flex flex-col w-full  min-h-[180px] items-center justify-between shadow-md p-2 border-[1px] border-[#33333325] rounded-xl ">
+    <div
+      data-guide-id="tree-canvas"
+      className="flex flex-col w-full  min-h-[180px] items-center justify-between shadow-md p-2 border-[1px] border-[#33333325] rounded-xl "
+    >
       {/* Tree */}
 
       {treeProgress >= 51 && (

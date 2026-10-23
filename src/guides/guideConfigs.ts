@@ -79,6 +79,13 @@ export const studentMissionSchoolGuide: GuideConfig = {
   ],
 };
 
+// NOT registered in ALL_GUIDES: there is no screen left for it to own. The
+// level and XP bar live on the same Progress tab as the medals
+// (`ProgressMedals`), whose `studentMedalGuide` already says "current level and
+// the medals you have unlocked", and every other Progress tab has its own
+// guide. Registering this one there would put two guides on one screen, where
+// only one can auto-start per route entry. Kept exported, unregistered, until
+// the Tutorial V2 XP guide replaces it (docs/TUTORIAL_V2_DESIGN.md §33).
 export const studentXpGuide: GuideConfig = {
   id: "student-xp",
   role: "Student",
@@ -278,7 +285,6 @@ export const ALL_GUIDES: GuideConfig[] = [
   studentHomeGuide,
   studentMissionPersonalGuide,
   studentMissionSchoolGuide,
-  studentXpGuide,
   studentTreeGuide,
   studentShopGuide,
   studentLeaderboardGuide,

@@ -84,8 +84,8 @@ const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
         gradientUnits="userSpaceOnUse"
         gradientTransform="translate(18.5 19.4512) rotate(90) scale(18.5)"
       >
-        <stop offset="0.284196" stop-color="#B7B7B7" />
-        <stop offset="1" stop-color="#E2E2E2" />
+        <stop offset="0.284196" stopColor="#B7B7B7" />
+        <stop offset="1" stopColor="#E2E2E2" />
       </radialGradient>
     </defs>
   </svg>

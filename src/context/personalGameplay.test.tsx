@@ -35,7 +35,18 @@ const deferred = () => {
 };
 const date = new Date().toISOString().slice(0, 10);
 const student = { id: 7, classId: null, organizationId: null, xp: 0, snabelRed: 100, snabelBlue: 100, snabelYellow: 100, water: 0, seeders: 0, treeProgress: 1, user: { firstName: "Personal", lastName: "Student", email: "test@example.invalid" } };
-const profile = (values = {}) => ({ status: 200, data: { data: { student: { ...student, ...values }, treePoint: { water: 1, seeders: 1, stage: 0, treeProgress: 1 }, completedTasks: { date, taskIds: [] } } } });
+// The fake server keeps state, because the real one does: a page refreshes the
+// profile after a completion, and that GET returns what was just committed. A
+// static fixture made the refresh look like a regression to xp 0 while the
+// mutation response itself was correct.
+let committed = { ...student };
+let committedTaskIds: number[] = [];
+const profile = (values = {}) => ({ status: 200, data: { data: { student: { ...committed, ...values }, treePoint: { water: 1, seeders: 1, stage: 0, treeProgress: 1 }, completedTasks: { date, taskIds: [...committedTaskIds] } } } });
+/** Records what the server would now return, exactly as a mutation response does. */
+const commit = ({ taskIds, ...values }: Record<string, unknown> & { taskIds?: number[] }) => {
+  committed = { ...committed, ...values };
+  if (taskIds) committedTaskIds = taskIds;
+};
 function Probe() {
   const context = useUserContext();
   return <><output data-testid="state">{JSON.stringify(context.user)}</output><button onClick={() => void context.refreshUserData()}>refresh profile</button></>;
@@ -57,7 +68,7 @@ async function confirmPurchase() {
   fireEvent.click(button); fireEvent.click(button);
 }
 beforeEach(() => {
-  vi.clearAllMocks(); localStorage.clear();
+  vi.clearAllMocks(); localStorage.clear(); committed = { ...student }; committedTaskIds = [];
   localStorage.setItem("token", "test-token"); localStorage.setItem("role", "Student");
   localStorage.setItem("sanabel:todos:7", JSON.stringify([{ id: 1, task: { id: 1, title: "Personal task", type: "Kind", completionStatus: "Completed" }, completed: false }]));
   vi.mocked(axios.get).mockImplementation(async (url: any) => url.includes("/users/session") ? { status: 200 } : profile());
@@ -84,7 +95,10 @@ describe("personal gameplay interactions", () => {
     expect(axios.request).toHaveBeenCalledWith(expect.objectContaining({ url: expect.stringContaining("/students/add-pros") }));
     expect(screen.getByRole("button", { name: "جاري التحديث..." })).toBeDisabled();
     expect(AudioManager.play).not.toHaveBeenCalled();
-    await act(async () => pending.resolve({ status: 201, data: { student: { ...student, xp: 15 }, completion: { taskId: 1, date, completionStatus: "Completed" } } }));
+    await act(async () => {
+      commit({ xp: 15, taskIds: [1] });
+      pending.resolve({ status: 201, data: { student: { ...student, xp: 15 }, completion: { taskId: 1, date, completionStatus: "Completed" } } });
+    });
     expect(screen.getByTestId("complete-mission-1")).toHaveAttribute("aria-pressed", "true");
     expect(state().xp).toBe(15);
     expect(AudioManager.play).toHaveBeenCalledTimes(1);
@@ -106,6 +120,7 @@ describe("personal gameplay interactions", () => {
     const stale = deferred(); vi.mocked(axios.get).mockReturnValueOnce(stale.promise);
     fireEvent.click(screen.getByText("refresh profile"));
     vi.mocked(axios.request).mockResolvedValue({ status: 201, data: { student: { ...student, xp: 5 }, completion: { taskId: 1, date } } });
+    commit({ xp: 5 });
     await confirmMission();
     await waitFor(() => expect(state().xp).toBe(5));
     await act(async () => stale.resolve(profile()));
@@ -147,6 +162,8 @@ describe("personal gameplay interactions", () => {
   });
 
   it("an already-completed retry reconciles its check without replaying rewards", async () => {
+    // Already completed on the server, so the profile already carries the reward.
+    commit({ xp: 15 });
     vi.mocked(axios.request).mockResolvedValue({ status: 200, data: { alreadyCompleted: true, student: { ...student, xp: 15 }, completion: { taskId: 1, date } } });
     mount(); await confirmMission();
     await waitFor(() => expect(screen.getByTestId("complete-mission-1")).toHaveAttribute("aria-pressed", "true"));
@@ -194,7 +211,10 @@ describe("personal gameplay interactions", () => {
     const pending = deferred(); vi.mocked(axios.request).mockReturnValue(pending.promise);
     mount(<Navigation />); await confirmMission();
     fireEvent.click(screen.getByText("leave page"));
-    await act(async () => pending.resolve({ status: 201, data: { student: { ...student, xp: 5 }, completion: { taskId: 1, date } } }));
+    await act(async () => {
+      commit({ xp: 5, taskIds: [1] });
+      pending.resolve({ status: 201, data: { student: { ...student, xp: 5 }, completion: { taskId: 1, date } } });
+    });
     expect(state().xp).toBe(5);
     expect(state().completedTasks.taskIds).toEqual([1]);
     expect(AudioManager.play).toHaveBeenCalledWith("reward", true);

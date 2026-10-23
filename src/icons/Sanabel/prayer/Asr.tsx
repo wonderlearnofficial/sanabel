@@ -45,9 +45,9 @@ const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
         width="46.8745"
         height="45.2083"
         filterUnits="userSpaceOnUse"
-        color-interpolation-filters="sRGB"
+        colorInterpolationFilters="sRGB"
       >
-        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feFlood floodOpacity="0" result="BackgroundImageFix" />
         <feBlend
           mode="normal"
           in="SourceGraphic"
@@ -66,9 +66,9 @@ const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
         width="24.7461"
         height="25.3409"
         filterUnits="userSpaceOnUse"
-        color-interpolation-filters="sRGB"
+        colorInterpolationFilters="sRGB"
       >
-        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feFlood floodOpacity="0" result="BackgroundImageFix" />
         <feBlend
           mode="normal"
           in="SourceGraphic"
@@ -101,9 +101,9 @@ const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
         width="40.0931"
         height="26.4108"
         filterUnits="userSpaceOnUse"
-        color-interpolation-filters="sRGB"
+        colorInterpolationFilters="sRGB"
       >
-        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feFlood floodOpacity="0" result="BackgroundImageFix" />
         <feGaussianBlur in="BackgroundImageFix" stdDeviation="1.60611" />
         <feComposite
           in2="SourceAlpha"
@@ -124,9 +124,9 @@ const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
         width="33.6687"
         height="21.176"
         filterUnits="userSpaceOnUse"
-        color-interpolation-filters="sRGB"
+        colorInterpolationFilters="sRGB"
       >
-        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feFlood floodOpacity="0" result="BackgroundImageFix" />
         <feBlend
           mode="normal"
           in="SourceGraphic"
@@ -160,8 +160,8 @@ const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
         y2="14.3076"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#FF9900" />
-        <stop offset="1" stop-color="#FFEE94" />
+        <stop stopColor="#FF9900" />
+        <stop offset="1" stopColor="#FFEE94" />
       </linearGradient>
       <linearGradient
         id="paint1_linear_105_7693"
@@ -171,8 +171,8 @@ const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
         y2="14.4214"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="white" />
-        <stop offset="1" stop-color="white" stop-opacity="0.58" />
+        <stop stopColor="white" />
+        <stop offset="1" stopColor="white" stopOpacity="0.58" />
       </linearGradient>
     </defs>
   </svg>

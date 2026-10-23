@@ -1,6 +1,7 @@
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
 import { localStore } from "./safeStorage";
+import { clearAllGuideProgress } from "../guides/v2/progressStore";
 
 export function clearClientSession(): void {
   localStore.removeItem("token");
@@ -13,6 +14,15 @@ export function clearClientSession(): void {
   localStore.removeItem("adminReturnRole");
   localStore.removeItem("adminReturnEmail");
   localStore.removeItem("adminImpersonatedStudentName");
+  // The impersonation markers describe the session that is ending. Leaving them
+  // behind makes the next real sign-in on this device look impersonated, which
+  // now suppresses that user's guides and their seen-state writes.
+  localStore.removeItem("isImpersonated");
+  localStore.removeItem("impersonatedStudentName");
+  // Ephemeral tutorial position only. Durable guide state lives on the server
+  // (`Users.seenGuides`) and is deliberately left alone: signing out is not
+  // forgetting what the learner was taught.
+  clearAllGuideProgress();
   localStore.setItem("keepLoggedIn", "false");
 }
 

@@ -63,14 +63,14 @@ const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
       <path
         d="M20.777 25.6454C20.8265 25.3644 20.8523 25.0752 20.8523 24.7801C20.8523 22.0193 18.5934 19.7812 15.8069 19.7812C13.7353 19.7812 11.9553 21.0182 11.1783 22.7872C10.5488 22.2487 9.73197 21.9236 8.83932 21.9236C6.84895 21.9236 5.23543 23.54 5.23543 25.5339C5.23543 25.6449 5.24043 25.7548 5.25022 25.8633C4.29289 26.3278 3.6337 27.3027 3.6337 28.4301C3.6337 30.0077 4.92451 31.2866 6.51681 31.2866H20.1315C21.7238 31.2866 23.0146 30.0077 23.0146 28.4301C23.0146 27.0723 22.0585 25.9358 20.777 25.6454Z"
         fill="#54516D"
-        fill-opacity="0.8"
+        fillOpacity="0.8"
       />
     </g>
     <g filter="url(#filter2_b_105_7738)">
       <path
         d="M34.7623 8.79778C34.8119 8.5167 34.8377 8.22756 34.8377 7.93245C34.8377 5.17166 32.5787 2.93359 29.7922 2.93359C27.7207 2.93359 25.9407 4.1705 25.1637 5.93954C24.5342 5.40107 23.7173 5.07596 22.8247 5.07596C20.8343 5.07596 19.2208 6.69234 19.2208 8.68624C19.2208 8.79727 19.2258 8.90713 19.2356 9.01561C18.2782 9.48019 17.619 10.455 17.619 11.5824C17.619 13.16 18.9099 14.4389 20.5022 14.4389H34.1169C35.7092 14.4389 37 13.16 37 11.5824C37 10.2247 36.0439 9.08817 34.7623 8.79778Z"
         fill="#54516D"
-        fill-opacity="0.8"
+        fillOpacity="0.8"
       />
     </g>
     <defs>
@@ -81,9 +81,9 @@ const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
         width="23.3818"
         height="26.0108"
         filterUnits="userSpaceOnUse"
-        color-interpolation-filters="sRGB"
+        colorInterpolationFilters="sRGB"
       >
-        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feFlood floodOpacity="0" result="BackgroundImageFix" />
         <feBlend
           mode="normal"
           in="SourceGraphic"
@@ -116,9 +116,9 @@ const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
         width="25.3273"
         height="17.4523"
         filterUnits="userSpaceOnUse"
-        color-interpolation-filters="sRGB"
+        colorInterpolationFilters="sRGB"
       >
-        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feFlood floodOpacity="0" result="BackgroundImageFix" />
         <feGaussianBlur in="BackgroundImageFix" stdDeviation="1.48661" />
         <feComposite
           in2="SourceAlpha"
@@ -139,9 +139,9 @@ const CustomIcon: React.FC<CustomIconProps> = ({ className, size = 25 }) => (
         width="25.3273"
         height="17.4523"
         filterUnits="userSpaceOnUse"
-        color-interpolation-filters="sRGB"
+        colorInterpolationFilters="sRGB"
       >
-        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feFlood floodOpacity="0" result="BackgroundImageFix" />
         <feGaussianBlur in="BackgroundImageFix" stdDeviation="1.48661" />
         <feComposite
           in2="SourceAlpha"

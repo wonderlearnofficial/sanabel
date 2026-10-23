@@ -10,6 +10,11 @@ import { SanabelTrophies } from "../../data/SanabelTrophies";
 import { useNotifications } from "./NotificationContext";
 import GetAvatar from "../student/tutorial/GetAvatar";
 import { sanabelImgs } from "../../data/SanabelDictionary";
+import { useOptionalGuideV2 } from '../../guides/v2/GuideProviderV2';
+import { useGuideAutoStart } from '../../guides/v2/useGuideAutoStart';
+import { publishGuideFacts } from '../../guides/v2/facts';
+import { useTeacherGuideFacts } from '../../guides/v2/useTeacherGuideFacts';
+import { emitTeacherGuideEvent } from '../../guides/v2/teacherSignals';
 
 const approvalCategoryVisuals = [
   { border: "border-t-blueprimary", text: "text-blueprimary" },
@@ -20,7 +25,7 @@ const approvalCategoryVisuals = [
 
 // Parent/Teacher: mission approval requests, reusing the same bell/route as
 // student trophy notifications rather than building a separate page.
-const ApprovalRequestsView: React.FC = () => {
+export const ApprovalRequestsView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language.startsWith("ar");
   const {
@@ -31,6 +36,14 @@ const ApprovalRequestsView: React.FC = () => {
     denyApprovalRequest,
   } = useNotifications();
   const [actioningId, setActioningId] = useState<number | null>(null);
+  const parentGuides = useOptionalGuideV2();
+  const parentGuideRole = parentGuides?.context.experience === 'parent';
+  useEffect(() => {
+    if (parentGuideRole && parentGuides?.enabled) publishGuideFacts({ pendingApprovalCount: isLoading ? 0 : pendingApprovalRequests.length });
+  }, [parentGuideRole, parentGuides?.enabled, isLoading, pendingApprovalRequests.length]);
+  useGuideAutoStart(parentGuideRole && !isLoading);
+  const teacherGuideRole = localStorage.getItem('role') === 'Teacher';
+  useTeacherGuideFacts(teacherGuideRole, { teacherPendingCount: isLoading ? 0 : pendingApprovalRequests.length });
   const [errorByRequest, setErrorByRequest] = useState<Record<number, string>>(
     {},
   );
@@ -67,6 +80,7 @@ const ApprovalRequestsView: React.FC = () => {
       } else {
         await denyApprovalRequest(requestId);
       }
+      if (teacherGuideRole) emitTeacherGuideEvent('teacher-decision-recorded');
     } catch (error: any) {
       setErrorByRequest((prev) => ({
         ...prev,
@@ -146,6 +160,7 @@ const ApprovalRequestsView: React.FC = () => {
                 return (
                   <motion.div
                     key={request.id}
+                    data-guide-id={parentGuideRole ? "parent-approval-request" : undefined}
                     data-testid={`approval-request-${request.id}`}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -230,10 +245,11 @@ const ApprovalRequestsView: React.FC = () => {
                         {error}
                       </p>
                     )}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2" data-guide-id="notif-decision">
                       <button
                         type="button"
                         onClick={() => handleDecision(request.id, "deny")}
+                        style={parentGuideRole ? { minHeight: 44 } : undefined}
                         disabled={isActioning}
                         className="flex-1 py-2 text-sm font-bold text-white transition-colors bg-red-500 rounded-lg hover:opacity-80 disabled:opacity-50"
                       >
@@ -242,6 +258,7 @@ const ApprovalRequestsView: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleDecision(request.id, "approve")}
+                        style={parentGuideRole ? { minHeight: 44 } : undefined}
                         disabled={isActioning}
                         className="flex-1 py-2 text-sm font-bold text-white transition-colors rounded-lg bg-greenprimary hover:opacity-80 disabled:opacity-50"
                       >
@@ -301,10 +318,14 @@ const SkeletonCard = () => (
 );
 
 const Notifications: React.FC = () => {
-  const currentLanguage = localStorage.getItem("language");
   const role = localStorage.getItem("role");
   useAutoStartGuide("student-notifications", role === "Student");
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Direction follows the active language, not a stored value: switching
+  // language re-renders through i18n, while `localStorage` is only read once on
+  // mount and would leave the page in the previous direction.
+  const isRTL = !i18n.language.startsWith("en");
+  const currentLanguage = i18n.language.startsWith("en") ? "en" : "ar";
   const [filteredTrophies, setFilteredTrophies] = useState<any[]>([]);
   const [filters, setFilters] = useState<FilterOptions>({
     timeRange: "all",
@@ -438,7 +459,13 @@ const Notifications: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-gray-50" dir="rtl">
+    // `dir` was hardcoded to "rtl", so in English the whole page rendered with
+    // RTL bidi ordering: a trailing "!" jumped to the left of its sentence and
+    // "1 achievements" read as "achievements 1".
+    <div
+      className="flex flex-col w-full h-full bg-gray-50"
+      dir={isRTL ? "rtl" : "ltr"}
+    >
       {/* Header */}
       <div className="px-4 pt-4 pb-0 bg-white shadow-sm">
         <div className="flex items-center justify-between mb-3">

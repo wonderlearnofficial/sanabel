@@ -10,11 +10,17 @@ export const ImpersonationBanner: React.FC = () => {
 
   useEffect(() => {
     const checkState = () => {
+      const isImpersonatedFlag = localStorage.getItem("isImpersonated") === "true";
       const returnToken = localStorage.getItem("adminReturnToken");
       const currentRole = localStorage.getItem("role");
-      if (returnToken && currentRole === "Student") {
+
+      if (isImpersonatedFlag || (returnToken && currentRole === "Student")) {
         setIsImpersonating(true);
-        setStudentName(localStorage.getItem("adminImpersonatedStudentName") || "Student");
+        setStudentName(
+          localStorage.getItem("impersonatedStudentName") ||
+          localStorage.getItem("adminImpersonatedStudentName") ||
+          "Student"
+        );
       } else {
         setIsImpersonating(false);
       }
@@ -30,14 +36,38 @@ export const ImpersonationBanner: React.FC = () => {
   const handleReturnToAdmin = () => {
     const adminToken = localStorage.getItem("adminReturnToken");
     const adminRole = localStorage.getItem("adminReturnRole") || "Admin";
+
+    // Clear impersonated session
+    localStorage.removeItem("isImpersonated");
+    localStorage.removeItem("impersonatedStudentName");
+
     if (adminToken) {
       localStorage.setItem("token", adminToken);
       localStorage.setItem("role", adminRole);
       localStorage.removeItem("adminReturnToken");
       localStorage.removeItem("adminReturnRole");
-      localStorage.removeItem("adminReturnEmail");
-      localStorage.removeItem("adminImpersonatedStudentName");
-      window.location.href = "/admin/userdata";
+      if (window.opener && !window.opener.closed) {
+        window.close();
+      } else {
+        const adminUrl = import.meta.env.VITE_ADMIN_APP_URL;
+        window.location.href = adminUrl || "/login";
+      }
+      return;
+    }
+
+    // Safe cross-origin flow: clear student credentials
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
+    window.dispatchEvent(new Event("storage"));
+
+    // Close window if opened by admin console, else redirect to admin console or login
+    if (window.opener && !window.opener.closed) {
+      window.close();
+    } else {
+      const adminUrl = import.meta.env.VITE_ADMIN_APP_URL;
+      window.location.href = adminUrl || "/login";
     }
   };
 

@@ -1,3 +1,4 @@
+import { useGuideAutoStart } from '../../guides/v2/useGuideAutoStart';
 import { API_BASE_URL } from "../../config/api";
 import { useHistory } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
@@ -357,6 +358,7 @@ const Leaderboards: React.FC = () => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay: 1 } },
   };
 
+  useGuideAutoStart(!!user && user.organizationId != null && user.classId != null);
   // Loading state
   if (isLoading) {
     return (
@@ -419,7 +421,7 @@ const Leaderboards: React.FC = () => {
               </h1>
 
               {/* Filter Button */}
-              <div className="flex gap-4 flex-center">
+              <div className="flex gap-4 flex-center" data-guide-id="leaderboard-search">
                 <button
                   onClick={() => setIsSearchButton(!isSearchButton)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-colors ${
@@ -667,7 +669,7 @@ const Leaderboards: React.FC = () => {
 
         {/* Sticky "Your rank" card for students */}
         {myEntry && (
-          <div className="w-full px-1 pb-1">
+          <div className="w-full px-1 pb-1" data-guide-id="leaderboard-self-row">
             <div className="flex flex-row-reverse items-center justify-between w-full p-2 border-2 border-blueprimary bg-blue-50 rounded-2xl shadow-md">
               <div className="scale-90">
                 <MedalAndLevel

@@ -9,6 +9,7 @@ import Password from "./Password";
 import { useHistory } from "react-router-dom";
 import { AudioManager } from "../../../../utils/AudioManager";
 import { createEmptyOTP } from "../../../../utils/otp";
+import { getErrorMessage } from "../../../../config/getErrorMessage";
 
 const Signup: React.FC = () => {
   const history = useHistory();
@@ -70,16 +71,11 @@ const Signup: React.FC = () => {
       role,
     };
 
-    console.log("Submitting form data:", formData);
-
     try {
       const response = await axios.patch(
         `${API_BASE_URL}/users/registration`,
         formData,
       );
-
-      console.log("Response status:", response.status);
-      console.log("Response data:", response.data);
 
       // Check for success status codes (200, 201, 204)
       if (response.status >= 200 && response.status < 300) {
@@ -93,20 +89,13 @@ const Signup: React.FC = () => {
       }
     } catch (error: any) {
       AudioManager.play("error");
-      console.error("Registration error:", error);
+      // The axios error carries the password in config; log the status only.
+      console.error("Registration error:", error?.response?.status);
 
       // Handle different types of errors
       if (error.response) {
         // Server responded with error status
-        console.error(
-          "Server error:",
-          error.response.status,
-          error.response.data,
-        );
-        toast.error(
-          t("خطأ في السيرفر: ") +
-            (error.response.data?.message || error.response.status),
-        );
+        toast.error(t(getErrorMessage(error, "registrationFailed")));
       } else if (error.request) {
         // Request was made but no response received
         console.error("Network error:", error.request);

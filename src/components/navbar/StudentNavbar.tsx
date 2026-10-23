@@ -41,10 +41,10 @@ function Navbar() {
   const location = useLocation();
   const { user } = useUserContext();
 
-  // Students with no grade/school assigned get a "personal" experience —
-  // there's no cohort to rank them against, so hide the Leaderboards tab.
-  const isPersonal = !user?.classId;
-  const visibleNavList = isPersonal
+  // Leaderboard eligibility needs a class, independently of mission approval.
+  // An organization member awaiting class placement still uses school missions.
+  const hasNoClass = !user?.classId;
+  const visibleNavList = hasNoClass
     ? navList.filter((item) => item.to !== "/student/leaderboards")
     : navList;
 

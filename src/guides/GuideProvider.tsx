@@ -12,7 +12,9 @@ import { API_BASE_URL } from "../config/api";
 import { useUserContext } from "../context/StudentUserProvider";
 import { ALL_GUIDES } from "./guideConfigs";
 import { GuideConfig, GuideStepConfig } from "./types";
-import { localStore, sessionStore } from "../utils/safeStorage";
+import { localStore } from "../utils/safeStorage";
+import { isTutorialV2Enabled } from "./v2/featureFlag";
+import { resolveExperience } from "./v2/resolveExperience";
 
 interface GuideContextValue {
   activeGuide: GuideConfig | null;
@@ -22,21 +24,43 @@ interface GuideContextValue {
   // true when the guide auto-started (focus moves to card); false on replay.
   isAutoStarted: boolean;
   requestGuide: (guideId: string) => void;
-  replayGuide: (guideId: string) => void;
+  /**
+   * Starts a guide on demand (Settings list / page help). Returns false when
+   * the guide cannot run here — an unknown id, or a spotlight step whose
+   * element is not on this page — in which case nothing is activated and the
+   * caller is responsible for telling the user why.
+   */
+  replayGuide: (guideId: string) => boolean;
   advance: () => void;
   back: () => void;
   // Ends the guide and marks it permanently seen (Finish / Skip / Escape).
   // Skipped guides stay replayable from Settings.
   finish: () => void;
   isGuideSeen: (guideId: string) => boolean;
+  /**
+   * Reports the route the app has navigated to. Each new pathname is a fresh
+   * route entry, which restores this route's single automatic-guide slot.
+   * Called by `GuideRouteWatcher`, which lives inside the router; repeating the
+   * pathname already in effect (a re-render or a remount) is a no-op.
+   */
+  notifyRouteEntry: (path: string) => void;
 }
 
 const GuideContext = createContext<GuideContextValue | undefined>(undefined);
 
 const storageKey = (email: string) => `seenGuides-${email}`;
-// Per-user so switching accounts in the same tab (dev login, shared device)
-// doesn't let one user's guide consume another user's session slot.
-const sessionAutoKey = (email: string) => `guideAutoShownThisSession-${email}`;
+
+// An admin previewing a Student holds a real Student token, so every write this
+// provider makes would land on that Student's own record. Impersonated sessions
+// are therefore read-only for guide state: nothing auto-starts and nothing is
+// marked seen. The server refuses the write too (`imp` token claim).
+const isImpersonatedSession = () =>
+  localStore.getItem("isImpersonated") === "true";
+
+// This provider sits above the router, so the current route is read from the
+// browser rather than from `useLocation`.
+const currentRoutePath = () =>
+  typeof window !== "undefined" ? window.location.pathname : "";
 
 export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -49,6 +73,19 @@ export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({
   // A ref (not state) so a second requestGuide call in the same render batch
   // sees the claim immediately.
   const activeGuideIdRef = useRef<string | null>(null);
+  // One automatic guide per route entry, so re-renders on the same screen
+  // cannot chain a second overlay while a later route can still teach its own
+  // thing. Replaces the previous one-guide-per-browser-session key, which
+  // starved every later guide for the rest of the session.
+  //
+  // The claim is cleared by `notifyRouteEntry`, not by comparing pathnames at
+  // request time: a route the user passes through without any guide request
+  // would otherwise leave the previous claim standing, and coming back to that
+  // route would look like the same visit.
+  const autoStartClaimRef = useRef<{ path: string; email: string } | null>(null);
+  // Last pathname reported by the router watcher. `null` means no watcher has
+  // reported yet (dev-only screens render outside the router).
+  const lastRoutePathRef = useRef<string | null>(null);
 
   // Source of truth is the backend (`user.seenGuides`); localStorage is only
   // an instant-read cache to avoid a flash of an already-seen guide.
@@ -84,6 +121,8 @@ export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({
   const markSeen = useCallback(
     (guideId: string) => {
       if (!user?.email) return;
+      // Read-only for the impersonated account: no local cache write, no PATCH.
+      if (isImpersonatedSession()) return;
       setSeenGuides((prev) => {
         if (prev.has(guideId)) return prev;
         const next = new Set(prev);
@@ -113,28 +152,78 @@ export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsAutoStarted(auto);
   }, []);
 
-  // Auto-start path: seen-check plus at most ONE auto guide per browser
-  // session, so guides never chain back-to-back across pages.
+  // A new pathname is a new route entry: this route gets its automatic-guide
+  // slot back. The same pathname repeated is a re-render or a remount of the
+  // watcher, which must not hand out a second guide on one visit.
+  const notifyRouteEntry = useCallback((path: string) => {
+    if (lastRoutePathRef.current === path) return;
+    lastRoutePathRef.current = path;
+    autoStartClaimRef.current = null;
+  }, []);
+
+  // Auto-start path: seen-check, plus at most ONE auto guide per route entry,
+  // so guides never chain back-to-back on one screen.
   const requestGuide = useCallback(
     (guideId: string) => {
       if (activeGuideIdRef.current || seenGuides.has(guideId)) return;
       if (!user?.email) return;
-      if (sessionStore.getItem(sessionAutoKey(user.email))) return;
+      if (isImpersonatedSession()) return;
+      // Tutorial V2 owns the overlay for any experience it is enabled for, so
+      // the two engines can never both auto-start. With the flag off (the
+      // default) this is a no-op and Phase 0 behaviour is unchanged.
+      if (isTutorialV2Enabled(resolveExperience({
+        role: user.role,
+        organizationId: user.organizationId ?? null,
+        classId: user.classId ?? null,
+        userId: user.id,
+        email: user.email,
+      }).experience)) {
+        return;
+      }
+      const path = currentRoutePath();
+      const claim = autoStartClaimRef.current;
+      // With a watcher reporting navigation, holding a claim at all means this
+      // route entry has already shown its guide. Without one, fall back to
+      // comparing pathnames so a missing watcher can never degrade into "one
+      // guide for the whole app session".
+      const routeEntriesWatched = lastRoutePathRef.current !== null;
+      if (
+        claim &&
+        claim.email === user.email &&
+        (routeEntriesWatched || claim.path === path)
+      ) {
+        return;
+      }
       const guide = ALL_GUIDES.find((g) => g.id === guideId);
       if (!guide || guide.steps.length === 0) return;
-      sessionStore.setItem(sessionAutoKey(user.email), guideId);
+      autoStartClaimRef.current = { path, email: user.email };
       startGuide(guideId, true);
     },
     [seenGuides, startGuide, user?.email]
   );
 
-  // Manual replay (Settings / page help): ignores guards and never mutates
-  // the seen set — replaying is not "unseeing".
+  // Manual replay (Settings / page help): ignores the seen-check and the
+  // auto-start claim, and never mutates the seen set — replaying is not
+  // "unseeing".
+  //
+  // A spotlight step waits for its element to mount, so replaying a targeted
+  // guide from a page that has no such element left an active-but-invisible
+  // guide that blocked every later guide. Refuse instead, and let the caller
+  // explain. Only the first targeted step is checked: a guide may legitimately
+  // follow the user across routes once it has started.
   const replayGuide = useCallback(
     (guideId: string) => {
       const guide = ALL_GUIDES.find((g) => g.id === guideId);
-      if (!guide || guide.steps.length === 0) return;
+      if (!guide || guide.steps.length === 0) return false;
+      const firstTargetId = guide.steps.find((step) => step.targetId)?.targetId;
+      if (
+        firstTargetId &&
+        !document.querySelector(`[data-guide-id="${firstTargetId}"]`)
+      ) {
+        return false;
+      }
       startGuide(guideId, false);
+      return true;
     },
     [startGuide]
   );
@@ -172,6 +261,7 @@ export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({
       back,
       finish,
       isGuideSeen,
+      notifyRouteEntry,
     }),
     [
       activeGuide,
@@ -185,6 +275,7 @@ export const GuideProvider: React.FC<{ children: React.ReactNode }> = ({
       back,
       finish,
       isGuideSeen,
+      notifyRouteEntry,
     ]
   );
 

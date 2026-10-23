@@ -45,6 +45,10 @@ import {
   APP_NOTIFICATIONS_ENABLED_KEY,
   NOTIFICATION_CHANNELS,
 } from "./appNotificationManager";
+import {
+  PRAYER_ENABLED_KEY,
+  resyncPrayerNotificationsIfEnabled,
+} from "./prayerNotifications";
 
 describe("appNotificationManager", () => {
   beforeEach(() => {
@@ -86,5 +90,25 @@ describe("appNotificationManager", () => {
     expect(success).toBe(true);
     expect(localNotificationMocks.scheduled).toHaveLength(1);
     expect(localNotificationMocks.scheduled[0].notifications[0].title).toBe("تنبيه جديد");
+  });
+});
+
+describe("appNotificationManager prayer startup", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    localNotificationMocks.permissionStatus = { display: "granted" };
+    vi.clearAllMocks();
+  });
+
+  it("does not switch prayer notifications on before the in-app explainer", async () => {
+    await initAppNotificationsOnStartup();
+    expect(localStorage.getItem(PRAYER_ENABLED_KEY)).toBeNull();
+    expect(resyncPrayerNotificationsIfEnabled).not.toHaveBeenCalled();
+  });
+
+  it("rolls an enabled prayer schedule forward on startup", async () => {
+    localStorage.setItem(PRAYER_ENABLED_KEY, "true");
+    await initAppNotificationsOnStartup();
+    expect(resyncPrayerNotificationsIfEnabled).toHaveBeenCalledTimes(1);
   });
 });

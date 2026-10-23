@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "../../../config/api";
 import { useAutoStartGuide } from "../../../guides/useAutoStartGuide";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import TeacherNavbar from "../../../components/navbar/TeacherNavbar";
 import SearchIcon from "../../../icons/SearchIcon";
@@ -24,6 +24,11 @@ import yellowSanabel from "../../../assets/resources/سنبلة صفراء.png";
 import xpIcon from "../../../assets/resources/اكس بي.png";
 import StudentNavbar from "../../../components/navbar/StudentNavbar";
 import ParentNavbar from "../../../components/navbar/ParentNavbar";
+import MissionConfirmationModal from "./MissionConfirmationModal";
+import { useTeacherGuideFacts } from '../../../guides/v2/useTeacherGuideFacts';
+import { emitTeacherGuideEvent, teacherMutationEvent } from '../../../guides/v2/teacherSignals';
+import { useStudentGuideToast } from '../../../guides/v2/useStudentGuideFeedback';
+import { useOptionalOverlaySuppressed } from '../../../guides/v2/OverlayCoordinator';
 
 // Define types for better type safety
 interface User {
@@ -55,7 +60,7 @@ interface Task {
   snabelBlue: number;
 }
 
-// Duplicate Task Popup Component
+// Duplicate Task Popup Component with bounded viewport height and scrollable list
 const DuplicateTaskPopup = ({
   isOpen,
   onClose,
@@ -63,6 +68,7 @@ const DuplicateTaskPopup = ({
   existingStudentIds,
   allStudents,
   onDeselectStudent,
+  isSubmitting = false,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -70,6 +76,7 @@ const DuplicateTaskPopup = ({
   existingStudentIds: number[];
   allStudents: StudentData[];
   onDeselectStudent: (studentId: number) => void;
+  isSubmitting?: boolean;
 }) => {
   const { t } = useTranslation();
 
@@ -81,34 +88,42 @@ const DuplicateTaskPopup = ({
     .filter(Boolean) as StudentData[];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
-      <div className="w-11/12 max-w-md p-5 overflow-y-auto bg-white rounded-xl max-h-90vh">
-        <h2 className="mb-4 text-xl font-bold text-center text-black">
-          {t("مهمة مكررة!")}
-        </h2>
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overscroll-contain"
+    >
+      <div className="w-full max-w-md max-h-[min(90dvh,540px)] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200/80">
+        <header className="px-5 pt-5 pb-2 shrink-0 border-b border-slate-100">
+          <h2 className="text-lg font-bold text-center text-slate-900">
+            {t("مهمة مكررة!")}
+          </h2>
+          <p className="mt-1 text-xs text-center text-slate-500">
+            {t("بعض الطلاب أكملوا هذه المهمة بالفعل اليوم")}
+          </p>
+        </header>
 
-        <p className="mb-4 text-center text-gray-600">
-          {t("بعض الطلاب أكملوا هذه المهمة بالفعل اليوم")}
-        </p>
-
-        {/* Existing Students */}
-        <div className="mb-5">
+        {/* Scrollable Existing Students List */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4">
           <div className="flex flex-wrap justify-center gap-3">
             {existingStudents.map((student) => (
               <div
                 key={student.id}
-                className="relative flex flex-col items-center"
+                className="relative flex flex-col items-center min-w-[64px]"
               >
-                <div
-                  className="absolute z-10 flex items-center justify-center w-5 h-5 bg-red-500 rounded-full cursor-pointer -top-1 -right-1"
+                <button
+                  type="button"
+                  aria-label={`${t("إزالة")} ${student.user.firstName}`}
+                  disabled={isSubmitting}
+                  className="absolute z-10 flex items-center justify-center w-5 h-5 text-white bg-red-500 rounded-full -top-1 -end-1 shadow-sm disabled:opacity-40"
                   onClick={() => onDeselectStudent(student.id)}
                 >
-                  <FaTimes className="text-xs text-white" />
-                </div>
-                <div className="w-16 h-16 overflow-hidden rounded-full">
+                  <FaTimes className="text-[10px]" />
+                </button>
+                <div className="w-14 h-14 overflow-hidden rounded-full border-2 border-slate-200 bg-slate-50">
                   <GetAvatar userAvatarData={student.user.profileImg} />
                 </div>
-                <span className="mt-1 text-xs font-medium text-center text-black">
+                <span className="mt-1 text-xs font-medium text-center text-slate-800 max-w-[70px] truncate">
                   {`${student.user.firstName}`}
                 </span>
               </div>
@@ -116,172 +131,30 @@ const DuplicateTaskPopup = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex w-full gap-3">
+        {/* Fixed Action Buttons */}
+        <footer className="p-4 shrink-0 border-t border-slate-100 bg-white flex w-full gap-3">
           <PrimaryButton
-            style="stroke"
+            style="stroke flex-1"
             text={t("إلغاء")}
             arrow="none"
-            onClick={onClose}
-          />
-          <PrimaryButton
-            style=""
-            text={t("تسجيل للباقي")}
-            arrow="none"
-            onClick={onContinue}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Confirmation Popup Component
-const ConfirmationPopup = ({
-  isOpen,
-  onClose,
-  onConfirm,
-  selectedTask,
-  selectedStudents,
-  onRemoveStudent,
-  action,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  selectedTask: Task | null;
-  selectedStudents: StudentData[];
-  onRemoveStudent: (studentId: number) => void;
-  action: "assign" | "complete";
-}) => {
-  const { t } = useTranslation();
-
-  if (!isOpen || !selectedTask) return null;
-
-  // Get the image for the selected task type
-  const getTaskTypeImage = (type: string) => {
-    return sanabelImgs[type] || null;
-  };
-
-  const renderResources = (task: any) =>
-    [
-      { icon: blueSanabel, value: task.snabelBlue, label: "سنبلة زرقاء" },
-      { icon: redSanabel, value: task.snabelRed, label: "سنبلة حمراء" },
-      { icon: yellowSanabel, value: task.snabelYellow, label: "سنبلة صفراء" },
-      { icon: xpIcon, value: task.xp, label: "نقاط الخبرة" },
-    ].map((resource, index) => (
-      <div key={index} className="flex flex-col items-center">
-        <img
-          src={resource.icon}
-          alt={resource.label}
-          className="w-auto h-5"
-          loading="lazy"
-        />
-        <h1 className="text-sm text-black">{resource.value}</h1>
-      </div>
-    ));
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-11/12 max-w-md p-5 overflow-y-auto bg-white rounded-xl max-h-90vh">
-        <p className={`mb-2 text-sm font-bold text-center ${action === "assign" ? "text-blueprimary" : "text-green-700"}`}>
-          {t(action === "assign" ? "Assign Mission" : "Register Completed Mission")}
-        </p>
-        <h2 className="mb-4 text-xl font-bold text-center text-black">
-          {t("تأكيد تسجيل المهمة")}
-        </h2>
-
-        {/* Task Information */}
-        <div className="flex-col justify-center w-full p-3 mb-5 border-2 rounded-xl flex-center">
-          <h3 className="mb-2 text-lg font-bold text-center text-black">
-            {t(selectedTask.title)}
-          </h3>
-          <div className="flex justify-center mb-3">
-            <img
-              src={getTaskTypeImage(selectedTask?.type ?? "")}
-              alt={selectedTask?.type}
-              className="object-contain w-16 h-16"
-            />
-          </div>
-          <div className="flex items-center justify-end gap-3 mb-2">
-            <div className="flex gap-2">{renderResources(selectedTask)}</div>
-          </div>
-        </div>
-
-        {/* Selected Students */}
-        <div className="mb-5">
-          <div className="flex items-center justify-between mb-2">
-            <span className="px-2 py-0.5 text-xs font-semibold text-slate-700 bg-slate-100 rounded-full">
-              {selectedStudents.length}
-            </span>
-            <h3 className="font-medium text-end text-black">
-              {t("الطلاب المختارين")}
-            </h3>
-          </div>
-
-          {selectedStudents.length === 0 ? (
-            <p className="py-3 text-sm text-center text-gray-500 border border-dashed rounded-lg">
-              {t("لم يتم اختيار أي طالب")}
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-2 overflow-y-auto max-h-56">
-              {selectedStudents.map((student: any) => (
-                <li
-                  key={student.id}
-                  className="flex items-center gap-3 p-2 border rounded-lg border-slate-200"
-                >
-                  <div className="flex-shrink-0 w-10 h-10 overflow-hidden rounded-full">
-                    <GetAvatar userAvatarData={student.user.profileImg} />
-                  </div>
-                  <div className="flex-1 min-w-0 text-end">
-                    <p className="text-sm font-semibold text-black truncate">
-                      {`${student.user.firstName} ${student.user.lastName || ""}`.trim()}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {[
-                        student.Class?.grade || student.class?.grade || student.grade,
-                        student.Class?.classname || student.class?.classname,
-                        student.organization?.name,
-                      ]
-                        .filter(Boolean)
-                        .map((part: string) => t(part))
-                        .join(" · ") || t("لا يوجد فصل")}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    aria-label={t("إزالة")}
-                    className="flex items-center justify-center flex-shrink-0 w-11 h-11 text-white bg-red-500 rounded-full"
-                    onClick={() => onRemoveStudent(student.id)}
-                  >
-                    <FaTimes className="text-xs" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex w-full gap-3">
-          <PrimaryButton
-            style="stroke"
-            text={t("إلغاء")}
-            arrow="none"
+            disabled={isSubmitting}
             onClick={onClose}
           />
           <PrimaryButton
             style="flex-1"
-            text={t("تأكيد")}
+            text={t("تسجيل للباقي")}
             arrow="none"
-            disabled={selectedStudents.length === 0}
-            onClick={onConfirm}
+            disabled={isSubmitting}
+            onClick={onContinue}
           />
-        </div>
+        </footer>
       </div>
     </div>
   );
 };
+
+// Use the robust, scalable MissionConfirmationModal
+const ConfirmationPopup = MissionConfirmationModal;
 
 // Congratulations Popup Component
 const CongratsPopup = ({
@@ -388,7 +261,10 @@ const SelectedStudentsSummary = ({
   const overflow = students.length - shown.length;
 
   return (
-    <section className="flex items-center w-full gap-2 py-2 border-b border-gray-100">
+    <section
+      data-guide-id="teacher-selected-count"
+      className="flex items-center w-full gap-2 py-2 border-b border-gray-100"
+    >
       <div className="flex items-center min-w-0 gap-2 me-auto">
         <h2 className="text-sm font-bold text-black whitespace-nowrap">
           {t("الطلاب المختارون")}
@@ -510,7 +386,7 @@ const ActionModeSelector = ({
   ];
 
   return (
-    <fieldset className="w-full">
+    <fieldset className="w-full" data-guide-id="teacher-action-mode">
       <legend className="mb-2 text-sm font-bold text-black">
         {t("نوع الإجراء")}
       </legend>
@@ -568,9 +444,16 @@ const StudentList = () => {
   const [showCongrats, setShowCongrats] = useState(false);
   const [showDuplicateTask, setShowDuplicateTask] = useState(false);
   const [existingStudentIds, setExistingStudentIds] = useState<number[]>([]);
-  const [missionAction, setMissionAction] = useState<"assign" | "complete">("complete");
+  const [missionAction, setMissionAction] = useState<"assign" | "complete">(
+    () => localStorage.getItem("role") === "Teacher" ? "assign" : "complete",
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionPending = useRef(false);
 
   const role = localStorage.getItem("role");
+  const teacherToast = useStudentGuideToast();
+  const teacherGuideSuppressed = useOptionalOverlaySuppressed() && role === 'Teacher';
+  useTeacherGuideFacts(role === 'Teacher', { teacherStudentCount: studentsData.length, teacherSelectedCount: selectedStudentIds.length, teacherWizardOpen: isStudentsSelected, teacherConfirming: showConfirmation, teacherAction: missionAction });
   useAutoStartGuide("teacher-register", true);
   const sanabelTypeImg = [
     sanabelType1Img,
@@ -665,7 +548,7 @@ const StudentList = () => {
   };
 
   const addProgress = async () => {
-    if (!selectedStudentIds.length || selectedTaskId === null) return;
+    if (!selectedStudentIds.length || selectedTaskId === null || submissionPending.current) return;
     const authToken = localStorage.getItem("token");
     console.log(selectedStudentIds);
     if (!authToken) return;
@@ -687,6 +570,8 @@ const StudentList = () => {
         toast.error(t("تعذر تحديد هذه المهمة. حاول اختيارها من جديد."));
         return;
       }
+      submissionPending.current = true;
+      setIsSubmitting(true);
       // Using fetch instead of axios
       const rolePath = role == "Teacher" ? "teachers" : "parents";
       const endpoint = missionAction === "assign" ? "assign-mission" : "add-pros";
@@ -710,13 +595,17 @@ const StudentList = () => {
       const responseData = await response.json().catch(() => ({}));
       if (response.ok) {
         setShowConfirmation(false);
+        if (role === 'Teacher') {
+          const event = teacherMutationEvent(missionAction, selectedStudentIds.length, responseData);
+          if (event) emitTeacherGuideEvent(event);
+        }
         if (missionAction === "assign") {
           const created = responseData.summary?.created || 0;
           const existing = responseData.summary?.existing || 0;
           const completed = responseData.summary?.already_completed || 0;
           // Lead with the outcome that matters, and mention the skipped
           // students only when there actually were some.
-          toast.success(
+          (role === 'Teacher' ? (message: string) => teacherToast('success', message) : toast.success)(
             [
               t("mission.assign.created", { count: created }),
               existing ? t("mission.assign.existing", { count: existing }) : null,
@@ -766,6 +655,9 @@ const StudentList = () => {
     } catch (error) {
       console.error("Error adding progress:", error);
       toast.error(t("تعذر الاتصال بالخادم. تحقق من اتصالك بالإنترنت وحاول مرة أخرى."));
+    } finally {
+      submissionPending.current = false;
+      setIsSubmitting(false);
     }
   };
 
@@ -913,6 +805,7 @@ const StudentList = () => {
                 <SearchIcon className="text-white" size={20} />
               </div>
               <input
+                data-guide-id="teacher-student-search"
                 type="text"
                 placeholder={t("ابحث عن طالب")}
                 className="w-full py-3 text-black bg-transparent drop-shadow-sm text-start"
@@ -978,6 +871,7 @@ const StudentList = () => {
         <div className="flex flex-col justify-start w-full gap-2">
           {filteredStudents.length === 0 ? (
             <div className="py-10 text-center text-gray-500">
+              {role === 'Teacher' && studentsData.length === 0 && <p>{t('tutorial.teacher.emptyBody')}</p>}
               <p>{t("لا يوجد طالب بهذا الاسم")}</p>
               {searchQuery && (
                 <button
@@ -1000,6 +894,7 @@ const StudentList = () => {
                 <button
                   type="button"
                   key={student.id}
+                  data-guide-id="teacher-student-checkbox"
                   role="checkbox"
                   aria-checked={isSelected}
                   onClick={() => toggleStudentSelection(student.id)}
@@ -1043,7 +938,7 @@ const StudentList = () => {
         </div>
       ) : (
         // Task Selection Views
-        <div className="w-full pb-1">
+        <div className="w-full pb-1" data-guide-id="teacher-mission-picker">
           {selectedCategoryId === null ? (
             // Category Selection View
             <div className="flex flex-col w-full gap-3">
@@ -1170,6 +1065,7 @@ const StudentList = () => {
         existingStudentIds={existingStudentIds}
         allStudents={studentsData}
         onDeselectStudent={handleRemoveDuplicateStudent}
+        isSubmitting={isSubmitting}
       />
 
       {/* Confirmation Popup */}
@@ -1181,11 +1077,12 @@ const StudentList = () => {
         selectedStudents={selectedStudents}
         onRemoveStudent={(studentId: number) => removeSelectedStudent(studentId)}
         action={missionAction}
+        isSubmitting={isSubmitting}
       />
 
       {/* Congratulations Popup */}
       <CongratsPopup
-        isOpen={showCongrats}
+        isOpen={showCongrats && !teacherGuideSuppressed}
         onClose={handleCongratsClose}
         selectedTask={getSelectedTask()}
         selectedStudents={selectedStudents}
