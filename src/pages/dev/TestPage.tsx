@@ -94,8 +94,9 @@ const ROLE_STYLE: Record<Role, { label: string; Icon: typeof Users; tile: string
 const ADMIN_APP_URL = (import.meta.env.VITE_ADMIN_APP_URL || "").trim();
 
 // Production has no passwordless /dev/login-as. Quick sign-in there uses the
-// normal login endpoint with the shared test password, which the tester enters
-// once per device.
+// normal login endpoint with the shared test password: built in through
+// VITE_TEST_ACCOUNT_PASSWORD, or entered once per device when that is unset.
+const BUILT_IN_PASSWORD = (import.meta.env.VITE_TEST_ACCOUNT_PASSWORD || "").trim();
 const PASSWORD_KEY = "testPagePassword";
 
 const HOME_BY_ROLE: Record<string, string> = {
@@ -236,6 +237,7 @@ const TestPage: React.FC = () => {
   }, [t]);
 
   const passwordless = data ? !data.isProduction : false;
+  const testPassword = BUILT_IN_PASSWORD || savedPassword;
 
   const savePassword = (e: React.FormEvent) => {
     e.preventDefault();
@@ -276,7 +278,7 @@ const TestPage: React.FC = () => {
   };
 
   const quickSignIn = async (userId: number, email: string) => {
-    if (!passwordless && !savedPassword) {
+    if (!passwordless && !testPassword) {
       setNotice({ tone: "error", text: t("أدخل كلمة مرور الاختبار أولًا.") });
       return;
     }
@@ -288,7 +290,7 @@ const TestPage: React.FC = () => {
         const { token, role } = res.data.data;
         await startSession({ token, role, email });
       } else {
-        const res = await axios.patch(`${API_BASE_URL}/users/login`, { email, password: savedPassword });
+        const res = await axios.patch(`${API_BASE_URL}/users/login`, { email, password: testPassword });
         const user = res.data.data.user;
         await startSession({ token: String(user.token), refreshToken: user.refreshToken, role: String(user.role), email });
       }
@@ -299,21 +301,17 @@ const TestPage: React.FC = () => {
     }
   };
 
-  const openAdminConsole = async (email: string) => {
-    const copied = await copyText(email);
-    window.open(ADMIN_APP_URL, "_blank", "noopener,noreferrer");
-    setNotice({
-      tone: "info",
-      text: copied
-        ? t("فُتحت لوحة الإدارة في نافذة جديدة، وتم نسخ {{email}}.", { email })
-        : t("فُتحت لوحة الإدارة في نافذة جديدة. سجّل الدخول هناك بالبريد {{email}}.", { email }),
-    });
+  // The console signs the account in itself from #test-login (its LoginPage),
+  // since a token from this origin cannot reach the console's storage.
+  const openAdminConsole = (email: string) => {
+    const url = `${ADMIN_APP_URL.replace(/\/+$/, "")}/login#test-login=${encodeURIComponent(email)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   const signInAction = (userId: number, email: string) => ({
     label: loggingInId === userId ? t("جارٍ الدخول…") : t("دخول سريع"),
     icon: <LogIn size={16} className={isArabic ? "-scale-x-100" : ""} />,
-    disabled: loggingInId !== null || (!passwordless && !savedPassword),
+    disabled: loggingInId !== null || (!passwordless && !testPassword),
     onClick: () => quickSignIn(userId, email),
   });
 
@@ -374,7 +372,7 @@ const TestPage: React.FC = () => {
         </header>
 
         {/* Quick sign-in setup */}
-        {data && !passwordless && (
+        {data && !passwordless && !BUILT_IN_PASSWORD && (
           <div className={`${card} mb-6 p-4`}>
             {savedPassword ? (
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -466,12 +464,12 @@ const TestPage: React.FC = () => {
                       meta={
                         <p className={`mt-0.5 text-xs ${ADMIN_APP_URL ? "text-slate-500 dark:text-slate-400" : "text-red-700 dark:text-red-300"}`}>
                           {ADMIN_APP_URL
-                            ? t("لوحة الإدارة تطبيق منفصل، سجّل الدخول فيها.")
+                            ? t("يفتح لوحة الإدارة في نافذة جديدة.")
                             : t("رابط لوحة الإدارة غير مهيأ في هذا الإصدار (VITE_ADMIN_APP_URL).")}
                         </p>
                       }
                       action={{
-                        label: t("فتح لوحة الإدارة"),
+                        label: t("دخول سريع"),
                         icon: <ExternalLink size={16} />,
                         disabled: !ADMIN_APP_URL,
                         onClick: () => openAdminConsole(data.admin!.email),

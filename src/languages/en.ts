@@ -2062,15 +2062,9 @@ const en = {
     "تعذر حفظ كلمة المرور على هذا الجهاز.": "Couldn't save the password on this device.",
     "أدخل كلمة مرور الاختبار أولًا.": "Enter the test password first.",
     "تعذر الدخول السريع: {{reason}}": "Quick sign-in failed: {{reason}}",
-    "فتح لوحة الإدارة": "Open admin console",
-    "لوحة الإدارة تطبيق منفصل، سجّل الدخول فيها.":
-      "The admin console is a separate app. Sign in there.",
+    "يفتح لوحة الإدارة في نافذة جديدة.": "Opens the admin console in a new tab.",
     "رابط لوحة الإدارة غير مهيأ في هذا الإصدار (VITE_ADMIN_APP_URL).":
       "The admin console link isn't configured in this build (VITE_ADMIN_APP_URL).",
-    "فُتحت لوحة الإدارة في نافذة جديدة، وتم نسخ {{email}}.":
-      "The admin console opened in a new tab, and {{email}} is copied.",
-    "فُتحت لوحة الإدارة في نافذة جديدة. سجّل الدخول هناك بالبريد {{email}}.":
-      "The admin console opened in a new tab. Sign in there with {{email}}.",
     "جارٍ تحميل الحسابات": "Loading accounts",
     "تعذر تحميل حسابات الاختبار": "Couldn't load the test accounts",
     "لم يتم إنشاء حسابات الاختبار في قاعدة البيانات هذه. شغّل npm run seed:test-local في مجلد server.":
