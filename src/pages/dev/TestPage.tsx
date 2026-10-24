@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 import { API_BASE_URL } from "../../config/api";
 import { useUserContext } from "../../context/StudentUserProvider";
+import { describeApiError } from "../../utils/apiError";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -13,7 +15,6 @@ interface TestChild {
   lastName: string;
   email: string;
   connectCode: string;
-  password: string | null;
 }
 
 interface TestFamily {
@@ -23,7 +24,6 @@ interface TestFamily {
     firstName: string;
     lastName: string;
     email: string;
-    password: string | null;
   };
   children: TestChild[];
 }
@@ -32,142 +32,141 @@ interface TestAccountData {
   school: { id: number; name: string } | null;
   grade: { id: number; name: string } | null;
   class: { id: number; name: string } | null;
-  admin: {
-    userId: number;
-    adminsId: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string | null;
-  } | null;
-  teacher: {
-    userId: number;
-    teacherId: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string | null;
-  } | null;
+  admin: { userId: number; adminsId: number; firstName: string; lastName: string; email: string } | null;
+  teacher: { userId: number; teacherId: number; firstName: string; lastName: string; email: string } | null;
   families: TestFamily[];
   isProduction: boolean;
 }
 
+type Role = "Admin" | "Teacher" | "Parent" | "Student";
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-const ROLE_CONFIG = {
-  Admin: { label: "مشرف المدرسة", bg: "from-purple-600 to-purple-800", badge: "bg-purple-100 text-purple-700", icon: "🛡" },
-  Teacher: { label: "معلم", bg: "from-emerald-600 to-emerald-800", badge: "bg-emerald-100 text-emerald-700", icon: "👩‍🏫" },
-  Parent: { label: "ولي أمر", bg: "from-amber-500 to-amber-700", badge: "bg-amber-100 text-amber-700", icon: "👨" },
-  Student: { label: "طالب", bg: "from-cyan-500 to-cyan-700", badge: "bg-cyan-100 text-cyan-700", icon: "👦" },
+const ROLE_STYLE: Record<Role, { label: string; dot: string; avatar: string; ring: string }> = {
+  Admin: { label: "مشرف المدرسة", dot: "bg-indigo-500", avatar: "bg-indigo-50 text-indigo-700", ring: "ring-indigo-100" },
+  Teacher: { label: "معلم", dot: "bg-emerald-600", avatar: "bg-emerald-50 text-emerald-700", ring: "ring-emerald-100" },
+  Parent: { label: "ولي أمر", dot: "bg-amber-500", avatar: "bg-amber-50 text-amber-800", ring: "ring-amber-100" },
+  Student: { label: "طالب", dot: "bg-sky-600", avatar: "bg-sky-50 text-sky-800", ring: "ring-sky-100" },
 };
 
-const CopyButton: React.FC<{ text: string }> = ({ text }) => {
-  const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
+// The Admin console is a separate app with its own login, so a client token
+// cannot sign an admin in there. Missing URL means the build is misconfigured.
+const ADMIN_APP_URL = (import.meta.env.VITE_ADMIN_APP_URL || "").trim();
+
+const initials = (first: string, last: string) =>
+  `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase() || "?";
+
+const copyText = (text: string) =>
+  navigator.clipboard?.writeText(text).then(() => true, () => false) ?? Promise.resolve(false);
+
+const CopyButton: React.FC<{ text: string; label: string }> = ({ text, label }) => {
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
+  const copy = async () => {
+    setState((await copyText(text)) ? "copied" : "failed");
+    setTimeout(() => setState("idle"), 1500);
   };
   return (
     <button
+      type="button"
       onClick={copy}
-      className="ml-1 rounded px-1.5 py-0.5 text-xs transition-all"
-      style={{ background: copied ? "#d1fae5" : "#f3f4f6", color: copied ? "#065f46" : "#6b7280" }}
-      title="Copy"
+      aria-label={label}
+      className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
     >
-      {copied ? "✓" : "⎘"}
+      {state === "copied" ? "تم النسخ" : state === "failed" ? "تعذر النسخ" : "نسخ"}
     </button>
   );
 };
 
 // ---------------------------------------------------------------------------
-// AccountCard
+// AccountRow
 // ---------------------------------------------------------------------------
-interface AccountCardProps {
+interface AccountRowProps {
   userId: number;
-  role: "Admin" | "Teacher" | "Parent" | "Student";
+  role: Role;
   firstName: string;
   lastName: string;
   email: string;
-  password: string | null;
-  extra?: React.ReactNode;
-  isProduction: boolean;
-  onLogin: (userId: number) => void;
-  loggingInId: number | null;
+  meta?: React.ReactNode;
+  action: { label: string; busyLabel?: string; onClick: () => void; disabled?: boolean; busy?: boolean };
 }
 
-const AccountCard: React.FC<AccountCardProps> = ({
-  userId, role, firstName, lastName, email, password, extra, isProduction, onLogin, loggingInId,
-}) => {
-  const cfg = ROLE_CONFIG[role];
-  const isLoggingIn = loggingInId === userId;
+const AccountRow: React.FC<AccountRowProps> = ({ role, firstName, lastName, email, meta, action }) => {
+  const style = ROLE_STYLE[role];
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-      {/* Gradient header */}
-      <div className={`bg-gradient-to-r ${cfg.bg} px-4 py-3 flex items-center justify-between`}>
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">{cfg.icon}</span>
-          <div>
-            <p className="font-bold text-white text-sm leading-tight">{firstName} {lastName}</p>
-            <span className="text-xs text-white/70">{cfg.label}</span>
-          </div>
-        </div>
-        <button
-          onClick={() => onLogin(userId)}
-          disabled={loggingInId !== null}
-          className="rounded-xl bg-white/20 hover:bg-white/30 disabled:opacity-50 px-3 py-1.5 text-xs font-bold text-white transition-all border border-white/30"
+    <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-4 ${style.avatar} ${style.ring}`}
+          aria-hidden
         >
-          {isLoggingIn ? "⏳ جاري..." : "⬆ دخول سريع"}
-        </button>
-      </div>
-
-      {/* Details */}
-      <div className="px-4 py-3 space-y-1.5 text-sm">
-        <div className="flex items-center gap-1 text-gray-600" dir="ltr">
-          <span className="text-gray-400">✉</span>
-          <span className="font-mono text-xs flex-1 truncate">{email}</span>
-          <CopyButton text={email} />
+          {initials(firstName, lastName)}
         </div>
-        {password && (
-          <div className="flex items-center gap-1 text-gray-600" dir="ltr">
-            <span className="text-gray-400">🔑</span>
-            <span className="font-mono text-xs">{password}</span>
-            <CopyButton text={password} />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <p className="font-bold text-slate-900">{firstName} {lastName}</p>
+            <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
+              <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
+              {style.label}
+            </span>
           </div>
-        )}
-        {extra}
+          <div className="mt-0.5 flex min-w-0 items-center gap-1">
+            <span className="truncate text-sm text-slate-600" dir="ltr">{email}</span>
+            <CopyButton text={email} label={`نسخ البريد ${email}`} />
+          </div>
+          {meta}
+        </div>
       </div>
+      <button
+        type="button"
+        onClick={action.onClick}
+        disabled={action.disabled}
+        className="w-full shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:border-slate-900 hover:bg-slate-900 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-300 disabled:hover:bg-white disabled:hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 sm:w-auto"
+      >
+        {action.busy ? action.busyLabel : action.label}
+      </button>
     </div>
   );
 };
+
+const SectionTitle: React.FC<{ title: string; hint?: string }> = ({ title, hint }) => (
+  <div className="mb-3 flex items-baseline justify-between gap-4 px-1">
+    <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+    {hint && <p className="text-xs text-slate-500">{hint}</p>}
+  </div>
+);
 
 // ---------------------------------------------------------------------------
 // Main TestPage
 // ---------------------------------------------------------------------------
 const TestPage: React.FC = () => {
+  const { t } = useTranslation();
   const { refreshUserData } = useUserContext();
   const [data, setData] = useState<TestAccountData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loggingInId, setLoggingInId] = useState<number | null>(null);
-  const [loginMsg, setLoginMsg] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ tone: "error" | "info"; text: string } | null>(null);
 
   useEffect(() => {
     axios
       .get(`${API_BASE_URL}/dev/test-accounts`)
       .then((r) => setData(r.data.data))
       .catch((e) => {
-        const msg = e?.response?.data?.message || e.message;
-        setError(msg);
+        setError(
+          e?.response?.status === 404
+            ? "لم يتم إنشاء حسابات الاختبار في قاعدة البيانات هذه. شغّل npm run seed:test-local في مجلد server."
+            : describeApiError(e, t),
+        );
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
+
+  const quickLogin = data ? !data.isProduction : false;
 
   const loginAs = async (userId: number) => {
     setLoggingInId(userId);
-    setLoginMsg(null);
+    setNotice(null);
     try {
       const res = await axios.post(`${API_BASE_URL}/dev/login-as/${userId}`);
       const { token, role, email } = res.data.data;
@@ -179,225 +178,214 @@ const TestPage: React.FC = () => {
       await refreshUserData(token);
       window.location.href = "/";
     } catch (e: any) {
-      setLoginMsg("تعذر تسجيل الدخول: " + (e?.response?.data?.message || e.message));
+      setNotice({ tone: "error", text: `تعذر الدخول السريع: ${describeApiError(e, t)}` });
       setLoggingInId(null);
     }
   };
 
+  // Production has no passwordless login: copy the email and send the tester
+  // to the normal login form.
+  const goToLogin = async (email: string) => {
+    if (!(await copyText(email))) {
+      setNotice({ tone: "error", text: `تعذر نسخ ${email}. انسخه يدويًا ثم افتح صفحة الدخول.` });
+      return;
+    }
+    window.location.href = "/login";
+  };
+
+  const openAdminConsole = async (email: string) => {
+    const copied = await copyText(email);
+    window.open(ADMIN_APP_URL, "_blank", "noopener,noreferrer");
+    setNotice({
+      tone: "info",
+      text: copied
+        ? `فُتحت لوحة الإدارة في نافذة جديدة، وتم نسخ ${email}. سجّل الدخول هناك بكلمة مرور الاختبار.`
+        : `فُتحت لوحة الإدارة في نافذة جديدة. سجّل الدخول هناك بالبريد ${email} وكلمة مرور الاختبار.`,
+    });
+  };
+
+  const accountAction = (userId: number, email: string) =>
+    quickLogin
+      ? {
+          label: "دخول سريع",
+          busyLabel: "جارٍ الدخول…",
+          busy: loggingInId === userId,
+          disabled: loggingInId !== null,
+          onClick: () => loginAs(userId),
+        }
+      : { label: "صفحة الدخول", onClick: () => goToLogin(email) };
+
   return (
     <div
-      className="fixed inset-0 z-10 w-full h-full overflow-y-auto overscroll-y-contain bg-gradient-to-br from-slate-50 to-blue-50"
+      className="fixed inset-0 z-10 h-full w-full overflow-y-auto overscroll-y-contain bg-slate-100"
       style={{ WebkitOverflowScrolling: "touch", minHeight: "100%" }}
       dir="rtl"
     >
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-700 to-indigo-800 px-6 py-8 shadow-lg">
-        <div className="mx-auto max-w-5xl">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h1 className="text-3xl font-black text-white mb-1">🧪 صفحة الاختبار</h1>
-              <p className="text-blue-200 text-sm">حسابات الاختبار وعلاقاتها — انقر على أي بطاقة لتسجيل الدخول مباشرة</p>
-            </div>
-            <button
-              onClick={() => (window.location.href = "/")}
-              className="rounded-xl bg-white/20 border border-white/30 hover:bg-white/30 px-4 py-2 text-sm font-semibold text-white transition"
-            >
-              ← فتح التطبيق
-            </button>
+      <div className="mx-auto max-w-4xl px-4 pb-16 pt-8 sm:pt-12">
+        {/* Header */}
+        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 sm:text-4xl">حسابات الاختبار</h1>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">
+              {data?.school
+                ? `${data.school.name}، ${data.grade?.name ?? "بدون صف"}، ${data.class?.name ?? "بدون فصل"}`
+                : "اختر حسابًا للدخول به وتجربة التطبيق."}
+            </p>
           </div>
+          <a
+            href="/"
+            className="self-start rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 sm:self-auto"
+          >
+            العودة إلى التطبيق
+          </a>
+        </header>
 
-          {/* School info bar */}
-          {data?.school && (
-            <div className="mt-4 flex flex-wrap gap-3">
-              {[
-                { label: "المدرسة", value: data.school.name, icon: "🏫" },
-                { label: "الصف", value: data.grade?.name ?? "—", icon: "📚" },
-                { label: "الفصل", value: data.class?.name ?? "—", icon: "🏛" },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="flex items-center gap-2 rounded-xl bg-white/15 px-3 py-1.5 border border-white/20"
-                >
-                  <span>{item.icon}</span>
-                  <span className="text-white/70 text-xs">{item.label}:</span>
-                  <span className="text-white text-sm font-semibold">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+        {data && (
+          <div
+            className={`mb-6 rounded-xl border px-4 py-3 text-sm leading-relaxed ${
+              quickLogin ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-amber-200 bg-amber-50 text-amber-900"
+            }`}
+          >
+            {quickLogin
+              ? "بيئة تطوير: «دخول سريع» يسجّل الدخول دون كلمة مرور."
+              : "بيئة الإنتاج: الدخول السريع غير متاح. انسخ البريد وسجّل الدخول بكلمة مرور الاختبار من صفحة الدخول."}
+          </div>
+        )}
 
-      {/* Body */}
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        {loginMsg && (
-          <div className="mb-4 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-red-700 text-sm">
-            {loginMsg}
+        {notice && (
+          <div
+            role={notice.tone === "error" ? "alert" : "status"}
+            className={`mb-6 rounded-xl border px-4 py-3 text-sm ${
+              notice.tone === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-sky-200 bg-sky-50 text-sky-900"
+            }`}
+          >
+            {notice.text}
           </div>
         )}
 
         {loading && (
-          <div className="flex items-center justify-center py-24 text-gray-400 text-lg">
-            <span className="animate-spin ml-2">⏳</span> جاري التحميل...
+          <div className="space-y-3" aria-busy="true" aria-label="جارٍ تحميل الحسابات">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-20 animate-pulse rounded-2xl bg-white" />
+            ))}
           </div>
         )}
 
         {!loading && error && (
-          <div className="rounded-2xl bg-red-50 border border-red-100 p-8 text-center text-red-600">
-            <p className="text-2xl mb-2">❌</p>
-            <p className="font-semibold">{error}</p>
-            <p className="text-sm text-red-400 mt-1">
-              هل تم تشغيل: <code>npm run seed:test-local</code>؟
-            </p>
+          <div role="alert" className="rounded-2xl border border-red-200 bg-white p-6">
+            <p className="font-bold text-red-800">تعذر تحميل حسابات الاختبار</p>
+            <p className="mt-1 text-sm text-red-700">{error}</p>
           </div>
         )}
 
         {!loading && data && (
-          <div className="space-y-8">
-            {/* Admin & Teacher row */}
-            <section>
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="h-px flex-1 bg-gray-200"></span>
-                الإدارة والتدريس
-                <span className="h-px flex-1 bg-gray-200"></span>
-              </h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {data.admin && (
-                  <AccountCard
-                    userId={data.admin.userId}
-                    role="Admin"
-                    firstName={data.admin.firstName}
-                    lastName={data.admin.lastName}
-                    email={data.admin.email}
-                    password={data.admin.password}
-                    isProduction={data.isProduction}
-                    onLogin={loginAs}
-                    loggingInId={loggingInId}
-                    extra={
-                      <div className="text-xs text-gray-400">
-                        مشرف مدرسة · {data.school?.name}
-                      </div>
-                    }
-                  />
-                )}
-                {data.teacher && (
-                  <AccountCard
-                    userId={data.teacher.userId}
-                    role="Teacher"
-                    firstName={data.teacher.firstName}
-                    lastName={data.teacher.lastName}
-                    email={data.teacher.email}
-                    password={data.teacher.password}
-                    isProduction={data.isProduction}
-                    onLogin={loginAs}
-                    loggingInId={loggingInId}
-                    extra={
-                      <div className="text-xs text-gray-400">
-                        معلم · {data.class?.name}
-                      </div>
-                    }
-                  />
-                )}
-              </div>
-            </section>
+          <div className="space-y-10">
+            {/* Staff */}
+            {(data.admin || data.teacher) && (
+              <section>
+                <SectionTitle title="الإدارة والتدريس" />
+                <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.06)]">
+                  {data.admin && (
+                    <AccountRow
+                      userId={data.admin.userId}
+                      role="Admin"
+                      firstName={data.admin.firstName}
+                      lastName={data.admin.lastName}
+                      email={data.admin.email}
+                      meta={
+                        !ADMIN_APP_URL && (
+                          <p className="mt-1 text-xs text-red-700">
+                            رابط لوحة الإدارة غير مهيأ في هذا الإصدار (VITE_ADMIN_APP_URL).
+                          </p>
+                        )
+                      }
+                      action={{
+                        label: "فتح لوحة الإدارة",
+                        disabled: !ADMIN_APP_URL,
+                        onClick: () => openAdminConsole(data.admin!.email),
+                      }}
+                    />
+                  )}
+                  {data.teacher && (
+                    <AccountRow
+                      userId={data.teacher.userId}
+                      role="Teacher"
+                      firstName={data.teacher.firstName}
+                      lastName={data.teacher.lastName}
+                      email={data.teacher.email}
+                      meta={data.class && <p className="mt-1 text-xs text-slate-500">يدرّس {data.class.name}</p>}
+                      action={accountAction(data.teacher.userId, data.teacher.email)}
+                    />
+                  )}
+                </div>
+              </section>
+            )}
 
-            {/* Family trees */}
+            {/* Families */}
             <section>
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="h-px flex-1 bg-gray-200"></span>
-                العائلات والطلاب
-                <span className="h-px flex-1 bg-gray-200"></span>
-              </h2>
-              <div className="space-y-6">
-                {data.families.map((family, fi) => (
-                  <div
-                    key={family.parent.userId}
-                    className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden"
-                  >
-                    {/* Parent header row */}
-                    <div className="border-b border-gray-100">
-                      <AccountCard
+              <SectionTitle title="العائلات" hint="كل ولي أمر وأبناؤه المرتبطون به" />
+              {data.families.length === 0 ? (
+                <p className="rounded-2xl bg-white px-4 py-6 text-sm text-slate-600">
+                  لا توجد عائلات اختبار في قاعدة البيانات هذه.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {data.families.map((family) => (
+                    <div
+                      key={family.parent.userId}
+                      className="overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
+                    >
+                      <AccountRow
                         userId={family.parent.userId}
                         role="Parent"
                         firstName={family.parent.firstName}
                         lastName={family.parent.lastName}
                         email={family.parent.email}
-                        password={family.parent.password}
-                        isProduction={data.isProduction}
-                        onLogin={loginAs}
-                        loggingInId={loggingInId}
-                        extra={
-                          <div className="text-xs text-gray-400">
-                            ولي أمر · {family.children.length} {family.children.length === 1 ? "طالب" : "طلاب"}
-                          </div>
+                        meta={
+                          <p className="mt-1 text-xs text-slate-500">
+                            {family.children.length === 0
+                              ? "لا يوجد أبناء مرتبطون"
+                              : family.children.length === 1
+                                ? "ابن واحد مرتبط"
+                                : `${family.children.length} أبناء مرتبطون`}
+                          </p>
                         }
+                        action={accountAction(family.parent.userId, family.parent.email)}
                       />
+                      {family.children.length > 0 && (
+                        <ul className="relative border-t border-slate-100 bg-slate-50/60 py-1">
+                          {/* Branch line from the parent's avatar down through the children */}
+                          <span className="absolute bottom-6 right-9 top-0 w-px bg-amber-200" aria-hidden />
+                          {family.children.map((child) => (
+                            <li key={child.userId} className="relative pr-10 sm:pr-12">
+                              <span className="absolute right-9 top-8 h-px w-4 bg-amber-200 sm:w-6" aria-hidden />
+                              <AccountRow
+                                userId={child.userId}
+                                role="Student"
+                                firstName={child.firstName}
+                                lastName={child.lastName}
+                                email={child.email}
+                                meta={
+                                  <div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+                                    <span>كود الربط</span>
+                                    <span className="font-bold tabular-nums text-slate-800" dir="ltr">{child.connectCode}</span>
+                                    <CopyButton text={child.connectCode} label={`نسخ كود الربط ${child.connectCode}`} />
+                                  </div>
+                                }
+                                action={accountAction(child.userId, child.email)}
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
-
-                    {/* Children */}
-                    <div className="px-4 py-3 bg-gray-50">
-                      <p className="text-xs font-semibold text-gray-500 mb-3 flex items-center gap-1">
-                        <span>└─</span> الأبناء
-                      </p>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {family.children.map((child, ci) => (
-                          <div key={child.userId} className="relative">
-                            {/* connector line */}
-                            <div className="absolute right-0 top-0 bottom-0 -mr-4 w-px bg-amber-200"></div>
-                            <AccountCard
-                              userId={child.userId}
-                              role="Student"
-                              firstName={child.firstName}
-                              lastName={child.lastName}
-                              email={child.email}
-                              password={child.password}
-                              isProduction={data.isProduction}
-                              onLogin={loginAs}
-                              loggingInId={loggingInId}
-                              extra={
-                                <div className="flex items-center gap-1 text-xs text-gray-400">
-                                  <span>كود الاتصال:</span>
-                                  <span className="font-mono font-bold text-gray-600">{child.connectCode}</span>
-                                  <CopyButton text={child.connectCode} />
-                                </div>
-                              }
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
 
-            {/* Relationship diagram */}
-            <section>
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="h-px flex-1 bg-gray-200"></span>
-                مخطط العلاقات
-                <span className="h-px flex-1 bg-gray-200"></span>
-              </h2>
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm font-mono text-sm text-gray-700 leading-8 whitespace-pre-wrap" dir="ltr">
-{`${data.school?.name ?? "School"} (Org ID: ${data.school?.id ?? "?"})
-├── 🛡 Admin: ${data.admin?.email ?? "—"}
-├── 📚 Grade: ${data.grade?.name ?? "—"}
-└── 🏛 Class: ${data.class?.name ?? "—"}
-    └── 👩‍🏫 Teacher: ${data.teacher?.email ?? "—"}
-        ├── 👨 Ahmed Hassan (ahmed.hassan@sanabel.local)
-        │   ├── 👦 Omar Ahmed  (omar.ahmed@sanabel.local)
-        │   └── 👧 Lina Ahmed  (lina.ahmed@sanabel.local)
-        ├── 👨 Khaled Mahmoud (khaled.mahmoud@sanabel.local)
-        │   ├── 👦 Adam Khaled (adam.khaled@sanabel.local)
-        │   └── 👧 Noor Khaled (noor.khaled@sanabel.local)
-        └── 👨 Adel Samir (adel.samir@sanabel.local)
-            └── 👦 Youssef Adel (youssef.adel@sanabel.local)`}
-              </div>
-            </section>
-
-            {/* Footer */}
-            <p className="text-center text-xs text-gray-400 pb-4">
-              🔒 هذه الصفحة مخصصة للاختبار فقط — يُرجى حذفها بعد انتهاء مرحلة الاختبار
+            <p className="text-center text-xs text-slate-500">
+              صفحة داخلية لمرحلة الاختبار، تُحذف قبل الإطلاق.
             </p>
           </div>
         )}
