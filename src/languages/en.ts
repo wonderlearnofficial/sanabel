@@ -2030,6 +2030,54 @@ const en = {
     "Choose a Parent or Teacher": "Choose a Parent or Teacher",
     "Assign Mission": "Assign Mission",
     "Register Completed Mission": "Register Completed Mission",
+
+    // Test accounts page (/test)
+    "حسابات الاختبار": "Test accounts",
+    "اختر حسابًا للدخول به وتجربة التطبيق.": "Pick an account to sign in and try the app.",
+    "العودة إلى التطبيق": "Back to the app",
+    "الوضع الداكن": "Dark mode",
+    "الوضع الفاتح": "Light mode",
+    "بدون صف": "No grade",
+    "الإدارة والتدريس": "Staff",
+    "العائلات": "Families",
+    "كل ولي أمر وأبناؤه المرتبطون به": "Each parent with their linked children",
+    "مشرف المدرسة": "School admin",
+    "ولي أمر": "Parent",
+    "نسخ": "Copy",
+    "تعذر النسخ": "Copy failed",
+    "نسخ {{value}}": "Copy {{value}}",
+    "كود الربط": "Connect code",
+    "يدرّس {{className}}": "Teaches {{className}}",
+    "لا يوجد أبناء مرتبطون": "No linked children",
+    "ابن واحد مرتبط": "1 linked child",
+    "{{count}} أبناء مرتبطون": "{{count}} linked children",
+    "دخول سريع": "Quick sign-in",
+    "جارٍ الدخول…": "Signing in…",
+    "كلمة مرور الاختبار": "Test password",
+    "أدخلها مرة واحدة ليعمل الدخول السريع على هذا الجهاز.":
+      "Enter it once to turn on quick sign-in on this device.",
+    "تفعيل الدخول السريع": "Turn on quick sign-in",
+    "الدخول السريع مفعّل على هذا الجهاز.": "Quick sign-in is on for this device.",
+    "إزالة كلمة المرور من هذا الجهاز": "Remove the password from this device",
+    "تعذر حفظ كلمة المرور على هذا الجهاز.": "Couldn't save the password on this device.",
+    "أدخل كلمة مرور الاختبار أولًا.": "Enter the test password first.",
+    "تعذر الدخول السريع: {{reason}}": "Quick sign-in failed: {{reason}}",
+    "فتح لوحة الإدارة": "Open admin console",
+    "لوحة الإدارة تطبيق منفصل، سجّل الدخول فيها.":
+      "The admin console is a separate app. Sign in there.",
+    "رابط لوحة الإدارة غير مهيأ في هذا الإصدار (VITE_ADMIN_APP_URL).":
+      "The admin console link isn't configured in this build (VITE_ADMIN_APP_URL).",
+    "فُتحت لوحة الإدارة في نافذة جديدة، وتم نسخ {{email}}.":
+      "The admin console opened in a new tab, and {{email}} is copied.",
+    "فُتحت لوحة الإدارة في نافذة جديدة. سجّل الدخول هناك بالبريد {{email}}.":
+      "The admin console opened in a new tab. Sign in there with {{email}}.",
+    "جارٍ تحميل الحسابات": "Loading accounts",
+    "تعذر تحميل حسابات الاختبار": "Couldn't load the test accounts",
+    "لم يتم إنشاء حسابات الاختبار في قاعدة البيانات هذه. شغّل npm run seed:test-local في مجلد server.":
+      "Test accounts aren't seeded in this database. Run npm run seed:test-local in the server folder.",
+    "لا توجد عائلات اختبار في قاعدة البيانات هذه.": "There are no test families in this database.",
+    "صفحة داخلية لمرحلة الاختبار، تُحذف قبل الإطلاق.":
+      "Internal page for the testing phase. Remove before launch.",
   },
 };
 
