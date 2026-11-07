@@ -31,7 +31,9 @@ export const PermissionsStartupModal: React.FC = () => {
 
   useEffect(() => {
     const hasCompleted = localStore.getItem(PERMISSIONS_ONBOARDING_KEY) === "true";
-    if (!hasCompleted) {
+    // The public account-deletion page must be readable on a first visit (Google Play reviewers, people without the app).
+    const onPublicPage = window.location.pathname.startsWith("/delete-account");
+    if (!hasCompleted && !onPublicPage) {
       // Small timeout to allow the initial screen render before presenting modal
       const timer = setTimeout(() => {
         setIsOpen(true);

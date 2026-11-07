@@ -233,6 +233,12 @@ const Profile: React.FC = () => {
       type: "prayerToggle",
     },
     {
+      title: "حذف الحساب",
+      icon: <ChangePassword size={25} />,
+      to: "/delete-account",
+      type: "link",
+    },
+    {
       title: "تسجيل الخروج",
       icon: <Logout size={25} />,
       to: "choosesignmethod",

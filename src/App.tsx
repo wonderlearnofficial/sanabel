@@ -82,6 +82,8 @@ const ParentView = lazyRoute(() => import("./pages/teacherorparent/ParentView"))
 
 // Auth Recovery
 const ForgotPassword = lazyRoute(() => import("./pages/common/login/ForgotPassword"));
+// Public account-deletion page (Google Play requirement): works signed out and without the app.
+const DeleteAccount = lazyRoute(() => import("./pages/common/DeleteAccount"));
 const ChangePassword = lazyRoute(() => import("./pages/common/login/ChangePassword"));
 
 // Standalone Tools
@@ -313,6 +315,7 @@ const App: React.FC = () => {
                     path="/forgotpassword"
                     component={ForgotPassword}
                   />
+                  <Route exact path="/delete-account" component={DeleteAccount} />
                   <Route
                     exact
                     path="/changepassword"

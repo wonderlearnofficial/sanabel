@@ -127,6 +127,12 @@ const Profile: React.FC = () => {
       type: "link",
     },
     {
+      title: "حذف الحساب",
+      icon: <PrivacyPolicy size={25} />,
+      to: "/delete-account",
+      type: "link",
+    },
+    {
       title: "المؤثرات الصوتية",
       icon: soundEffectsEnabled ? (
         <MdVolumeUp size={25} color="#4AAAD6" />
