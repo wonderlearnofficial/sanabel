@@ -45,6 +45,20 @@ describe("PermissionsStartupModal", () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it.each(["/delete-account", "/privacy-policy"])(
+    "stays closed on the public page %s for a first-time visitor",
+    async (path) => {
+      window.history.pushState({}, "", path);
+      try {
+        const { container } = render(<PermissionsStartupModal />);
+        await new Promise((resolve) => setTimeout(resolve, 900));
+        expect(container.firstChild).toBeNull();
+      } finally {
+        window.history.pushState({}, "", "/");
+      }
+    },
+  );
+
   it("opens for first-time user and handles auto-detect flow", async () => {
     render(<PermissionsStartupModal />);
 
