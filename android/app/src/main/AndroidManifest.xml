@@ -37,6 +37,10 @@
          Fine location is left out: the app never asks for high accuracy, and precise location
          in a children's app draws extra Play review. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- The location permission implies a required android.hardware.location feature, which
+         would hide the app from devices without it. Location is optional: the app falls back
+         to a city picker. -->
+    <uses-feature android:name="android.hardware.location" android:required="false" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- @capacitor/local-notifications declares this, but Play only allows it for alarm-clock and
          calendar apps. Reminders are scheduled inexact instead (isExactNotification: false). -->
