@@ -80,11 +80,20 @@ describe("prayer notification location permission", () => {
 
   it("clears the stored denial once permission is granted", async () => {
     localStorage.setItem(LOCATION_DENIED_KEY, "true");
-    mocks.requestResult = { location: "granted", coarseLocation: "granted" };
+    // Only coarse location is declared in the Android manifest, so the "location"
+    // (fine) alias comes back denied while coarseLocation is granted.
+    mocks.requestResult = { location: "denied", coarseLocation: "granted" };
 
     const result = await enablePrayerNotifications();
 
     expect(result.ok).toBe(true);
+    expect(mocks.requestPermissions).toHaveBeenCalledWith({ permissions: ["coarseLocation"] });
+    // SCHEDULE_EXACT_ALARM is not declared, so every reminder must be inexact.
+    const notifications = mocks.schedule.mock.calls.flatMap(
+      (call) => (call[0] as { notifications: { isExactNotification?: boolean }[] }).notifications,
+    );
+    expect(notifications.length).toBeGreaterThan(0);
+    expect(notifications.every((n) => n.isExactNotification === false)).toBe(true);
     expect(localStorage.getItem(LOCATION_DENIED_KEY)).toBeNull();
   });
 });

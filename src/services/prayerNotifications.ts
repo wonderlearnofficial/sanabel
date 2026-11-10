@@ -175,6 +175,9 @@ const scheduleNativePrayerNotifications = async (
       title: `حان وقت صلاة ${prayer.arabicName}`,
       body: "لا تنس ذكر الله وإقامة الصلاة في وقتها.",
       schedule: { at: prayer.time, allowWhileIdle: true },
+      // Inexact on purpose: SCHEDULE_EXACT_ALARM is not declared (Play policy),
+      // so Android may deliver these a few minutes late.
+      isExactNotification: false,
       channelId: ANDROID_CHANNEL_ID,
       smallIcon: "ic_launcher",
       largeIcon: "ic_launcher",
@@ -211,7 +214,7 @@ const requestNativeLocationPermission = async (): Promise<boolean> => {
   }
   let granted = false;
   try {
-    granted = isLocationGranted(await Geolocation.requestPermissions());
+    granted = isLocationGranted(await Geolocation.requestPermissions({ permissions: ["coarseLocation"] }));
   } catch {
     granted = false;
   }
@@ -429,6 +432,7 @@ export const sendTestPrayerNotification = async (): Promise<EnableResult> => {
             title: "حان وقت صلاة الظهر (تجربة)",
             body: "هذا إشعار تجريبي للتأكد من عمل تنبيهات الصلاة.",
             schedule: { at: new Date(Date.now() + 10_000), allowWhileIdle: true },
+            isExactNotification: false,
             channelId: ANDROID_CHANNEL_ID,
             smallIcon: "ic_launcher",
             largeIcon: "ic_launcher",

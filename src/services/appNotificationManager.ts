@@ -172,6 +172,9 @@ export const sendLocalAppNotification = async (options: {
             title: options.title,
             body: options.body,
             schedule: options.scheduleAt ? { at: options.scheduleAt, allowWhileIdle: true } : undefined,
+            // Inexact on purpose: the app does not declare SCHEDULE_EXACT_ALARM
+            // (Play restricts it to alarm-clock and calendar apps).
+            isExactNotification: false,
             channelId,
             smallIcon: "ic_launcher",
             largeIcon: "ic_launcher",

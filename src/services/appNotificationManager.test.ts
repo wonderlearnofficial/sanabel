@@ -90,6 +90,7 @@ describe("appNotificationManager", () => {
     expect(success).toBe(true);
     expect(localNotificationMocks.scheduled).toHaveLength(1);
     expect(localNotificationMocks.scheduled[0].notifications[0].title).toBe("تنبيه جديد");
+    expect(localNotificationMocks.scheduled[0].notifications[0].isExactNotification).toBe(false);
   });
 });
 
