@@ -150,17 +150,6 @@ const Profile: React.FC = () => {
       function: handleVibrationToggle,
       type: "vibrationToggle",
     },
-    {
-      title: "تفعيل الوضع الداكن",
-      icon: darkMode ? (
-        <MdLightMode size={25} color="#4AAAD6" />
-      ) : (
-        <MdDarkMode size={25} color="#4AAAD6" />
-      ),
-      to: "",
-      function: () => setShowDarkModePopup(true),
-      type: "darkModeToggle",
-    },
   ];
 
   const [showDarkModePopup, setShowDarkModePopup] = useState(false);
@@ -172,7 +161,7 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-between w-full h-full p-4">
+    <div className="flex flex-col items-center justify-start w-full h-full p-4 overflow-y-auto">
       <div className="flex flex-row-reverse items-center justify-between w-full gap-3">
         <div className="opacity-0 w-[45px]" />
 
@@ -189,9 +178,9 @@ const Profile: React.FC = () => {
         <h1>{t("تعديل الملف الشخصي")}</h1>
       </IonRouterLink> */}
 
-      <div className="flex flex-col items-center justify-around w-full h-3/5">
+      <div className="flex flex-col items-center w-full mt-4">
         {profileButtons.map((item, index) => (
-          <div className="flex flex-col w-full -mt-10" key={index}>
+          <div className="flex flex-col w-full mt-2" key={index}>
             <div
               className="flex items-center justify-between w-full p-2 flex-row-reverse border-b-[#D5EBF6] border-b-[1px] rounded-lg"
               onClick={() =>

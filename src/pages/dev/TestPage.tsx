@@ -11,16 +11,13 @@ import {
   Languages,
   Layers,
   LogIn,
-  Moon,
   Presentation,
   School,
   ShieldCheck,
-  Sun,
   Users,
 } from "lucide-react";
 import { API_BASE_URL } from "../../config/api";
 import { useUserContext } from "../../context/StudentUserProvider";
-import { useTheme } from "../../context/ThemeContext";
 import { describeApiError } from "../../utils/apiError";
 import { localStore } from "../../utils/safeStorage";
 
@@ -210,7 +207,6 @@ const card = "overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(15,23,
 // ---------------------------------------------------------------------------
 const TestPage: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const { darkMode, toggleDarkMode } = useTheme();
   const { refreshUserData } = useUserContext();
   const [data, setData] = useState<TestAccountData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -337,10 +333,6 @@ const TestPage: React.FC = () => {
             >
               <Languages size={16} />
               {isArabic ? "English" : "العربية"}
-            </ToolbarButton>
-            <ToolbarButton onClick={toggleDarkMode} label={darkMode ? t("الوضع الفاتح") : t("الوضع الداكن")}>
-              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-              <span className="hidden sm:inline">{darkMode ? t("الوضع الفاتح") : t("الوضع الداكن")}</span>
             </ToolbarButton>
           </div>
         </div>

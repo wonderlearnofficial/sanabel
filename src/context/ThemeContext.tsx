@@ -1,7 +1,10 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useEffect, useContext } from "react";
 import { localStore } from "../utils/safeStorage";
 
-// Create the context
+// The app ships in light mode only. Most screens have no dark styling, so a
+// "dark" class left on <html> produced black screens, a black tab bar and white
+// text on white cards. The context keeps its shape for existing callers, but
+// darkMode is always false and toggling does nothing.
 const ThemeContext = createContext<{
   darkMode: boolean;
   toggleDarkMode: () => void;
@@ -10,34 +13,24 @@ const ThemeContext = createContext<{
   toggleDarkMode: () => {},
 });
 
-// Create a provider component
+const noop = () => {};
+
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [darkMode, setDarkMode] = useState(false);
-
-  // Check user's preference and set initial theme
+  // Undo a dark theme saved by older builds (the /test page had a toggle).
   useEffect(() => {
-    const savedTheme = localStore.getItem("theme");
-    if (savedTheme) {
-      setDarkMode(savedTheme === "dark");
-      document.documentElement.classList.toggle("dark", savedTheme === "dark");
+    document.documentElement.classList.remove("dark");
+    if (localStore.getItem("theme") === "dark") {
+      localStore.removeItem("theme");
     }
   }, []);
 
-  const toggleDarkMode = () => {
-    const isDark = !darkMode;
-    setDarkMode(isDark);
-    document.documentElement.classList.toggle("dark", isDark);
-    localStore.setItem("theme", isDark ? "dark" : "light");
-  };
-
   return (
-    <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
+    <ThemeContext.Provider value={{ darkMode: false, toggleDarkMode: noop }}>
       {children}
     </ThemeContext.Provider>
   );
 };
 
-// Custom hook to use the theme context
 export const useTheme = () => useContext(ThemeContext);
